@@ -10,8 +10,10 @@ from .mlb_settle_engine import MLBSettleEngine
 from .mlb_odds_scraper import MLBOddsScraper
 from .mlb_pitcher_scraper import MLBPitcherScraper
 from .mlb_weather_scraper import MLBWeatherScraper
+from .mlb_lineup_scraper import MLBLineupScraper
 
 __all__ = [
     "MLBGameScraper", "MLBPlayerScraper", "MLBSettleEngine",
     "MLBOddsScraper", "MLBPitcherScraper", "MLBWeatherScraper",
+    "MLBLineupScraper",
 ]

@@ -43,6 +43,12 @@ MIN_IP_FOR_SIGNAL = 5.0      # below this, factor falls back to 1.0
 FACTOR_MIN = 0.70
 FACTOR_MAX = 1.30
 
+# Phase 2B: weight on last-3-starts FIP when blending into the SP factor.
+# 0.30 = 70% season / 30% recent — captures hot/cold streaks without
+# overreacting to a single bad outing.
+RECENT_BLEND_WEIGHT = 0.30
+RECENT_STARTS_WINDOW = 3
+
 
 # Reverse lookup of TEAM_MAP (id -> code) so we can take a team code in
 # and ask the API for that team's stats by id.
@@ -109,6 +115,41 @@ def sp_factor(era: float | None, ip: float | None, fip: float | None = None) -> 
     return quality_factor(era, ip)
 
 
+def blended_sp_factor(
+    season: dict | None,
+    recent: dict | None,
+    recent_weight: float = RECENT_BLEND_WEIGHT,
+) -> float:
+    """SP factor blended from season FIP + last-N-starts FIP.
+
+    season:  {"era", "fip", "ip"} from fetch_season_stats
+    recent:  {"fip", "ip", "starts"} from fetch_recent_form (or None)
+
+    When recent data is missing or thin, falls back gracefully to
+    season-only via sp_factor. The blend uses season IP as the
+    shrinkage anchor so a single dominant recent outing can't override
+    a long sample.
+    """
+    if not season:
+        return 1.0
+    season_fip = season.get("fip")
+    season_era = season.get("era")
+    season_ip = season.get("ip")
+
+    if not recent or recent.get("fip") is None or recent.get("ip", 0) < MIN_IP_FOR_SIGNAL:
+        return sp_factor(season_era, season_ip, fip=season_fip)
+
+    recent_fip = recent["fip"]
+    recent_ip = recent["ip"]
+
+    if season_fip is None or season_ip is None or season_ip < MIN_IP_FOR_SIGNAL:
+        # Season too thin → recent dominates, with its own IP as the anchor.
+        return quality_factor(recent_fip, recent_ip)
+
+    blended_fip = (1 - recent_weight) * season_fip + recent_weight * recent_fip
+    return quality_factor(blended_fip, season_ip)
+
+
 def bullpen_factor(era: float | None, ip: float | None) -> float:
     """Team-bullpen quality multiplier. Higher IP prior since bullpens
     aggregate quickly across many relievers."""
@@ -123,6 +164,7 @@ class MLBPitcherScraper:
         self.base_url = BASE_URL
         self._stat_cache: dict[int, dict] = {}
         self._bullpen_cache: dict[int, dict] = {}
+        self._recent_cache: dict[int, dict] = {}
 
     # ---------------- probable pitchers ----------------------------------
 
@@ -220,6 +262,72 @@ class MLBPitcherScraper:
         self._stat_cache[pitcher_id] = out
         return out
 
+    # ---------------- recent form (last N starts) ------------------------
+
+    def fetch_recent_form(
+        self, pitcher_id: int, n_starts: int = RECENT_STARTS_WINDOW,
+    ) -> dict | None:
+        """Aggregate FIP / IP / K / BB / HR / HBP across the pitcher's
+        last N appearances in the season game log. Returns None on
+        network failure or when the pitcher has no game log entries.
+        Cached per pitcher per scraper instance.
+        """
+        if pitcher_id in self._recent_cache:
+            return self._recent_cache[pitcher_id]
+
+        url = (
+            f"{self.base_url}/people/{pitcher_id}/stats"
+            f"?stats=gameLog&season={self.season}&group=pitching"
+        )
+        try:
+            resp = requests.get(url, timeout=30)
+            resp.raise_for_status()
+            payload = resp.json()
+        except requests.RequestException:
+            self._recent_cache[pitcher_id] = None
+            return None
+
+        try:
+            splits = payload["stats"][0]["splits"]
+        except (KeyError, IndexError):
+            self._recent_cache[pitcher_id] = None
+            return None
+
+        if not splits:
+            self._recent_cache[pitcher_id] = None
+            return None
+
+        # Game logs are date-ordered ascending; the most recent N are the tail.
+        recent = splits[-n_starts:]
+
+        total_hr = total_bb = total_hbp = total_k = 0
+        total_ip = 0.0
+        latest_date: str | None = None
+        for s in recent:
+            stat = s.get("stat") or {}
+            total_hr += int(stat.get("homeRuns") or 0)
+            total_bb += int(stat.get("baseOnBalls") or 0)
+            total_hbp += int(stat.get("hitByPitch") or 0)
+            total_k += int(stat.get("strikeOuts") or 0)
+            total_ip += _ip_to_float(stat.get("inningsPitched"))
+            if s.get("date"):
+                latest_date = s["date"]
+
+        fip = compute_fip(total_hr, total_bb, total_hbp, total_k, total_ip)
+
+        out = {
+            "starts": len(recent),
+            "ip": total_ip,
+            "fip": round(fip, 2) if fip is not None else None,
+            "hr": total_hr,
+            "bb": total_bb,
+            "k": total_k,
+            "hbp": total_hbp,
+            "latest_date": latest_date,
+        }
+        self._recent_cache[pitcher_id] = out
+        return out
+
     # ---------------- combined: per-slate factors ------------------------
 
     def fetch_factors_for_slate(self, slate: list[dict]) -> dict[int, dict]:
@@ -256,17 +364,21 @@ class MLBPitcherScraper:
                         "whip": None, "factor": 1.0,
                     }
                     continue
-                stats = self.fetch_season_stats(pitcher["id"]) or {}
+                season_stats = self.fetch_season_stats(pitcher["id"]) or {}
+                recent_stats = self.fetch_recent_form(pitcher["id"])
+                factor = blended_sp_factor(season_stats, recent_stats)
                 game_dict[side] = {
                     "id": pitcher["id"],
                     "name": pitcher["name"],
-                    "era": stats.get("era"),
-                    "fip": stats.get("fip"),
-                    "ip": stats.get("ip"),
-                    "whip": stats.get("whip"),
-                    "factor": sp_factor(
-                        stats.get("era"), stats.get("ip"), fip=stats.get("fip"),
-                    ),
+                    "era": season_stats.get("era"),
+                    "fip": season_stats.get("fip"),
+                    "ip": season_stats.get("ip"),
+                    "whip": season_stats.get("whip"),
+                    # Recent-form snapshot — surfaces hot/cold streaks.
+                    "recent_fip": (recent_stats or {}).get("fip"),
+                    "recent_ip": (recent_stats or {}).get("ip"),
+                    "recent_starts": (recent_stats or {}).get("starts"),
+                    "factor": factor,
                 }
             out[game_pk] = game_dict
         return out
