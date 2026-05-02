@@ -108,6 +108,32 @@ Probable pitchers are fetched from `statsapi.mlb.com` via the
 (ERA, WHIP, IP) come from the `/people/{id}/stats?stats=season&group=pitching`
 endpoint and are cached per run.
 
+### CLV (Closing Line Value) tracking
+
+Every play that lands on Today's Card is recorded to
+`public/data/mlb/picks_log.json` with the price we took. A separate
+GitHub Action runs every 30 minutes through game-day windows and snaps
+the current market price for any unsettled pick — recording closing
+line value:
+
+```
+pick_implied    = 1 / pick_decimal_odds
+closing_implied = 1 / closing_decimal_odds
+clv_pct = (closing_implied - pick_implied) * 100
+```
+
+Positive CLV means our pick price was sharper than the close — the gold
+standard for whether the model is genuinely beating the market. Long-run
+profitability correlates more strongly with positive CLV than with raw
+W/L, since CLV strips out the variance-driven luck in any short sample.
+
+CLV summary rows are appended to the Backtest tab (overall + per-bet-type
+mean and median CLV). To run the snapshot manually:
+
+```bash
+python -m exporters.mlb.closing_snapshot --push
+```
+
 ### Self-calibration
 
 Every daily run executes a season-long backtest that records residuals

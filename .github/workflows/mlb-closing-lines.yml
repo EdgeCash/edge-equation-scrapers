@@ -1,0 +1,47 @@
+name: MLB Closing-Line Snapshot
+
+# Snaps the current market price for every pick in picks_log.json that
+# doesn't yet have a closing snapshot, computes CLV, and pushes the
+# updated log back to the repo. Runs on a tighter cron than the morning
+# build so it can catch lines as games approach first pitch.
+on:
+  schedule:
+    # Every 30 minutes from 17:00-23:30 UTC (roughly 1pm-7:30pm ET) plus
+    # late-night coverage 00:00-04:00 UTC for west-coast late games.
+    # Each pick gets its first closing snapshot at the next interval
+    # within ~30 min of game time.
+    - cron: "*/30 17-23 * * *"
+    - cron: "*/30 0-3 * * *"
+  workflow_dispatch:
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Configure git
+        run: |
+          git config user.name  "edge-equation-bot"
+          git config user.email "bot@edge-equation.local"
+
+      - name: Snap closing lines
+        env:
+          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+        run: python -m exporters.mlb.closing_snapshot --push

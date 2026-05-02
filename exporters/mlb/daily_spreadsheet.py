@@ -49,6 +49,7 @@ from exporters.mlb.projections import (
 )
 from exporters.mlb.kelly import kelly_advice, edge_pct, DEFAULT_DECIMAL_ODDS
 from exporters.mlb.backtest import BacktestEngine
+from exporters.mlb.clv_tracker import ClvTracker
 
 
 SEASON_DEFAULT = 2026
@@ -339,7 +340,28 @@ class DailySpreadsheet:
         tabs["todays_card"] = self._build_todays_card(
             tabs, min_edge_pct=self.min_edge_pct, top_n=self.top_n
         )
-        tabs["backtest"] = self._build_backtest(backtest)
+
+        # Persist today's actionable picks to the CLV log, then load CLV
+        # summary stats from any prior closing-snapshot runs.
+        tracker = ClvTracker(self.output_dir)
+        game_pks_by_matchup = {
+            f"{g['away_team']}@{g['home_team']}": g.get("game_pk")
+            for g in slate
+        }
+        added = tracker.record_picks(
+            tabs["todays_card"]["projections"],
+            odds_source=odds.get("source", "unknown"),
+            game_pks_by_matchup=game_pks_by_matchup,
+        )
+        clv_summary = tracker.summary()
+        print(f"  CLV log: +{added} new picks, "
+              f"{clv_summary['picks_with_close']}/{clv_summary['picks_total']} "
+              f"have closing snapshots")
+        if clv_summary["picks_with_close"]:
+            o = clv_summary["overall"]
+            print(f"    overall CLV: {o['mean_clv_pct']:+.2f}% mean ({o['positive']}+ / {o['negative']}-)")
+
+        tabs["backtest"] = self._build_backtest(backtest, clv_summary=clv_summary)
 
         return {
             "generated_at": datetime.utcnow().isoformat() + "Z",
@@ -863,7 +885,7 @@ class DailySpreadsheet:
         }
 
     @staticmethod
-    def _build_backtest(backtest: dict) -> dict:
+    def _build_backtest(backtest: dict, clv_summary: dict | None = None) -> dict:
         overall = backtest["overall"]
         summary_rows = [{
             "scope": "OVERALL",
@@ -879,11 +901,47 @@ class DailySpreadsheet:
         for row in backtest["summary_by_bet_type"]:
             summary_rows.append({"scope": "BY TYPE", **row})
 
+        # CLV rows go below the backtest summary in the same section so
+        # users can compare modeled performance vs market-validated edge.
+        if clv_summary and clv_summary.get("picks_with_close"):
+            o = clv_summary["overall"]
+            summary_rows.append({
+                "scope": "CLV",
+                "bet_type": "all",
+                "bets": o["n"],
+                "wins": o["positive"],
+                "losses": o["negative"],
+                "pushes": o["neutral"],
+                "hit_rate": round(o["positive"] / o["n"] * 100, 1) if o["n"] else 0.0,
+                "units_pl": o["mean_clv_pct"],
+                "roi_pct": o["median_clv_pct"],
+            })
+            for bt, stats in clv_summary["by_bet_type"].items():
+                summary_rows.append({
+                    "scope": "CLV BY TYPE",
+                    "bet_type": bt,
+                    "bets": stats["n"],
+                    "wins": stats["positive"],
+                    "losses": stats["negative"],
+                    "pushes": stats["neutral"],
+                    "hit_rate":
+                        round(stats["positive"] / stats["n"] * 100, 1) if stats["n"] else 0.0,
+                    "units_pl": stats["mean_clv_pct"],
+                    "roi_pct": stats["median_clv_pct"],
+                })
+
+        clv_note = ""
+        if clv_summary:
+            clv_note = (
+                f" · CLV tracked: {clv_summary['picks_with_close']} of "
+                f"{clv_summary['picks_total']} logged picks"
+            )
+
         return {
             "title": "Backtest",
             "projection_section_title":
                 f"BACKTEST SUMMARY — "
-                f"{backtest['first_date']} → {backtest['last_date']}",
+                f"{backtest['first_date']} → {backtest['last_date']}{clv_note}",
             "backfill_section_title": "DAILY P&L (cumulative units, flat 1u @ -110)",
             "projection_columns": [
                 "scope", "bet_type", "bets", "wins", "losses", "pushes",
