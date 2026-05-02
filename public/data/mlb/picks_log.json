@@ -418,6 +418,66 @@
       "clv_pct": null,
       "result": null,
       "units": null
+    },
+    {
+      "pick_id": "2026-05-02|MIL@WSH|run_line|MIL",
+      "date": "2026-05-02",
+      "matchup": "MIL@WSH",
+      "game_pk": 822746,
+      "game_time": "2026-05-02T20:05:00Z",
+      "bet_type": "run_line",
+      "pick": "MIL",
+      "spec": {
+        "type": "run_line",
+        "team": "MIL",
+        "point": -1.5
+      },
+      "model_prob": 0.457,
+      "edge_pct_at_pick": 3.15,
+      "kelly_pct": 2.12,
+      "kelly_advice": "1u",
+      "pick_price_dec": 2.35,
+      "pick_price_american": 135,
+      "book_at_pick": "lowvig",
+      "pick_taken_at": "2026-05-02T17:32:44.847210Z",
+      "odds_source": "the-odds-api",
+      "closing_price_dec": null,
+      "closing_price_american": null,
+      "closing_book": null,
+      "closing_recorded_at": null,
+      "clv_pct": null,
+      "result": null,
+      "units": null
+    },
+    {
+      "pick_id": "2026-05-02|SF@TB|run_line|SF",
+      "date": "2026-05-02",
+      "matchup": "SF@TB",
+      "game_pk": 822988,
+      "game_time": "2026-05-02T22:10:00Z",
+      "bet_type": "run_line",
+      "pick": "SF",
+      "spec": {
+        "type": "run_line",
+        "team": "SF",
+        "point": -1.5
+      },
+      "model_prob": 0.423,
+      "edge_pct_at_pick": 3.08,
+      "kelly_pct": 2.54,
+      "kelly_advice": "1u",
+      "pick_price_dec": 2.55,
+      "pick_price_american": 155,
+      "book_at_pick": "betrivers",
+      "pick_taken_at": "2026-05-02T17:32:44.847210Z",
+      "odds_source": "the-odds-api",
+      "closing_price_dec": null,
+      "closing_price_american": null,
+      "closing_book": null,
+      "closing_recorded_at": null,
+      "clv_pct": null,
+      "result": null,
+      "units": null
     }
   ]
 }
