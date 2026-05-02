@@ -19,8 +19,12 @@ Usage:
 import json
 import argparse
 from datetime import datetime, timedelta
-from mlb_game_scraper import MLBGameScraper
-from mlb_player_scraper import MLBPlayerScraper, TRACKED_PITCHERS, TRACKED_BATTERS
+try:
+    from .mlb_game_scraper import MLBGameScraper
+    from .mlb_player_scraper import MLBPlayerScraper, TRACKED_PITCHERS, TRACKED_BATTERS
+except ImportError:
+    from mlb_game_scraper import MLBGameScraper
+    from mlb_player_scraper import MLBPlayerScraper, TRACKED_PITCHERS, TRACKED_BATTERS
 
 
 class MLBSettleEngine:
