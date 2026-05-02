@@ -32,52 +32,62 @@ npm install
 npm run dev
 ```
 
-Then visit http://localhost:3000. The site reads
-`/data/mlb/mlb_daily.json` from the parent repo's `public/data/mlb/`. For
-local dev, copy or symlink that file into `web/public/data/mlb/`:
+Then visit http://localhost:3000. The `dev` script runs `copy-data.js`
+first, which mirrors the repo-root `public/data/` into `web/public/data/`
+so the site can serve the latest pipeline outputs at `/data/mlb/*`. Run
+`npm run copy-data` manually any time you want to refresh after a daily
+build commits new files.
 
-```bash
-mkdir -p public/data/mlb
-ln -s ../../../public/data/mlb/mlb_daily.json public/data/mlb/mlb_daily.json
+## Production deployment (Vercel)
+
+The data files live at the repo root in `public/data/`, generated daily
+by the GitHub Actions cron. Next.js only serves files inside its own
+project root, so the build script copies them into `web/public/data/` on
+every build. Vercel rebuilds on every commit to `main` (including the
+cron's daily data commit), so fresh data ships automatically.
+
+### One-time Vercel setup
+
+1. Go to the Vercel dashboard and either create a new project pointing
+   at `edgecash/edge-equation-scrapers` or update your existing project.
+2. **Settings → Build & Deployment**:
+   - **Framework Preset**: Next.js
+   - **Root Directory**: `web`
+   - **Build Command**: leave default (`npm run build` — already wired
+     to copy data first)
+   - **Output Directory**: leave default (`.next`)
+   - **Install Command**: leave default (`npm install`)
+3. **Settings → Git**: ensure the connected branch is `main`.
+4. Hit **Deploy**. The site will be live at `<project>.vercel.app`.
+5. (Optional) **Settings → Domains**: point your custom domain at the
+   project.
+
+### What happens on every push
+
+```
+git push                                    # any commit, including the
+                                            # daily cron's data update
+  → Vercel webhook fires
+  → Vercel runs `cd web && npm install`
+  → `npm run build` triggers:
+      → copy-data.js mirrors ../public/data → web/public/data
+      → next build compiles the app
+  → Deploy goes live
 ```
 
-## Production deployment
+No manual steps after the one-time setup. The 11 AM ET cron commits
+new data, Vercel rebuilds within 1-2 minutes, and the site reflects the
+fresh card.
 
-Two paths:
+## Alternative: copy components into an existing site repo
 
-### Path A — Deploy this repo's `web/` to Vercel (recommended)
+If you want to keep the website on a separate Vercel project:
 
-1. In the Vercel project settings, set **Root Directory** to `web`.
-2. **Build Command**: `npm run build` (default Next.js)
-3. The site automatically picks up data files from the repo's
-   `public/data/mlb/` because Next.js serves anything under `public/` at
-   the URL root. The daily GitHub Actions cron commits new data, Vercel
-   redeploys, the site updates.
-
-Note: Vercel will look for `public/` inside the root directory by default.
-You may need to either:
-- Mount `public/data/` at `web/public/data/` with a build step that copies, OR
-- Configure rewrites in `next.config.js` to serve from the parent
-
-The cleanest fix is to add a build script that copies `../public/data` into
-`web/public/data` before `next build`. Add to `web/package.json` if needed:
-
-```json
-"scripts": {
-  "build": "node scripts/copy-data.js && next build"
-}
-```
-
-### Path B — Copy components into your existing site
-
-If you'd rather keep the website on its current Vercel project:
-
-1. Copy `web/app/`, `web/components/`, `web/lib/types.ts`, and the
-   relevant chunks of `web/app/globals.css` into your existing Next.js
-   tree. Adjust paths to match your project's structure.
-2. Copy `web/tailwind.config.ts` color extensions into your existing
-   Tailwind config.
-3. Make sure `mlb_daily.json` is fetchable at `/data/mlb/mlb_daily.json`.
+1. Copy `web/app/`, `web/components/`, `web/lib/types.ts`, the contents
+   of `web/app/globals.css`, and the color extensions from
+   `web/tailwind.config.ts` into your existing Next.js tree.
+2. Make sure `mlb_daily.json` is fetchable at `/data/mlb/mlb_daily.json`
+   in your deployment (you'll need to sync data files between repos).
 
 ## Data dependencies
 
