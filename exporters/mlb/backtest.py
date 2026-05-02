@@ -17,6 +17,8 @@ Bet types tracked:
 
 from __future__ import annotations
 
+import math
+import statistics
 from collections import defaultdict
 from datetime import datetime
 from typing import Iterable
@@ -29,6 +31,29 @@ MIN_BACKFILL_GAMES = 10    # don't bet until model has some signal
 
 TOTAL_LINES = (8.5, 9.0, 9.5)
 TEAM_TOTAL_LINES = (3.5, 4.5)
+
+
+def _fit_logistic_slope(pairs: list[tuple[float, int]], iters: int = 2000) -> float:
+    """Maximum-likelihood fit of slope in y = 1/(1+exp(-slope*x)) on (x, y) pairs.
+
+    Pure-stdlib gradient descent; pairs is (margin_proj, won_int_0_or_1).
+    Falls back to the default slope if the data is too thin or degenerate.
+    """
+    if len(pairs) < 30:
+        return 0.45
+    slope = 0.45
+    lr = 0.005
+    for _ in range(iters):
+        grad = 0.0
+        for x, y in pairs:
+            xc = max(-30.0, min(30.0, slope * x))
+            p = 1.0 / (1.0 + math.exp(-xc))
+            grad += (p - y) * x
+        grad /= len(pairs)
+        slope -= lr * grad
+        if abs(grad) < 1e-6:
+            break
+    return max(0.05, min(2.0, slope))
 
 
 def _settle(stake: float, decimal_odds: float, won: bool, push: bool = False) -> float:
@@ -57,6 +82,14 @@ class BacktestEngine:
 
     def run(self) -> dict:
         bets: list[dict] = []
+        residuals = {
+            "total": [],          # (proj_total, actual_total)
+            "team_total": [],     # (proj_team_runs, actual_team_runs)
+            "margin": [],         # (proj_margin_home_minus_away, actual_margin)
+            "f5_total": [],
+            "f5_margin": [],
+            "ml_pairs": [],       # (proj_margin, won_home_0_or_1)
+        }
         for i, game in enumerate(self.games):
             history = self.games[:i]
             if len(history) < self.min_history:
@@ -68,6 +101,28 @@ class BacktestEngine:
                 continue
             bets.extend(self._grade_all(proj, game))
 
+            actual_total = game["total"]
+            actual_margin = game["home_score"] - game["away_score"]
+            proj_margin = proj["home_runs_proj"] - proj["away_runs_proj"]
+            residuals["total"].append((proj["total_proj"], actual_total))
+            residuals["margin"].append((proj_margin, actual_margin))
+            residuals["team_total"].append(
+                (proj["away_runs_proj"], game["away_score"])
+            )
+            residuals["team_total"].append(
+                (proj["home_runs_proj"], game["home_score"])
+            )
+            residuals["f5_total"].append(
+                (proj["f5_total_proj"], game["f5_away"] + game["f5_home"])
+            )
+            residuals["f5_margin"].append(
+                (proj["f5_home_proj"] - proj["f5_away_proj"],
+                 game["f5_home"] - game["f5_away"])
+            )
+            residuals["ml_pairs"].append(
+                (proj_margin, 1 if actual_margin > 0 else 0)
+            )
+
         return {
             "as_of": datetime.utcnow().isoformat() + "Z",
             "total_games_in_window": len(self.games),
@@ -76,7 +131,32 @@ class BacktestEngine:
             "summary_by_bet_type": self._summarize(bets),
             "overall": self._overall(bets),
             "daily_pl": self._daily_pl(bets),
+            "calibration": self._calibration(residuals),
             "bets": bets,
+        }
+
+    @staticmethod
+    def _calibration(residuals: dict) -> dict:
+        """Fit SDs from residuals and the ML logistic slope from outcomes."""
+        def sd(pairs: list[tuple[float, float]], default: float) -> float:
+            if len(pairs) < 30:
+                return default
+            errs = [a - p for p, a in pairs]
+            try:
+                value = statistics.pstdev(errs)
+            except statistics.StatisticsError:
+                return default
+            # Guard against pathological values
+            return max(0.5, min(default * 2.0, value)) if value > 0 else default
+
+        return {
+            "total_sd":      round(sd(residuals["total"], TOTAL_SD), 3),
+            "team_total_sd": round(sd(residuals["team_total"], TEAM_TOTAL_SD), 3),
+            "margin_sd":     round(sd(residuals["margin"], 3.5), 3),
+            "f5_total_sd":   round(sd(residuals["f5_total"], 2.2), 3),
+            "f5_margin_sd":  round(sd(residuals["f5_margin"], 2.2), 3),
+            "win_prob_slope": round(_fit_logistic_slope(residuals["ml_pairs"]), 4),
+            "n_residuals":   len(residuals["total"]),
         }
 
     # ---------------- per-bet graders ------------------------------------

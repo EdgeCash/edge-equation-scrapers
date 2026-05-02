@@ -21,6 +21,8 @@ import math
 from collections import defaultdict
 from datetime import datetime
 
+from exporters.mlb.park_factors import park_factor
+
 
 SEASON_WEIGHT = 0.45
 RECENT_WEIGHT = 0.30
@@ -32,10 +34,17 @@ LEAGUE_AVG_F1_RUNS_PER_TEAM = 0.55
 LEAGUE_AVG_F5_RUNS_PER_TEAM = 2.4
 LEAGUE_F1_SCORE_RATE = 0.27
 
+# Bayesian shrinkage: pseudo-count of league-average "ghost games" added
+# to every team's running totals. Larger k = more pull toward league mean,
+# better for early-season noise; smaller k = more responsive to real form.
+SHRINKAGE_K = 15
+
 WIN_PROB_SLOPE = 0.45
 
 # Standard deviations for deriving probabilities from point projections.
-# Calibrated to typical MLB game-to-game variance.
+# Calibrated to typical MLB game-to-game variance. These are the DEFAULT
+# values; ProjectionModel(calibration={...}) overrides them with values
+# computed from actual backtest residuals.
 TOTAL_SD = 3.0          # full-game total runs
 TEAM_TOTAL_SD = 2.2     # one team's runs
 MARGIN_SD = 3.5         # full-game run margin
@@ -44,6 +53,8 @@ F5_MARGIN_SD = 2.2      # first-5-innings margin
 
 
 def _logistic(x: float) -> float:
+    # clip to avoid overflow on huge projected margins
+    x = max(-30.0, min(30.0, x))
     return 1.0 / (1.0 + math.exp(-x))
 
 
@@ -60,11 +71,39 @@ def prob_over(line: float, mean: float, sd: float) -> float:
 
 
 class ProjectionModel:
-    """Aggregates per-team stats and projects matchup outcomes."""
+    """Aggregates per-team stats and projects matchup outcomes.
 
-    def __init__(self, games: list[dict]):
+    Args:
+        games: completed-game dicts from MLBGameScraper.
+        shrinkage_k: pseudo-count of league-average "ghost games" mixed
+            into each team's totals (Bayesian shrinkage to mean).
+        calibration: optional dict overriding hardcoded SDs and the ML
+            logistic slope with values fitted from backtest residuals.
+        apply_park_factors: when True, multiplies projected runs by the
+            home venue's park factor.
+    """
+
+    def __init__(
+        self,
+        games: list[dict],
+        shrinkage_k: int = SHRINKAGE_K,
+        calibration: dict | None = None,
+        apply_park_factors: bool = True,
+    ):
         self.games = sorted(games, key=lambda g: g.get("date", ""))
         self.team_games: dict[str, list[dict]] = defaultdict(list)
+        self.shrinkage_k = shrinkage_k
+        self.apply_park_factors = apply_park_factors
+
+        cal = calibration or {}
+        self.total_sd = cal.get("total_sd", TOTAL_SD)
+        self.team_total_sd = cal.get("team_total_sd", TEAM_TOTAL_SD)
+        self.margin_sd = cal.get("margin_sd", MARGIN_SD)
+        self.f5_total_sd = cal.get("f5_total_sd", F5_TOTAL_SD)
+        self.f5_margin_sd = cal.get("f5_margin_sd", F5_MARGIN_SD)
+        self.win_prob_slope = cal.get("win_prob_slope", WIN_PROB_SLOPE)
+        self.calibration = cal
+
         self._build()
 
     def _build(self) -> None:
@@ -100,10 +139,19 @@ class ProjectionModel:
             "won": rs > ra,
         }
 
-    def _aggregate(self, rows: list[dict]) -> dict:
-        """Compute per-game averages over a list of team-view rows."""
+    def _aggregate(self, rows: list[dict], shrunk: bool = True) -> dict:
+        """Per-game averages with optional Bayesian shrinkage to league mean.
+
+        Shrunk estimate: (sum + k * league_avg) / (n + k)
+        With k=15 and a team that's played 30 games at 5.5 RPG, the shrunk
+        rate is (165 + 15*4.5) / 45 = 5.17 — pulled meaningfully toward the
+        league average until the sample is large enough to dominate.
+        """
         n = len(rows)
-        if n == 0:
+        k = self.shrinkage_k if shrunk else 0
+        denom = n + k
+
+        if denom == 0:
             return {
                 "n": 0,
                 "rs_pg": LEAGUE_AVG_RUNS_PER_TEAM,
@@ -116,17 +164,27 @@ class ProjectionModel:
                 "f1_allow_rate": LEAGUE_F1_SCORE_RATE,
                 "win_pct": 0.5,
             }
+
         return {
             "n": n,
-            "rs_pg": sum(r["rs"] for r in rows) / n,
-            "ra_pg": sum(r["ra"] for r in rows) / n,
-            "f1_rs_pg": sum(r["f1_rs"] for r in rows) / n,
-            "f1_ra_pg": sum(r["f1_ra"] for r in rows) / n,
-            "f5_rs_pg": sum(r["f5_rs"] for r in rows) / n,
-            "f5_ra_pg": sum(r["f5_ra"] for r in rows) / n,
-            "f1_score_rate": sum(1 for r in rows if r["scored_in_f1"]) / n,
-            "f1_allow_rate": sum(1 for r in rows if r["allowed_in_f1"]) / n,
-            "win_pct": sum(1 for r in rows if r["won"]) / n,
+            "rs_pg":
+                (sum(r["rs"] for r in rows) + k * LEAGUE_AVG_RUNS_PER_TEAM) / denom,
+            "ra_pg":
+                (sum(r["ra"] for r in rows) + k * LEAGUE_AVG_RUNS_PER_TEAM) / denom,
+            "f1_rs_pg":
+                (sum(r["f1_rs"] for r in rows) + k * LEAGUE_AVG_F1_RUNS_PER_TEAM) / denom,
+            "f1_ra_pg":
+                (sum(r["f1_ra"] for r in rows) + k * LEAGUE_AVG_F1_RUNS_PER_TEAM) / denom,
+            "f5_rs_pg":
+                (sum(r["f5_rs"] for r in rows) + k * LEAGUE_AVG_F5_RUNS_PER_TEAM) / denom,
+            "f5_ra_pg":
+                (sum(r["f5_ra"] for r in rows) + k * LEAGUE_AVG_F5_RUNS_PER_TEAM) / denom,
+            "f1_score_rate":
+                (sum(1 for r in rows if r["scored_in_f1"]) + k * LEAGUE_F1_SCORE_RATE) / denom,
+            "f1_allow_rate":
+                (sum(1 for r in rows if r["allowed_in_f1"]) + k * LEAGUE_F1_SCORE_RATE) / denom,
+            "win_pct":
+                (sum(1 for r in rows if r["won"]) + k * 0.5) / denom,
         }
 
     def team_summary(self, team: str) -> dict:
@@ -163,6 +221,14 @@ class ProjectionModel:
             h["season"]["f5_rs_pg"], h["recent"]["f5_rs_pg"], a["season"]["f5_ra_pg"]
         )
 
+        # Park factor — both teams' offensive output is scaled equally
+        # by the home venue's run environment.
+        pf = park_factor(home) if self.apply_park_factors else 1.0
+        away_runs *= pf
+        home_runs *= pf
+        away_f5 *= pf
+        home_f5 *= pf
+
         away_f1 = self._blend(
             a["season"]["f1_rs_pg"], a["recent"]["f1_rs_pg"], h["season"]["f1_ra_pg"]
         )
@@ -185,21 +251,21 @@ class ProjectionModel:
         nrfi_prob = (1 - away_f1_score_p) * (1 - home_f1_score_p)
 
         margin = home_runs - away_runs
-        home_win_prob = _logistic(WIN_PROB_SLOPE * margin)
+        home_win_prob = _logistic(self.win_prob_slope * margin)
         away_win_prob = 1.0 - home_win_prob
 
         # Run-line: probability the projected favorite covers -1.5
         f5_margin = home_f5 - away_f5
         if margin >= 0:
-            rl_cover_prob = prob_over(1.5, margin, MARGIN_SD)
+            rl_cover_prob = prob_over(1.5, margin, self.margin_sd)
         else:
-            rl_cover_prob = prob_over(1.5, -margin, MARGIN_SD)
+            rl_cover_prob = prob_over(1.5, -margin, self.margin_sd)
 
         # First 5: win probability for the projected F5 favorite
         if f5_margin > 0:
-            f5_win_prob = 1 - _norm_cdf(-f5_margin / F5_MARGIN_SD)
+            f5_win_prob = 1 - _norm_cdf(-f5_margin / self.f5_margin_sd)
         elif f5_margin < 0:
-            f5_win_prob = 1 - _norm_cdf(f5_margin / F5_MARGIN_SD)
+            f5_win_prob = 1 - _norm_cdf(f5_margin / self.f5_margin_sd)
         else:
             f5_win_prob = 0.5
 
@@ -239,6 +305,12 @@ class ProjectionModel:
                 "recent_weight": RECENT_WEIGHT,
                 "opponent_weight": OPPONENT_WEIGHT,
                 "recent_window": RECENT_WINDOW,
+                "shrinkage_k": self.shrinkage_k,
+                "park_factor": pf,
+                "total_sd": self.total_sd,
+                "margin_sd": self.margin_sd,
+                "win_prob_slope": self.win_prob_slope,
+                "calibrated": bool(self.calibration),
                 "away_games_used": a["season"]["n"],
                 "home_games_used": h["season"]["n"],
             },

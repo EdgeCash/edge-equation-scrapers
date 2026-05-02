@@ -45,7 +45,7 @@ from exporters.mlb.projections import (
     TEAM_TOTAL_SD,
     F5_TOTAL_SD,
 )
-from exporters.mlb.kelly import kelly_advice, DEFAULT_DECIMAL_ODDS
+from exporters.mlb.kelly import kelly_advice, edge_pct, DEFAULT_DECIMAL_ODDS
 from exporters.mlb.backtest import BacktestEngine
 
 
@@ -54,6 +54,12 @@ SEASON_OPENING_DAY = "{season}-03-20"
 DEFAULT_OUTPUT_DIR = REPO_ROOT / "public" / "data" / "mlb"
 TOTAL_LINES = (8.5, 9.0, 9.5)
 TEAM_TOTAL_LINES = (3.5, 4.5)
+
+# Today's Card filtering — the user's strategy is to play only the
+# highest-edge plays, so default to a 3% edge threshold and cap at the
+# top 10 picks per day. Tunable via CLI.
+DEFAULT_MIN_EDGE_PCT = 3.0
+DEFAULT_TOP_N = 10
 
 
 def _today_et() -> str:
@@ -87,7 +93,12 @@ def _market_total_kelly(
     sd: float,
     market_totals: list[dict],
 ) -> dict | None:
-    """Best Kelly across whichever totals lines the book is actually offering."""
+    """Best Kelly across whichever totals lines the book is actually offering.
+
+    Optimizes for half-Kelly fraction (which is edge-proportional for any
+    fixed price). Returns the (line, side) combo with the highest edge
+    plus the corresponding edge_pct in the result.
+    """
     best = None
     for offer in market_totals:
         line = offer.get("point")
@@ -109,6 +120,7 @@ def _market_total_kelly(
                 "market_decimal": price["decimal"],
                 "market_american": price["american"],
                 "book": price["book"],
+                "edge_pct": edge_pct(prob, price["decimal"]),
             }
             if best is None or cand["kelly_pct"] > best["kelly_pct"]:
                 best = cand
@@ -179,6 +191,8 @@ class DailySpreadsheet:
         output_dir: Path | None = None,
         odds_api_key: str | None = None,
         skip_odds: bool = False,
+        min_edge_pct: float = DEFAULT_MIN_EDGE_PCT,
+        top_n: int = DEFAULT_TOP_N,
     ):
         self.season = season
         self.target_date = target_date or _today_et()
@@ -186,6 +200,8 @@ class DailySpreadsheet:
         self.scraper = MLBGameScraper()
         self.odds_scraper = MLBOddsScraper(api_key=odds_api_key)
         self.skip_odds = skip_odds
+        self.min_edge_pct = min_edge_pct
+        self.top_n = top_n
 
     # --------- data assembly ------------------------------------------------
 
@@ -204,10 +220,6 @@ class DailySpreadsheet:
         slate = fetch_slate(self.target_date)
         print(f"    {len(slate)} scheduled games")
 
-        print("  Building projection model...")
-        model = ProjectionModel(backfill)
-        projections = model.project_slate(slate)
-
         if self.skip_odds:
             odds = {"fetched_at": None, "source": "skipped", "games": []}
         else:
@@ -215,21 +227,32 @@ class DailySpreadsheet:
             odds = self.odds_scraper.fetch()
             print(f"    {odds['source']} -> {len(odds['games'])} priced games")
 
-        print("  Running backtest...")
+        print("  Running backtest (default constants)...")
         backtest = BacktestEngine(backfill).run()
+        cal = backtest["calibration"]
         print(f"    {backtest['overall']['bets']} graded bets, "
               f"hit rate {backtest['overall']['hit_rate']}%, "
               f"units {backtest['overall']['units_pl']:+.2f}")
+        print(f"    calibrated SDs: total {cal['total_sd']}, margin {cal['margin_sd']}, "
+              f"team_total {cal['team_total_sd']}, ML slope {cal['win_prob_slope']}")
+
+        print("  Building projection model with calibrated constants...")
+        model = ProjectionModel(backfill, calibration=cal)
+        projections = model.project_slate(slate)
 
         tabs = {
             "moneyline": self._build_moneyline(backfill, projections, odds),
             "run_line": self._build_run_line(backfill, projections, odds),
-            "totals": self._build_totals(backfill, projections, odds),
+            "totals": self._build_totals(backfill, projections, odds, model.total_sd),
             "first_5": self._build_first_5(backfill, projections, odds),
             "first_inning": self._build_first_inning(backfill, projections, odds),
-            "team_totals": self._build_team_totals(backfill, projections, odds),
+            "team_totals": self._build_team_totals(
+                backfill, projections, odds, model.team_total_sd
+            ),
         }
-        tabs["todays_card"] = self._build_todays_card(tabs)
+        tabs["todays_card"] = self._build_todays_card(
+            tabs, min_edge_pct=self.min_edge_pct, top_n=self.top_n
+        )
         tabs["backtest"] = self._build_backtest(backtest)
 
         return {
@@ -289,6 +312,7 @@ class DailySpreadsheet:
                 "market_odds_dec": market_dec,
                 "market_odds_american": market_am,
                 "book": book,
+                "edge_pct": edge_pct(pick_prob, market_dec),
                 "kelly_pct": adv["kelly_pct"],
                 "kelly_advice": adv["kelly_advice"],
             })
@@ -310,7 +334,7 @@ class DailySpreadsheet:
                 "away_win_prob", "home_win_prob", "ml_pick",
                 "model_prob", "fair_odds_dec",
                 "market_odds_dec", "market_odds_american", "book",
-                "kelly_pct", "kelly_advice",
+                "edge_pct", "kelly_pct", "kelly_advice",
             ],
             "backfill_columns": [
                 "date", "away", "home", "away_score", "home_score", "ml_winner",
@@ -356,6 +380,7 @@ class DailySpreadsheet:
                 "market_odds_dec": market_dec,
                 "market_odds_american": market_am,
                 "book": book,
+                "edge_pct": edge_pct(p["rl_cover_prob"], market_dec),
                 "kelly_pct": adv["kelly_pct"],
                 "kelly_advice": adv["kelly_advice"],
             })
@@ -380,7 +405,7 @@ class DailySpreadsheet:
                 "rl_cover_prob", "rl_fav_covers_1_5",
                 "model_prob", "fair_odds_dec",
                 "market_odds_dec", "market_odds_american", "book",
-                "kelly_pct", "kelly_advice",
+                "edge_pct", "kelly_pct", "kelly_advice",
             ],
             "backfill_columns": [
                 "date", "away", "home", "away_score", "home_score",
@@ -392,7 +417,10 @@ class DailySpreadsheet:
 
     @staticmethod
     def _build_totals(
-        backfill: list[dict], projections: list[dict], odds: dict
+        backfill: list[dict],
+        projections: list[dict],
+        odds: dict,
+        total_sd: float = TOTAL_SD,
     ) -> dict:
         proj_rows = []
         for p in projections:
@@ -409,9 +437,9 @@ class DailySpreadsheet:
 
             game_odds = MLBOddsScraper.find_game(odds, p["away_team"], p["home_team"])
             market_totals = (game_odds or {}).get("totals") or []
-            best = _market_total_kelly(p["total_proj"], TOTAL_SD, market_totals)
+            best = _market_total_kelly(p["total_proj"], total_sd, market_totals)
             if best is None:
-                best = _best_total_kelly(p["total_proj"], TOTAL_LINES, TOTAL_SD)
+                best = _best_total_kelly(p["total_proj"], TOTAL_LINES, total_sd)
                 row.update({
                     "kelly_line": f"{best['side']} {best['line']}",
                     "model_prob": best["model_prob"],
@@ -419,6 +447,7 @@ class DailySpreadsheet:
                     "market_odds_dec": None,
                     "market_odds_american": None,
                     "book": None,
+                    "edge_pct": None,
                     "kelly_pct": best["kelly_pct"],
                     "kelly_advice": best["kelly_advice"],
                 })
@@ -430,6 +459,7 @@ class DailySpreadsheet:
                     "market_odds_dec": best["market_decimal"],
                     "market_odds_american": best["market_american"],
                     "book": best["book"],
+                    "edge_pct": best["edge_pct"],
                     "kelly_pct": best["kelly_pct"],
                     "kelly_advice": best["kelly_advice"],
                 })
@@ -454,7 +484,7 @@ class DailySpreadsheet:
             ] + [f"pick_{l}" for l in TOTAL_LINES] + [
                 "kelly_line", "model_prob", "fair_odds_dec",
                 "market_odds_dec", "market_odds_american", "book",
-                "kelly_pct", "kelly_advice",
+                "edge_pct", "kelly_pct", "kelly_advice",
             ],
             "backfill_columns": [
                 "date", "away", "home", "total_runs",
@@ -561,7 +591,10 @@ class DailySpreadsheet:
 
     @staticmethod
     def _build_team_totals(
-        backfill: list[dict], projections: list[dict], odds: dict
+        backfill: list[dict],
+        projections: list[dict],
+        odds: dict,
+        team_total_sd: float = TEAM_TOTAL_SD,
     ) -> dict:
         proj_rows = []
         for p in projections:
@@ -578,7 +611,7 @@ class DailySpreadsheet:
                 }
                 for line in TEAM_TOTAL_LINES:
                     row[f"pick_{line}"] = "OVER" if runs > line else "UNDER"
-                best = _best_total_kelly(runs, TEAM_TOTAL_LINES, TEAM_TOTAL_SD)
+                best = _best_total_kelly(runs, TEAM_TOTAL_LINES, team_total_sd)
                 row.update({
                     "kelly_line": f"{best['side']} {best['line']}",
                     "model_prob": best["model_prob"],
@@ -620,8 +653,20 @@ class DailySpreadsheet:
         }
 
     @staticmethod
-    def _build_todays_card(tabs: dict) -> dict:
-        """Cross-tab summary: every projection row ranked by Kelly edge."""
+    def _build_todays_card(
+        tabs: dict,
+        min_edge_pct: float = DEFAULT_MIN_EDGE_PCT,
+        top_n: int = DEFAULT_TOP_N,
+    ) -> dict:
+        """Cross-tab roll-up of the highest-edge plays.
+
+        Inclusion rules (the "play only the sharpest spots" filter):
+          1. The pick must have a real market price (no synthetic -110).
+          2. edge_pct (model_prob − implied_market_prob) must be ≥ min_edge_pct.
+          3. Sort by edge desc, then take the top N.
+
+        Anything that fails 1 or 2 lands in the PASS list for transparency.
+        """
         sources = (
             ("moneyline",   "ml_pick"),
             ("run_line",    "rl_fav"),
@@ -633,10 +678,8 @@ class DailySpreadsheet:
         rows = []
         for tab_key, pick_key in sources:
             for r in tabs[tab_key]["projections"]:
-                kelly = r.get("kelly_pct")
-                if kelly is None:
+                if r.get("kelly_pct") is None:
                     continue
-                # team_totals rows have team/opponent; others have away/home
                 if "team" in r and "opponent" in r:
                     matchup = f"{r['team']} vs {r['opponent']}"
                 else:
@@ -651,30 +694,41 @@ class DailySpreadsheet:
                     "market_odds_dec": r.get("market_odds_dec"),
                     "market_odds_american": r.get("market_odds_american"),
                     "book": r.get("book"),
-                    "kelly_pct": kelly,
+                    "edge_pct": r.get("edge_pct"),
+                    "kelly_pct": r.get("kelly_pct"),
                     "kelly_advice": r.get("kelly_advice"),
                 })
-        rows.sort(key=lambda r: r.get("kelly_pct") or 0, reverse=True)
-        actionable = [r for r in rows if r.get("kelly_advice") and r["kelly_advice"] != "PASS"]
-        passed = [r for r in rows if r.get("kelly_advice") == "PASS"]
+
+        priced = [r for r in rows if r.get("edge_pct") is not None]
+        priced.sort(key=lambda r: r["edge_pct"], reverse=True)
+
+        plays = [r for r in priced if r["edge_pct"] >= min_edge_pct]
+        if top_n and len(plays) > top_n:
+            plays = plays[:top_n]
+        leans = [r for r in priced if 0 < r["edge_pct"] < min_edge_pct]
+        no_market = [r for r in rows if r.get("edge_pct") is None]
+        negative_edge = [r for r in priced if r["edge_pct"] <= 0]
 
         return {
             "title": "Today's Card",
             "projection_section_title":
-                f"TODAY'S CARD — top picks by Kelly edge ({len(actionable)} plays)",
+                f"PLAYS — edge ≥ {min_edge_pct:.1f}% (top {top_n}) — "
+                f"{len(plays)} of {len(priced)} priced picks",
             "backfill_section_title":
-                f"PASS list — model has no edge or negative EV ({len(passed)} skipped)",
+                f"FADE / SKIP — leans below threshold ({len(leans)}) · "
+                f"negative-EV ({len(negative_edge)}) · "
+                f"no-market ({len(no_market)})",
             "projection_columns": [
                 "date", "matchup", "bet_type", "pick", "model_prob",
                 "fair_odds_dec", "market_odds_dec", "market_odds_american",
-                "book", "kelly_pct", "kelly_advice",
+                "book", "edge_pct", "kelly_pct", "kelly_advice",
             ],
             "backfill_columns": [
                 "date", "matchup", "bet_type", "pick", "model_prob",
-                "market_odds_dec", "kelly_pct",
+                "market_odds_dec", "edge_pct", "kelly_pct",
             ],
-            "projections": actionable,
-            "backfill": passed,
+            "projections": plays,
+            "backfill": leans + negative_edge + no_market,
         }
 
     @staticmethod
@@ -733,6 +787,12 @@ class DailySpreadsheet:
                 json.dumps(backtest_payload, indent=2, default=str)
             )
             written.append(backtest_path)
+
+            cal = backtest_payload.get("calibration")
+            if cal:
+                cal_path = self.output_dir / "calibration.json"
+                cal_path.write_text(json.dumps(cal, indent=2, default=str))
+                written.append(cal_path)
 
         for key in self.BET_TABS:
             tab = data["tabs"][key]
@@ -902,6 +962,16 @@ def main(argv: list[str] | None = None) -> int:
         "--no-odds", action="store_true", default=False,
         help="Skip the odds fetch entirely; use -110 default for all Kelly sizing",
     )
+    parser.add_argument(
+        "--min-edge", type=float, default=DEFAULT_MIN_EDGE_PCT,
+        help=f"Minimum edge_pct (model − implied market) to include in "
+             f"Today's Card (default {DEFAULT_MIN_EDGE_PCT})",
+    )
+    parser.add_argument(
+        "--top-n", type=int, default=DEFAULT_TOP_N,
+        help=f"Cap Today's Card at this many plays (default {DEFAULT_TOP_N}; "
+             f"set 0 to disable)",
+    )
     args = parser.parse_args(argv)
 
     spreadsheet = DailySpreadsheet(
@@ -910,6 +980,8 @@ def main(argv: list[str] | None = None) -> int:
         output_dir=Path(args.output_dir),
         odds_api_key=args.odds_api_key,
         skip_odds=args.no_odds,
+        min_edge_pct=args.min_edge,
+        top_n=args.top_n,
     )
 
     print(f"MLB Daily Spreadsheet — target {spreadsheet.target_date}")

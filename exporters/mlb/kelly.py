@@ -83,3 +83,20 @@ def kelly_advice(
         "kelly_pct": round(sized * 100, 2),
         "kelly_advice": _tier(sized),
     }
+
+
+def edge_pct(prob: float, decimal_odds: float | None) -> float | None:
+    """
+    Vig-inclusive edge in percentage points: model probability minus the
+    market-implied probability (1 / decimal_odds).
+
+    Positive edge = model thinks the pick wins more often than the price
+    pays. To turn a profit at scale you want this to be at least a few
+    percentage points (typically 3%+) since closing-line variance and
+    model-error variance eat thinner edges.
+
+    Returns None if no market price was available.
+    """
+    if decimal_odds is None or decimal_odds <= 1.0 or not (0 < prob < 1):
+        return None
+    return round((prob - 1.0 / decimal_odds) * 100, 2)

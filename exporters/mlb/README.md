@@ -48,7 +48,10 @@ python -m exporters.mlb.daily_spreadsheet --push --branch main
 ## How Projections Are Built
 
 The `ProjectionModel` aggregates every completed game in the season and
-projects today's slate using a weighted blend:
+projects today's slate using a weighted blend, with several sharpening
+layers applied on top.
+
+### Weighted blend
 
 | Component | Weight | What it captures |
 |-----------|--------|------------------|
@@ -64,8 +67,38 @@ proj_A_runs = 0.45 * A_season_RS_pg
             + 0.25 * B_season_RA_pg
 ```
 
-Win probability is derived from projected margin via a logistic function
-calibrated to MLB's typical run-differential to win-rate slope. Per-bet
+### Bayesian shrinkage
+
+Per-team aggregates use a `(sum + k * league_avg) / (n + k)` shrinkage
+estimator with `k = 15` (15 ghost games of league-average baseline). This
+keeps early-season noise from producing 7-RPG projections for a team that
+got hot for a week, while letting truly elite/poor teams pull away once
+the sample is large enough.
+
+### Park factors
+
+Both teams' projected runs are scaled by the home venue's park factor
+(`exporters/mlb/park_factors.py`). Coors Field is 1.18, Petco is 0.92,
+most parks within ±5% of neutral. This is a fixed table — re-pull from
+Baseball-Reference / FanGraphs once per off-season for fresh values.
+
+### Self-calibration
+
+Every daily run executes a season-long backtest that records residuals
+(actual − projected) for total runs, team runs, run margin, and F5
+splits, plus the (margin, won) pairs needed to fit the moneyline
+logistic slope. Standard deviations and the slope are then re-fitted
+from those residuals and used to project today's slate. Output is
+persisted to `public/data/mlb/calibration.json`.
+
+If residual data is too thin (early season, fewer than ~30 games of
+backtest), the model gracefully falls back to the hardcoded defaults.
+
+### Win probability
+
+ML pricing uses `1 / (1 + exp(-slope * margin))` with `slope` fitted
+from actual season data. Run-line cover, F5 win, totals, and team-total
+probabilities use a normal CDF on the projection with the calibrated SDs. Per-bet
 outputs:
 
 - **Moneyline:** `away_win_prob`, `home_win_prob`, `ml_pick`
@@ -172,12 +205,39 @@ Use it as a sanity check: bet types with a long-run negative units P&L
 are the model's blind spots and may warrant tighter Kelly sizing — or
 sitting them out entirely.
 
-## Today's Card
+## Today's Card — disciplined edge filter
 
-The first tab is a cross-tab roll-up of every actionable pick from the
-six bet tabs, ranked by half-Kelly fraction descending. PASS picks (no
-edge / negative EV) drop into a separate section so you can see what the
-model considered and rejected.
+The first tab is the headline you'll look at every morning. It rolls up
+**only the picks where the model's probability beats the market's implied
+probability by a meaningful margin** (default 3%), capped at the top 10
+plays of the day, sorted by edge descending.
+
+The strategy is simple: pass on every spot the book has already priced
+correctly, lever Kelly only on the genuine mispricings. Over a full
+season, a model that runs ~54% on a curated 1-3 plays/day card at +3%
+edge produces materially better ROI than a 51-52% model spraying every
+game.
+
+Tunable via CLI:
+
+```bash
+# default 3% edge, top 10 — strict
+python -m exporters.mlb.daily_spreadsheet
+
+# loosen to 1.5% edge (more plays, smaller per-play edge)
+python -m exporters.mlb.daily_spreadsheet --min-edge 1.5
+
+# only show the 5 sharpest plays
+python -m exporters.mlb.daily_spreadsheet --top-n 5
+
+# disable the cap entirely (every priced play with edge ≥ threshold)
+python -m exporters.mlb.daily_spreadsheet --top-n 0
+```
+
+The PASS / FADE list below the plays section keeps everything else
+visible: small-edge leans, negative-EV picks (where the model says you'd
+need to PASS even if you like the pick), and bets with no available
+market data. Useful for sanity-checking what the model is rejecting.
 
 ## Frontend Integration (Vercel)
 
