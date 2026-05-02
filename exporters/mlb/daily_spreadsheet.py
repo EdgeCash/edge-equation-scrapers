@@ -46,6 +46,7 @@ from exporters.mlb.projections import (
     F5_TOTAL_SD,
 )
 from exporters.mlb.kelly import kelly_advice, DEFAULT_DECIMAL_ODDS
+from exporters.mlb.backtest import BacktestEngine
 
 
 SEASON_DEFAULT = 2026
@@ -161,12 +162,14 @@ class DailySpreadsheet:
     """Builds and writes the daily MLB game-results spreadsheet."""
 
     BET_TABS = (
+        "todays_card",
         "moneyline",
         "run_line",
         "totals",
         "first_5",
         "first_inning",
         "team_totals",
+        "backtest",
     )
 
     def __init__(
@@ -212,6 +215,23 @@ class DailySpreadsheet:
             odds = self.odds_scraper.fetch()
             print(f"    {odds['source']} -> {len(odds['games'])} priced games")
 
+        print("  Running backtest...")
+        backtest = BacktestEngine(backfill).run()
+        print(f"    {backtest['overall']['bets']} graded bets, "
+              f"hit rate {backtest['overall']['hit_rate']}%, "
+              f"units {backtest['overall']['units_pl']:+.2f}")
+
+        tabs = {
+            "moneyline": self._build_moneyline(backfill, projections, odds),
+            "run_line": self._build_run_line(backfill, projections, odds),
+            "totals": self._build_totals(backfill, projections, odds),
+            "first_5": self._build_first_5(backfill, projections, odds),
+            "first_inning": self._build_first_inning(backfill, projections, odds),
+            "team_totals": self._build_team_totals(backfill, projections, odds),
+        }
+        tabs["todays_card"] = self._build_todays_card(tabs)
+        tabs["backtest"] = self._build_backtest(backtest)
+
         return {
             "generated_at": datetime.utcnow().isoformat() + "Z",
             "season": self.season,
@@ -223,15 +243,9 @@ class DailySpreadsheet:
                 "slate_games": len(slate),
                 "priced_games": len(odds["games"]),
             },
-            "tabs": {
-                "moneyline": self._build_moneyline(backfill, projections, odds),
-                "run_line": self._build_run_line(backfill, projections, odds),
-                "totals": self._build_totals(backfill, projections, odds),
-                "first_5": self._build_first_5(backfill, projections, odds),
-                "first_inning": self._build_first_inning(backfill, projections, odds),
-                "team_totals": self._build_team_totals(backfill, projections, odds),
-            },
+            "tabs": tabs,
             "odds": odds,
+            "backtest": backtest,
         }
 
     # --------- per-tab builders --------------------------------------------
@@ -605,6 +619,96 @@ class DailySpreadsheet:
             "backfill": backfill_rows,
         }
 
+    @staticmethod
+    def _build_todays_card(tabs: dict) -> dict:
+        """Cross-tab summary: every projection row ranked by Kelly edge."""
+        sources = (
+            ("moneyline",   "ml_pick"),
+            ("run_line",    "rl_fav"),
+            ("totals",      "kelly_line"),
+            ("first_5",     "f5_pick"),
+            ("first_inning","nrfi_pick"),
+            ("team_totals", "kelly_line"),
+        )
+        rows = []
+        for tab_key, pick_key in sources:
+            for r in tabs[tab_key]["projections"]:
+                kelly = r.get("kelly_pct")
+                if kelly is None:
+                    continue
+                # team_totals rows have team/opponent; others have away/home
+                if "team" in r and "opponent" in r:
+                    matchup = f"{r['team']} vs {r['opponent']}"
+                else:
+                    matchup = f"{r.get('away')}@{r.get('home')}"
+                rows.append({
+                    "date": r.get("date"),
+                    "matchup": matchup,
+                    "bet_type": tab_key,
+                    "pick": r.get(pick_key),
+                    "model_prob": r.get("model_prob"),
+                    "fair_odds_dec": r.get("fair_odds_dec"),
+                    "market_odds_dec": r.get("market_odds_dec"),
+                    "market_odds_american": r.get("market_odds_american"),
+                    "book": r.get("book"),
+                    "kelly_pct": kelly,
+                    "kelly_advice": r.get("kelly_advice"),
+                })
+        rows.sort(key=lambda r: r.get("kelly_pct") or 0, reverse=True)
+        actionable = [r for r in rows if r.get("kelly_advice") and r["kelly_advice"] != "PASS"]
+        passed = [r for r in rows if r.get("kelly_advice") == "PASS"]
+
+        return {
+            "title": "Today's Card",
+            "projection_section_title":
+                f"TODAY'S CARD — top picks by Kelly edge ({len(actionable)} plays)",
+            "backfill_section_title":
+                f"PASS list — model has no edge or negative EV ({len(passed)} skipped)",
+            "projection_columns": [
+                "date", "matchup", "bet_type", "pick", "model_prob",
+                "fair_odds_dec", "market_odds_dec", "market_odds_american",
+                "book", "kelly_pct", "kelly_advice",
+            ],
+            "backfill_columns": [
+                "date", "matchup", "bet_type", "pick", "model_prob",
+                "market_odds_dec", "kelly_pct",
+            ],
+            "projections": actionable,
+            "backfill": passed,
+        }
+
+    @staticmethod
+    def _build_backtest(backtest: dict) -> dict:
+        overall = backtest["overall"]
+        summary_rows = [{
+            "scope": "OVERALL",
+            "bet_type": "all",
+            "bets": overall["bets"],
+            "wins": overall["wins"],
+            "losses": overall["losses"],
+            "pushes": overall["pushes"],
+            "hit_rate": overall["hit_rate"],
+            "units_pl": overall["units_pl"],
+            "roi_pct": overall["roi_pct"],
+        }]
+        for row in backtest["summary_by_bet_type"]:
+            summary_rows.append({"scope": "BY TYPE", **row})
+
+        return {
+            "title": "Backtest",
+            "projection_section_title":
+                f"BACKTEST SUMMARY — "
+                f"{backtest['first_date']} → {backtest['last_date']}",
+            "backfill_section_title": "DAILY P&L (cumulative units, flat 1u @ -110)",
+            "projection_columns": [
+                "scope", "bet_type", "bets", "wins", "losses", "pushes",
+                "hit_rate", "units_pl", "roi_pct",
+            ],
+            "backfill_columns": ["date", "daily_units", "cumulative_units"],
+            "projections": summary_rows,
+            "backfill": list(reversed(backtest["daily_pl"])),
+        }
+
     # --------- writers -----------------------------------------------------
 
     def write_all(self, data: dict) -> list[Path]:
@@ -621,6 +725,14 @@ class DailySpreadsheet:
             odds_path = self.output_dir / "lines.json"
             odds_path.write_text(json.dumps(odds_payload, indent=2, default=str))
             written.append(odds_path)
+
+        backtest_payload = data.get("backtest")
+        if backtest_payload is not None:
+            backtest_path = self.output_dir / "backtest.json"
+            backtest_path.write_text(
+                json.dumps(backtest_payload, indent=2, default=str)
+            )
+            written.append(backtest_path)
 
         for key in self.BET_TABS:
             tab = data["tabs"][key]
@@ -669,7 +781,16 @@ class DailySpreadsheet:
             tab = data["tabs"][key]
             ws = wb.create_sheet(title=tab["title"])
 
-            ws.cell(row=1, column=1, value=f"PROJECTIONS — {data['today']}")
+            proj_title = tab.get(
+                "projection_section_title", f"PROJECTIONS — {data['today']}"
+            )
+            backfill_title = tab.get(
+                "backfill_section_title",
+                f"BACKFILL — {data['season']} season-to-date "
+                f"({data['counts']['backfill_games']} games)",
+            )
+
+            ws.cell(row=1, column=1, value=proj_title)
             ws.cell(row=1, column=1).font = title_font
             ws.cell(row=1, column=1).fill = title_fill
             ws.merge_cells(
@@ -686,11 +807,7 @@ class DailySpreadsheet:
                     ws.cell(row=r, column=c, value=row.get(col))
 
             backfill_start = 3 + len(tab["projections"]) + 1
-            ws.cell(
-                row=backfill_start, column=1,
-                value=f"BACKFILL — {data['season']} season-to-date "
-                      f"({data['counts']['backfill_games']} games)",
-            )
+            ws.cell(row=backfill_start, column=1, value=backfill_title)
             ws.cell(row=backfill_start, column=1).font = title_font
             ws.cell(row=backfill_start, column=1).fill = backfill_title_fill
             ws.merge_cells(

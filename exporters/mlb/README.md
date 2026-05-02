@@ -11,15 +11,18 @@ Written to `public/data/mlb/`:
 
 | File | Purpose |
 |------|---------|
-| `mlb_daily.xlsx` | Multi-tab workbook (one tab per bet type). |
-| `mlb_daily.json` | Structured payload for the frontend (all six tabs in one file). |
+| `mlb_daily.xlsx` | Multi-tab workbook — Today's Card · 6 bet tabs · Backtest. |
+| `mlb_daily.json` | Structured payload for the frontend (all tabs + odds + backtest). |
 | `lines.json` | Raw market odds snapshot (all sportsbooks, normalized). |
-| `moneyline.csv` | Flat CSV for the Moneyline tab. `section` column = `projection` or `backfill`. |
+| `backtest.json` | Standalone backtest payload (overall + per-bet-type + daily P&L + bet log). |
+| `todays_card.csv` | Headline shortlist of today's actionable picks ranked by Kelly. |
+| `moneyline.csv` | Moneyline tab. `section` column = `projection` or `backfill`. |
 | `run_line.csv` | Run Line tab. |
 | `totals.csv` | Totals tab (lines 8.5 / 9.0 / 9.5). |
 | `first_5.csv` | First 5 Innings tab. |
 | `first_inning.csv` | First Inning (NRFI/YRFI) tab. |
 | `team_totals.csv` | Team Totals tab (lines 3.5 / 4.5). Two rows per game (away + home). |
+| `backtest.csv` | Backtest tab — overall + per-bet-type summary, plus daily P&L. |
 
 ## Quick Start
 
@@ -123,10 +126,26 @@ For each market, the BEST available price (highest decimal odds) across
 books is what feeds Kelly sizing — i.e. line shopping. The full multi-book
 snapshot is persisted to `public/data/mlb/lines.json` for transparency.
 
-## Daily Cron
+## Daily Automation
 
-A simple cron line (e.g. on a small server or a Vercel scheduled task) that
-refreshes the spreadsheet every morning:
+The repo ships with a GitHub Actions workflow at
+`.github/workflows/mlb-daily.yml` that runs the build every morning at
+13:30 UTC (≈ 8:30 AM ET — late enough that yesterday's slate is final on
+statsapi.mlb.com, early enough to publish today's projections before first
+pitch). It commits the new files to `main`, which triggers an automatic
+Vercel redeploy.
+
+To enable it:
+
+1. Push this repo to GitHub.
+2. In the repo settings → Secrets and variables → Actions, add a secret
+   named `ODDS_API_KEY` with your free key from the-odds-api.com (skip
+   this and the workflow will fall back to the DraftKings scraper).
+3. The workflow runs automatically on the cron schedule. You can also
+   trigger it manually from the Actions tab (workflow_dispatch) and
+   optionally pass a target date.
+
+For self-hosted cron:
 
 ```
 30 13 * * *  cd /path/to/edge-equation-scrapers && \
@@ -135,8 +154,30 @@ refreshes the spreadsheet every morning:
              >> /var/log/mlb_daily.log 2>&1
 ```
 
-13:30 UTC ~ 8:30 AM ET: late enough that yesterday's slate is final, early
-enough to project today's lines.
+## Backtest
+
+Every daily run includes a model backtest in the `Backtest` tab and in
+`backtest.json`. The engine walks the season game-by-game and projects
+each game using ONLY data available before it (no look-ahead), grading
+the model's pick against the actual outcome. Bets are flat 1u at -110.
+
+Headline numbers exposed:
+
+- Per-bet-type hit rate, units P&L, ROI %
+- Overall record across all bet types
+- Daily cumulative P&L curve
+- Full bet log (date, matchup, bet_type, pick, prob, result, units)
+
+Use it as a sanity check: bet types with a long-run negative units P&L
+are the model's blind spots and may warrant tighter Kelly sizing — or
+sitting them out entirely.
+
+## Today's Card
+
+The first tab is a cross-tab roll-up of every actionable pick from the
+six bet tabs, ranked by half-Kelly fraction descending. PASS picks (no
+edge / negative EV) drop into a separate section so you can see what the
+model considered and rejected.
 
 ## Frontend Integration (Vercel)
 
