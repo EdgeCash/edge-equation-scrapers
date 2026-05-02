@@ -20,6 +20,25 @@ HALF_KELLY = 0.5
 MAX_KELLY_FRACTION = 0.05      # 5% bankroll cap
 
 
+def american_to_decimal(american: int | float) -> float:
+    """Convert American odds (e.g. -110, +145) to decimal form."""
+    am = float(american)
+    if am > 0:
+        return round(1 + am / 100, 4)
+    if am < 0:
+        return round(1 + 100 / -am, 4)
+    return 1.0
+
+
+def decimal_to_american(decimal: float) -> int:
+    """Convert decimal odds back to American (rounded)."""
+    if decimal is None or decimal <= 1.0:
+        return 0
+    if decimal >= 2.0:
+        return round((decimal - 1) * 100)
+    return round(-100 / (decimal - 1))
+
+
 def kelly_fraction(prob: float, decimal_odds: float = DEFAULT_DECIMAL_ODDS) -> float:
     """Full Kelly fraction. Negative edge clamps to 0 (no bet)."""
     b = decimal_odds - 1

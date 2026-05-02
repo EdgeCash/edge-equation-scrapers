@@ -37,6 +37,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from scrapers.mlb.mlb_game_scraper import MLBGameScraper, TEAM_MAP
+from scrapers.mlb.mlb_odds_scraper import MLBOddsScraper
 from exporters.mlb.projections import (
     ProjectionModel,
     prob_over,
@@ -69,7 +70,7 @@ def _ou_label(actual: float, line: float) -> str:
 
 
 def _best_total_kelly(mean: float, lines: tuple[float, ...], sd: float) -> dict:
-    """Pick the (line, side) with the highest half-Kelly fraction."""
+    """Pick the (line, side) with the highest half-Kelly fraction at the default price."""
     best = None
     for line in lines:
         p_over = prob_over(line, mean, sd)
@@ -78,6 +79,51 @@ def _best_total_kelly(mean: float, lines: tuple[float, ...], sd: float) -> dict:
             if best is None or adv["kelly_pct"] > best["kelly_pct"]:
                 best = {**adv, "line": line, "side": side}
     return best
+
+
+def _market_total_kelly(
+    mean: float,
+    sd: float,
+    market_totals: list[dict],
+) -> dict | None:
+    """Best Kelly across whichever totals lines the book is actually offering."""
+    best = None
+    for offer in market_totals:
+        line = offer.get("point")
+        if line is None:
+            continue
+        p_over = prob_over(line, mean, sd)
+        for side_key, side_label, prob in (
+            ("over", "OVER", p_over),
+            ("under", "UNDER", 1 - p_over),
+        ):
+            price = offer.get(side_key)
+            if not price:
+                continue
+            adv = kelly_advice(prob, decimal_odds=price["decimal"])
+            cand = {
+                **adv,
+                "line": line,
+                "side": side_label,
+                "market_decimal": price["decimal"],
+                "market_american": price["american"],
+                "book": price["book"],
+            }
+            if best is None or cand["kelly_pct"] > best["kelly_pct"]:
+                best = cand
+    return best
+
+
+def _ml_market_price(market: dict, side: str) -> dict | None:
+    return (market or {}).get(side)
+
+
+def _rl_market_price(rl_offers: list[dict], side: str, point: float) -> dict | None:
+    """Find the run-line price for (side, point); tolerate small numeric drift."""
+    for o in rl_offers or []:
+        if o["team"] == side and abs(o["point"] - point) < 0.01:
+            return o
+    return None
 
 
 def fetch_slate(date: str) -> list[dict]:
@@ -128,11 +174,15 @@ class DailySpreadsheet:
         season: int = SEASON_DEFAULT,
         target_date: str | None = None,
         output_dir: Path | None = None,
+        odds_api_key: str | None = None,
+        skip_odds: bool = False,
     ):
         self.season = season
         self.target_date = target_date or _today_et()
         self.output_dir = Path(output_dir) if output_dir else DEFAULT_OUTPUT_DIR
         self.scraper = MLBGameScraper()
+        self.odds_scraper = MLBOddsScraper(api_key=odds_api_key)
+        self.skip_odds = skip_odds
 
     # --------- data assembly ------------------------------------------------
 
@@ -155,35 +205,62 @@ class DailySpreadsheet:
         model = ProjectionModel(backfill)
         projections = model.project_slate(slate)
 
+        if self.skip_odds:
+            odds = {"fetched_at": None, "source": "skipped", "games": []}
+        else:
+            print("  Fetching market odds...")
+            odds = self.odds_scraper.fetch()
+            print(f"    {odds['source']} -> {len(odds['games'])} priced games")
+
         return {
             "generated_at": datetime.utcnow().isoformat() + "Z",
             "season": self.season,
             "today": self.target_date,
+            "odds_source": odds["source"],
+            "odds_fetched_at": odds["fetched_at"],
             "counts": {
                 "backfill_games": len(backfill),
                 "slate_games": len(slate),
+                "priced_games": len(odds["games"]),
             },
             "tabs": {
-                "moneyline": self._build_moneyline(backfill, projections),
-                "run_line": self._build_run_line(backfill, projections),
-                "totals": self._build_totals(backfill, projections),
-                "first_5": self._build_first_5(backfill, projections),
-                "first_inning": self._build_first_inning(backfill, projections),
-                "team_totals": self._build_team_totals(backfill, projections),
+                "moneyline": self._build_moneyline(backfill, projections, odds),
+                "run_line": self._build_run_line(backfill, projections, odds),
+                "totals": self._build_totals(backfill, projections, odds),
+                "first_5": self._build_first_5(backfill, projections, odds),
+                "first_inning": self._build_first_inning(backfill, projections, odds),
+                "team_totals": self._build_team_totals(backfill, projections, odds),
             },
+            "odds": odds,
         }
 
     # --------- per-tab builders --------------------------------------------
 
     @staticmethod
-    def _build_moneyline(backfill: list[dict], projections: list[dict]) -> dict:
+    def _build_moneyline(
+        backfill: list[dict], projections: list[dict], odds: dict
+    ) -> dict:
         proj_rows = []
         for p in projections:
+            pick_side = "home" if p["ml_pick"] == p["home_team"] else "away"
             pick_prob = (
-                p["home_win_prob"] if p["ml_pick"] == p["home_team"]
-                else p["away_win_prob"]
+                p["home_win_prob"] if pick_side == "home" else p["away_win_prob"]
             )
-            adv = kelly_advice(pick_prob)
+
+            game_odds = MLBOddsScraper.find_game(odds, p["away_team"], p["home_team"])
+            market = _ml_market_price((game_odds or {}).get("moneyline", {}), pick_side)
+
+            if market:
+                adv = kelly_advice(pick_prob, decimal_odds=market["decimal"])
+                market_dec = market["decimal"]
+                market_am = market["american"]
+                book = market["book"]
+            else:
+                adv = kelly_advice(pick_prob)
+                market_dec = None
+                market_am = None
+                book = None
+
             proj_rows.append({
                 "date": p["date"],
                 "away": p["away_team"],
@@ -195,6 +272,9 @@ class DailySpreadsheet:
                 "ml_pick": p["ml_pick"],
                 "model_prob": adv["model_prob"],
                 "fair_odds_dec": adv["fair_odds_dec"],
+                "market_odds_dec": market_dec,
+                "market_odds_american": market_am,
+                "book": book,
                 "kelly_pct": adv["kelly_pct"],
                 "kelly_advice": adv["kelly_advice"],
             })
@@ -214,7 +294,9 @@ class DailySpreadsheet:
             "projection_columns": [
                 "date", "away", "home", "away_runs_proj", "home_runs_proj",
                 "away_win_prob", "home_win_prob", "ml_pick",
-                "model_prob", "fair_odds_dec", "kelly_pct", "kelly_advice",
+                "model_prob", "fair_odds_dec",
+                "market_odds_dec", "market_odds_american", "book",
+                "kelly_pct", "kelly_advice",
             ],
             "backfill_columns": [
                 "date", "away", "home", "away_score", "home_score", "ml_winner",
@@ -224,10 +306,29 @@ class DailySpreadsheet:
         }
 
     @staticmethod
-    def _build_run_line(backfill: list[dict], projections: list[dict]) -> dict:
+    def _build_run_line(
+        backfill: list[dict], projections: list[dict], odds: dict
+    ) -> dict:
         proj_rows = []
         for p in projections:
-            adv = kelly_advice(p["rl_cover_prob"])
+            fav_side = "home" if p["rl_fav"] == p["home_team"] else "away"
+
+            game_odds = MLBOddsScraper.find_game(odds, p["away_team"], p["home_team"])
+            market = _rl_market_price(
+                (game_odds or {}).get("run_line", []), fav_side, -1.5,
+            )
+
+            if market:
+                adv = kelly_advice(p["rl_cover_prob"], decimal_odds=market["decimal"])
+                market_dec = market["decimal"]
+                market_am = market["american"]
+                book = market["book"]
+            else:
+                adv = kelly_advice(p["rl_cover_prob"])
+                market_dec = None
+                market_am = None
+                book = None
+
             proj_rows.append({
                 "date": p["date"],
                 "away": p["away_team"],
@@ -238,6 +339,9 @@ class DailySpreadsheet:
                 "rl_fav_covers_1_5": "YES" if p["rl_fav_covers_1_5"] else "NO",
                 "model_prob": adv["model_prob"],
                 "fair_odds_dec": adv["fair_odds_dec"],
+                "market_odds_dec": market_dec,
+                "market_odds_american": market_am,
+                "book": book,
                 "kelly_pct": adv["kelly_pct"],
                 "kelly_advice": adv["kelly_advice"],
             })
@@ -260,7 +364,9 @@ class DailySpreadsheet:
             "projection_columns": [
                 "date", "away", "home", "rl_fav", "rl_margin_proj",
                 "rl_cover_prob", "rl_fav_covers_1_5",
-                "model_prob", "fair_odds_dec", "kelly_pct", "kelly_advice",
+                "model_prob", "fair_odds_dec",
+                "market_odds_dec", "market_odds_american", "book",
+                "kelly_pct", "kelly_advice",
             ],
             "backfill_columns": [
                 "date", "away", "home", "away_score", "home_score",
@@ -271,7 +377,9 @@ class DailySpreadsheet:
         }
 
     @staticmethod
-    def _build_totals(backfill: list[dict], projections: list[dict]) -> dict:
+    def _build_totals(
+        backfill: list[dict], projections: list[dict], odds: dict
+    ) -> dict:
         proj_rows = []
         for p in projections:
             row = {
@@ -285,14 +393,32 @@ class DailySpreadsheet:
             for line in TOTAL_LINES:
                 row[f"pick_{line}"] = "OVER" if p["total_proj"] > line else "UNDER"
 
-            best = _best_total_kelly(p["total_proj"], TOTAL_LINES, TOTAL_SD)
-            row.update({
-                "kelly_line": f"{best['side']} {best['line']}",
-                "model_prob": best["model_prob"],
-                "fair_odds_dec": best["fair_odds_dec"],
-                "kelly_pct": best["kelly_pct"],
-                "kelly_advice": best["kelly_advice"],
-            })
+            game_odds = MLBOddsScraper.find_game(odds, p["away_team"], p["home_team"])
+            market_totals = (game_odds or {}).get("totals") or []
+            best = _market_total_kelly(p["total_proj"], TOTAL_SD, market_totals)
+            if best is None:
+                best = _best_total_kelly(p["total_proj"], TOTAL_LINES, TOTAL_SD)
+                row.update({
+                    "kelly_line": f"{best['side']} {best['line']}",
+                    "model_prob": best["model_prob"],
+                    "fair_odds_dec": best["fair_odds_dec"],
+                    "market_odds_dec": None,
+                    "market_odds_american": None,
+                    "book": None,
+                    "kelly_pct": best["kelly_pct"],
+                    "kelly_advice": best["kelly_advice"],
+                })
+            else:
+                row.update({
+                    "kelly_line": f"{best['side']} {best['line']}",
+                    "model_prob": best["model_prob"],
+                    "fair_odds_dec": best["fair_odds_dec"],
+                    "market_odds_dec": best["market_decimal"],
+                    "market_odds_american": best["market_american"],
+                    "book": best["book"],
+                    "kelly_pct": best["kelly_pct"],
+                    "kelly_advice": best["kelly_advice"],
+                })
             proj_rows.append(row)
 
         backfill_rows = []
@@ -312,7 +438,9 @@ class DailySpreadsheet:
             "projection_columns": [
                 "date", "away", "home", "away_runs_proj", "home_runs_proj", "total_proj",
             ] + [f"pick_{l}" for l in TOTAL_LINES] + [
-                "kelly_line", "model_prob", "fair_odds_dec", "kelly_pct", "kelly_advice",
+                "kelly_line", "model_prob", "fair_odds_dec",
+                "market_odds_dec", "market_odds_american", "book",
+                "kelly_pct", "kelly_advice",
             ],
             "backfill_columns": [
                 "date", "away", "home", "total_runs",
@@ -322,7 +450,9 @@ class DailySpreadsheet:
         }
 
     @staticmethod
-    def _build_first_5(backfill: list[dict], projections: list[dict]) -> dict:
+    def _build_first_5(
+        backfill: list[dict], projections: list[dict], odds: dict
+    ) -> dict:
         proj_rows = []
         for p in projections:
             adv = kelly_advice(p["f5_win_prob"]) if p["f5_pick"] != "PUSH" \
@@ -369,7 +499,9 @@ class DailySpreadsheet:
         }
 
     @staticmethod
-    def _build_first_inning(backfill: list[dict], projections: list[dict]) -> dict:
+    def _build_first_inning(
+        backfill: list[dict], projections: list[dict], odds: dict
+    ) -> dict:
         proj_rows = []
         for p in projections:
             pick_prob = p["nrfi_prob"] if p["nrfi_pick"] == "NRFI" else p["yrfi_prob"]
@@ -414,7 +546,9 @@ class DailySpreadsheet:
         }
 
     @staticmethod
-    def _build_team_totals(backfill: list[dict], projections: list[dict]) -> dict:
+    def _build_team_totals(
+        backfill: list[dict], projections: list[dict], odds: dict
+    ) -> dict:
         proj_rows = []
         for p in projections:
             for side, team, opp, runs in (
@@ -481,6 +615,12 @@ class DailySpreadsheet:
         json_path = self.output_dir / "mlb_daily.json"
         json_path.write_text(json.dumps(data, indent=2, default=str))
         written.append(json_path)
+
+        odds_payload = data.get("odds")
+        if odds_payload is not None:
+            odds_path = self.output_dir / "lines.json"
+            odds_path.write_text(json.dumps(odds_payload, indent=2, default=str))
+            written.append(odds_path)
 
         for key in self.BET_TABS:
             tab = data["tabs"][key]
@@ -637,12 +777,22 @@ def main(argv: list[str] | None = None) -> int:
         "--branch", type=str, default=None,
         help="Branch to push to (only with --push)",
     )
+    parser.add_argument(
+        "--odds-api-key", type=str, default=None,
+        help="The Odds API key (overrides ODDS_API_KEY env var)",
+    )
+    parser.add_argument(
+        "--no-odds", action="store_true", default=False,
+        help="Skip the odds fetch entirely; use -110 default for all Kelly sizing",
+    )
     args = parser.parse_args(argv)
 
     spreadsheet = DailySpreadsheet(
         season=args.season,
         target_date=args.date,
         output_dir=Path(args.output_dir),
+        odds_api_key=args.odds_api_key,
+        skip_odds=args.no_odds,
     )
 
     print(f"MLB Daily Spreadsheet — target {spreadsheet.target_date}")

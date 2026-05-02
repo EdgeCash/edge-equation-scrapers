@@ -13,6 +13,7 @@ Written to `public/data/mlb/`:
 |------|---------|
 | `mlb_daily.xlsx` | Multi-tab workbook (one tab per bet type). |
 | `mlb_daily.json` | Structured payload for the frontend (all six tabs in one file). |
+| `lines.json` | Raw market odds snapshot (all sportsbooks, normalized). |
 | `moneyline.csv` | Flat CSV for the Moneyline tab. `section` column = `projection` or `backfill`. |
 | `run_line.csv` | Run Line tab. |
 | `totals.csv` | Totals tab (lines 8.5 / 9.0 / 9.5). |
@@ -25,11 +26,17 @@ Written to `public/data/mlb/`:
 ```bash
 pip install -r requirements.txt
 
+# Optional: free key from https://the-odds-api.com (500 req/month)
+export ODDS_API_KEY=...
+
 # Build today's spreadsheet (no git push)
 python -m exporters.mlb.daily_spreadsheet
 
 # Build for a specific date
 python -m exporters.mlb.daily_spreadsheet --date 2026-05-02
+
+# Skip the odds fetch entirely (Kelly falls back to -110 default)
+python -m exporters.mlb.daily_spreadsheet --no-odds
 
 # Build and auto-commit + push (Vercel auto-deploys)
 python -m exporters.mlb.daily_spreadsheet --push --branch main
@@ -73,15 +80,16 @@ Every projection row carries a Kelly recommendation:
 |--------|---------|
 | `model_prob` | Probability the model assigns to the recommended pick. |
 | `fair_odds_dec` | Decimal odds implied by `model_prob` (i.e. `1 / model_prob`). Compare against the market line. |
-| `kelly_pct` | Recommended bet size as a percentage of bankroll. **Half-Kelly, capped at 5%.** |
+| `market_odds_dec` / `market_odds_american` | Best price available across books for this exact pick (or `null` if no market data). |
+| `book` | Sportsbook offering that best price. |
+| `kelly_pct` | Recommended bet size as a percentage of bankroll. **Half-Kelly, capped at 5%.** Computed with `market_odds_dec` when available, otherwise the -110 default. |
 | `kelly_advice` | Categorical tier: `PASS` / `0.5u` / `1u` / `2u` / `3u`. |
 | `kelly_line` | (Totals & Team Totals only) Which line + side the Kelly recommendation refers to (e.g. `OVER 8.5`). |
 
-Sizing assumes a default market price of **-110 (decimal 1.909)** since that's
-the standard juice on spreads, totals, F5, F1, and team totals. Moneyline
-prices vary, so treat the ML Kelly as a sanity check — when you have the real
-price, recompute with `kelly_advice(prob, decimal_odds=...)` from
-`exporters.mlb.kelly`.
+When no market price is found for a given bet (e.g. F5/F1/team totals are
+rarely on the free Odds API tier), Kelly falls back to a default price of
+**-110 (decimal 1.909)**. ML/Run Line/Totals get live multi-book prices when
+`ODDS_API_KEY` is set or the DraftKings fallback succeeds.
 
 The full Kelly fraction is `(b*p - q) / b` where `b = decimal_odds - 1`,
 `p = model_prob`, `q = 1 - p`. We halve it (Kelly is well-known to be too
@@ -100,6 +108,21 @@ calibrated standard deviations:
 | First 5 total | 2.2 |
 | First 5 margin | 2.2 |
 
+## Odds Sources
+
+Live market prices are fetched in this order:
+
+1. **The Odds API** (`https://the-odds-api.com`) — free tier 500 req/month,
+   covers DK, FanDuel, MGM, Caesars, etc. Set `ODDS_API_KEY` (env var) or
+   pass `--odds-api-key`. **Recommended.**
+2. **DraftKings public sportsbook JSON** — undocumented endpoint on
+   `sportsbook-nash.draftkings.com`, no auth, single book, fragile.
+3. **Empty / fallback** — if both fail, Kelly sizing uses the -110 default.
+
+For each market, the BEST available price (highest decimal odds) across
+books is what feeds Kelly sizing — i.e. line shopping. The full multi-book
+snapshot is persisted to `public/data/mlb/lines.json` for transparency.
+
 ## Daily Cron
 
 A simple cron line (e.g. on a small server or a Vercel scheduled task) that
@@ -107,6 +130,7 @@ refreshes the spreadsheet every morning:
 
 ```
 30 13 * * *  cd /path/to/edge-equation-scrapers && \
+             ODDS_API_KEY=xxx \
              python -m exporters.mlb.daily_spreadsheet --push --branch main \
              >> /var/log/mlb_daily.log 2>&1
 ```
