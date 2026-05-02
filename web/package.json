@@ -3,10 +3,11 @@
   "version": "5.0.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "dev": "node scripts/copy-data.js && next dev",
+    "build": "node scripts/copy-data.js && next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "copy-data": "node scripts/copy-data.js"
   },
   "dependencies": {
     "next": "^15.0.0",
