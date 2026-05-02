@@ -39,6 +39,13 @@ LEAGUE_F1_SCORE_RATE = 0.27
 # better for early-season noise; smaller k = more responsive to real form.
 SHRINKAGE_K = 15
 
+# Phase 2: exponential decay on the SEASON aggregate so recent games
+# count more than ones from a month ago. 14-day half-life means a game
+# 14 days ago contributes half as much as a game today; a game 28 days
+# ago, a quarter as much. The hard "last 10 games" recent component
+# stays alongside this for very-fresh-form sensitivity.
+DEFAULT_DECAY_HALF_LIFE_DAYS = 14.0
+
 WIN_PROB_SLOPE = 0.45
 
 # Standard deviations for deriving probabilities from point projections.
@@ -257,11 +264,19 @@ class ProjectionModel:
         shrinkage_k: int = SHRINKAGE_K,
         calibration: dict | None = None,
         apply_park_factors: bool = True,
+        decay_half_life_days: float = DEFAULT_DECAY_HALF_LIFE_DAYS,
     ):
         self.games = sorted(games, key=lambda g: g.get("date", ""))
         self.team_games: dict[str, list[dict]] = defaultdict(list)
         self.shrinkage_k = shrinkage_k
         self.apply_park_factors = apply_park_factors
+        self.decay_half_life_days = decay_half_life_days
+
+        # Reference date for decay weighting. The latest game in the
+        # dataset is "today" from the model's perspective — for the live
+        # daily build that's yesterday's game; for backtest iteration N
+        # it's game N-1. Both correctly avoid look-ahead.
+        self._reference_date = self._latest_game_date()
 
         cal = calibration or {}
         self.total_sd = cal.get("total_sd", TOTAL_SD)
@@ -273,6 +288,42 @@ class ProjectionModel:
         self.calibration = cal
 
         self._build()
+
+    def _latest_game_date(self) -> datetime | None:
+        if not self.games:
+            return None
+        for g in reversed(self.games):
+            d = g.get("date")
+            if not d:
+                continue
+            try:
+                return datetime.strptime(d, "%Y-%m-%d")
+            except (TypeError, ValueError):
+                continue
+        return None
+
+    def _decay_weights(self, rows: list[dict]) -> list[float]:
+        """Per-row exponential decay weights, anchored at the model's
+        reference date. Weight at days_ago=0 is 1.0, at half_life it's 0.5.
+        Returns a list of 1.0s when decay is disabled (half_life <= 0).
+        """
+        if self.decay_half_life_days <= 0 or self._reference_date is None:
+            return [1.0] * len(rows)
+        weights: list[float] = []
+        hl = self.decay_half_life_days
+        for r in rows:
+            d = r.get("date")
+            if not d:
+                weights.append(1.0)
+                continue
+            try:
+                game_date = datetime.strptime(d, "%Y-%m-%d")
+            except (TypeError, ValueError):
+                weights.append(1.0)
+                continue
+            days_ago = max(0, (self._reference_date - game_date).days)
+            weights.append(0.5 ** (days_ago / hl))
+        return weights
 
     def _build(self) -> None:
         """Index every completed game from each team's perspective."""
@@ -307,21 +358,37 @@ class ProjectionModel:
             "won": rs > ra,
         }
 
-    def _aggregate(self, rows: list[dict], shrunk: bool = True) -> dict:
-        """Per-game averages with optional Bayesian shrinkage to league mean.
+    def _aggregate(
+        self,
+        rows: list[dict],
+        shrunk: bool = True,
+        weights: list[float] | None = None,
+    ) -> dict:
+        """Per-game averages with optional Bayesian shrinkage to league mean
+        and optional per-row weights (for exponential decay).
 
-        Shrunk estimate: (sum + k * league_avg) / (n + k)
-        With k=15 and a team that's played 30 games at 5.5 RPG, the shrunk
-        rate is (165 + 15*4.5) / 45 = 5.17 — pulled meaningfully toward the
-        league average until the sample is large enough to dominate.
+        Without weights: (sum + k * league_avg) / (n + k) — original behavior.
+        With weights: (Σ w_i * x_i + k * league_avg) / (Σ w_i + k).
+
+        Effective sample size is the sum of weights, so very-old games
+        contribute almost nothing toward both numerator and denominator —
+        the shrinkage prior automatically dominates when recent samples
+        are thin.
         """
-        n = len(rows)
+        n_raw = len(rows)
+        if weights is None:
+            weights = [1.0] * n_raw
+        elif len(weights) != n_raw:
+            raise ValueError("weights length must match rows length")
+
+        n_eff = sum(weights)
         k = self.shrinkage_k if shrunk else 0
-        denom = n + k
+        denom = n_eff + k
 
         if denom == 0:
             return {
                 "n": 0,
+                "n_eff": 0.0,
                 "rs_pg": LEAGUE_AVG_RUNS_PER_TEAM,
                 "ra_pg": LEAGUE_AVG_RUNS_PER_TEAM,
                 "f1_rs_pg": LEAGUE_AVG_F1_RUNS_PER_TEAM,
@@ -333,32 +400,47 @@ class ProjectionModel:
                 "win_pct": 0.5,
             }
 
+        def w_sum_field(field: str) -> float:
+            return sum(w * r[field] for w, r in zip(weights, rows))
+
+        def w_sum_pred(pred) -> float:
+            return sum(w for w, r in zip(weights, rows) if pred(r))
+
         return {
-            "n": n,
+            "n": n_raw,
+            "n_eff": round(n_eff, 2),
             "rs_pg":
-                (sum(r["rs"] for r in rows) + k * LEAGUE_AVG_RUNS_PER_TEAM) / denom,
+                (w_sum_field("rs") + k * LEAGUE_AVG_RUNS_PER_TEAM) / denom,
             "ra_pg":
-                (sum(r["ra"] for r in rows) + k * LEAGUE_AVG_RUNS_PER_TEAM) / denom,
+                (w_sum_field("ra") + k * LEAGUE_AVG_RUNS_PER_TEAM) / denom,
             "f1_rs_pg":
-                (sum(r["f1_rs"] for r in rows) + k * LEAGUE_AVG_F1_RUNS_PER_TEAM) / denom,
+                (w_sum_field("f1_rs") + k * LEAGUE_AVG_F1_RUNS_PER_TEAM) / denom,
             "f1_ra_pg":
-                (sum(r["f1_ra"] for r in rows) + k * LEAGUE_AVG_F1_RUNS_PER_TEAM) / denom,
+                (w_sum_field("f1_ra") + k * LEAGUE_AVG_F1_RUNS_PER_TEAM) / denom,
             "f5_rs_pg":
-                (sum(r["f5_rs"] for r in rows) + k * LEAGUE_AVG_F5_RUNS_PER_TEAM) / denom,
+                (w_sum_field("f5_rs") + k * LEAGUE_AVG_F5_RUNS_PER_TEAM) / denom,
             "f5_ra_pg":
-                (sum(r["f5_ra"] for r in rows) + k * LEAGUE_AVG_F5_RUNS_PER_TEAM) / denom,
+                (w_sum_field("f5_ra") + k * LEAGUE_AVG_F5_RUNS_PER_TEAM) / denom,
             "f1_score_rate":
-                (sum(1 for r in rows if r["scored_in_f1"]) + k * LEAGUE_F1_SCORE_RATE) / denom,
+                (w_sum_pred(lambda r: r["scored_in_f1"]) + k * LEAGUE_F1_SCORE_RATE) / denom,
             "f1_allow_rate":
-                (sum(1 for r in rows if r["allowed_in_f1"]) + k * LEAGUE_F1_SCORE_RATE) / denom,
+                (w_sum_pred(lambda r: r["allowed_in_f1"]) + k * LEAGUE_F1_SCORE_RATE) / denom,
             "win_pct":
-                (sum(1 for r in rows if r["won"]) + k * 0.5) / denom,
+                (w_sum_pred(lambda r: r["won"]) + k * 0.5) / denom,
         }
 
     def team_summary(self, team: str) -> dict:
-        """Season + last-N aggregates for a team."""
+        """Season (decay-weighted) + last-N (unweighted) aggregates.
+
+        The "season" component now applies exponential decay so a team
+        that was hot a month ago doesn't drag a current cold streak.
+        The "recent" component stays as a hard last-N window for
+        very-fresh-form sensitivity that even decay can't capture
+        (e.g., a roster overhaul a week ago).
+        """
         rows = self.team_games.get(team, [])
-        season = self._aggregate(rows)
+        season_weights = self._decay_weights(rows)
+        season = self._aggregate(rows, weights=season_weights)
         recent = self._aggregate(rows[-RECENT_WINDOW:])
         return {"team": team, "season": season, "recent": recent}
 
