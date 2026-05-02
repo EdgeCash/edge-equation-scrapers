@@ -40,6 +40,7 @@ from scrapers.mlb.mlb_game_scraper import MLBGameScraper, TEAM_MAP
 from scrapers.mlb.mlb_odds_scraper import MLBOddsScraper
 from scrapers.mlb.mlb_pitcher_scraper import MLBPitcherScraper
 from scrapers.mlb.mlb_weather_scraper import MLBWeatherScraper
+from scrapers.mlb.mlb_lineup_scraper import MLBLineupScraper
 from exporters.mlb.projections import (
     ProjectionModel,
     prob_over,
@@ -410,6 +411,28 @@ def _weather_fields(p: dict) -> dict:
     }
 
 
+def _lineup_fields(p: dict) -> dict:
+    """Pull lineup context out of a projection — star count + scratches."""
+    a = p.get("away_lineup") or {}
+    h = p.get("home_lineup") or {}
+    return {
+        "away_lineup_posted": a.get("lineup_posted"),
+        "home_lineup_posted": h.get("lineup_posted"),
+        "away_stars_present": (
+            f"{a.get('stars_present', '?')}/{a.get('stars_total', '?')}"
+            if a else None
+        ),
+        "home_stars_present": (
+            f"{h.get('stars_present', '?')}/{h.get('stars_total', '?')}"
+            if h else None
+        ),
+        "away_missing_stars": ", ".join(a.get("missing_stars") or []) or None,
+        "home_missing_stars": ", ".join(h.get("missing_stars") or []) or None,
+        "away_lineup_factor": a.get("factor"),
+        "home_lineup_factor": h.get("factor"),
+    }
+
+
 def _rl_market_price(rl_offers: list[dict], side: str, point: float) -> dict | None:
     """Find the run-line price for (side, point); tolerate small numeric drift."""
     for o in rl_offers or []:
@@ -489,6 +512,7 @@ class DailySpreadsheet:
         )
         self.pitcher_scraper = MLBPitcherScraper(season=season)
         self.weather_scraper = MLBWeatherScraper()
+        self.lineup_scraper = MLBLineupScraper(season=season)
         self.skip_odds = skip_odds
         self.min_edge_pct = min_edge_pct
         self.top_n = top_n
@@ -563,6 +587,25 @@ class DailySpreadsheet:
         )
         domes = sum(1 for w in weather_map.values() if w and w.get("dome"))
         print(f"    {wx_with_temp} outdoor games with weather, {domes} domes")
+
+        print("  Fetching day-of lineups + team star hitters...")
+        try:
+            lineup_map = self.lineup_scraper.fetch_for_slate(slate)
+        except Exception as e:
+            print(f"    Lineup fetch failed ({type(e).__name__}: {e}); proceeding with neutral factors")
+            lineup_map = {}
+        posted = 0
+        scratched = 0
+        for g in slate:
+            entry = lineup_map.get(g.get("game_pk")) or {}
+            g["away_lineup"] = entry.get("away")
+            g["home_lineup"] = entry.get("home")
+            for side_data in (entry.get("away"), entry.get("home")):
+                if side_data and side_data.get("lineup_posted"):
+                    posted += 1
+                if side_data and side_data.get("missing_stars"):
+                    scratched += len(side_data["missing_stars"])
+        print(f"    {posted}/{len(slate) * 2} lineups posted, {scratched} star scratches detected")
 
         if self.skip_odds:
             odds = {"fetched_at": None, "source": "skipped", "games": []}
@@ -829,6 +872,7 @@ class DailySpreadsheet:
                 "home": p["home_team"],
                 **_sp_fields(p),
                 **_weather_fields(p),
+                **_lineup_fields(p),
                 "away_runs_proj": p["away_runs_proj"],
                 "home_runs_proj": p["home_runs_proj"],
                 "total_proj": p["total_proj"],
@@ -886,6 +930,9 @@ class DailySpreadsheet:
                 "away_sp_factor", "home_sp_factor",
                 "away_bp_factor", "home_bp_factor",
                 "venue", "temp_f", "wind_mph", "wind_dir", "weather_factor",
+                "away_stars_present", "home_stars_present",
+                "away_missing_stars", "home_missing_stars",
+                "away_lineup_factor", "home_lineup_factor",
                 "away_runs_proj", "home_runs_proj", "total_proj",
             ] + [f"pick_{l}" for l in TOTAL_LINES] + [
                 "kelly_line", "model_prob", "fair_odds_dec",

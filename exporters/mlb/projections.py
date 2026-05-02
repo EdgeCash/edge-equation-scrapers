@@ -461,6 +461,8 @@ class ProjectionModel:
         away_bp: dict | None = None,
         home_bp: dict | None = None,
         weather: dict | None = None,
+        away_lineup: dict | None = None,
+        home_lineup: dict | None = None,
     ) -> dict:
         """Project all six bet metrics for a single matchup.
 
@@ -527,6 +529,17 @@ class ProjectionModel:
         home_runs *= wf
         away_f5 *= wf_f5
         home_f5 *= wf_f5
+
+        # Lineup — missing star bats reduce the team's offensive output.
+        # Factor of 1.0 when lineup isn't posted yet (no penalty for
+        # missing data). Applied to both full game and F5 since the
+        # scratched bat misses the entire game.
+        a_lineup_factor = (away_lineup or {}).get("factor", 1.0)
+        h_lineup_factor = (home_lineup or {}).get("factor", 1.0)
+        away_runs *= a_lineup_factor
+        home_runs *= h_lineup_factor
+        away_f5 *= a_lineup_factor
+        home_f5 *= h_lineup_factor
 
         away_f1 = self._blend(
             a["season"]["f1_rs_pg"], a["recent"]["f1_rs_pg"], h["season"]["f1_ra_pg"]
@@ -619,6 +632,8 @@ class ProjectionModel:
             "away_bp": away_bp,
             "home_bp": home_bp,
             "weather": weather,
+            "away_lineup": away_lineup,
+            "home_lineup": home_lineup,
             "model_meta": {
                 "season_weight": SEASON_WEIGHT,
                 "recent_weight": RECENT_WEIGHT,
@@ -631,6 +646,8 @@ class ProjectionModel:
                 "home_sp_factor": home_sp_factor,
                 "away_bp_factor": away_bp_factor,
                 "home_bp_factor": home_bp_factor,
+                "away_lineup_factor": a_lineup_factor,
+                "home_lineup_factor": h_lineup_factor,
                 "total_sd": self.total_sd,
                 "margin_sd": self.margin_sd,
                 "win_prob_slope": self.win_prob_slope,
@@ -657,6 +674,8 @@ class ProjectionModel:
                 away_bp=g.get("away_bp"),
                 home_bp=g.get("home_bp"),
                 weather=g.get("weather"),
+                away_lineup=g.get("away_lineup"),
+                home_lineup=g.get("home_lineup"),
             )
             proj["date"] = g.get("date")
             proj["game_pk"] = g.get("game_pk")
