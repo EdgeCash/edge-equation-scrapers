@@ -134,6 +134,168 @@ def _ml_market_price(market: dict, side: str) -> dict | None:
     return (market or {}).get(side)
 
 
+def _format_american(am: int | float | None) -> str | None:
+    if am is None:
+        return None
+    am = int(round(am))
+    return f"+{am}" if am > 0 else str(am)
+
+
+def _vig_free(dec_a: float | None, dec_b: float | None) -> tuple[float | None, float | None]:
+    """Strip the book's juice off a 2-way pair to recover what the
+    market really thinks. Compare model probability to vig-free implied
+    probability for a fair edge calc.
+    """
+    if not dec_a or not dec_b or dec_a <= 1 or dec_b <= 1:
+        return (None, None)
+    p_a_raw = 1.0 / dec_a
+    p_b_raw = 1.0 / dec_b
+    total = p_a_raw + p_b_raw
+    if total <= 0:
+        return (None, None)
+    return (p_a_raw / total, p_b_raw / total)
+
+
+def _build_odds_debug(odds: dict) -> dict:
+    """Flat, eyeball-friendly view of the normalized odds payload.
+
+    One entry per game with ML / Run Line / Totals laid out side-by-side
+    plus vig-free implied probabilities for sanity checks. Useful when
+    Today's Card surfaces an unexpected pick — open this file to see
+    exactly what prices the model saw without re-running the build or
+    burning another API call.
+    """
+    games = []
+    for g in odds.get("games", []):
+        away, home = g["away_team"], g["home_team"]
+        record: dict = {
+            "game": f"{away} @ {home}",
+            "first_pitch": g.get("commence_time"),
+        }
+
+        ml = g.get("moneyline") or {}
+        away_ml = ml.get("away")
+        home_ml = ml.get("home")
+        if away_ml or home_ml:
+            block: dict = {}
+            if away_ml:
+                block[away] = {
+                    "american": _format_american(away_ml["american"]),
+                    "decimal": away_ml["decimal"],
+                    "book": away_ml["book"],
+                }
+            if home_ml:
+                block[home] = {
+                    "american": _format_american(home_ml["american"]),
+                    "decimal": home_ml["decimal"],
+                    "book": home_ml["book"],
+                }
+            if away_ml and home_ml:
+                p_a, p_h = _vig_free(away_ml["decimal"], home_ml["decimal"])
+                if p_a is not None:
+                    block["vig_free"] = {
+                        away: f"{p_a * 100:.1f}%",
+                        home: f"{p_h * 100:.1f}%",
+                    }
+            record["moneyline"] = block
+
+        rl_offers = g.get("run_line") or []
+        if rl_offers:
+            block = {}
+            for o in rl_offers:
+                team_code = away if o["team"] == "away" else home
+                point = o["point"]
+                sign = "+" if point > 0 else ""
+                key = f"{team_code} {sign}{point}"
+                block[key] = {
+                    "american": _format_american(o["american"]),
+                    "decimal": o["decimal"],
+                    "book": o["book"],
+                }
+            record["run_line"] = block
+
+        total_offers = g.get("totals") or []
+        if total_offers:
+            offers = []
+            for offer in total_offers:
+                line = offer.get("point")
+                over = offer.get("over")
+                under = offer.get("under")
+                t: dict = {"line": line}
+                if over:
+                    t["OVER"] = {
+                        "american": _format_american(over["american"]),
+                        "decimal": over["decimal"],
+                        "book": over["book"],
+                    }
+                if under:
+                    t["UNDER"] = {
+                        "american": _format_american(under["american"]),
+                        "decimal": under["decimal"],
+                        "book": under["book"],
+                    }
+                if over and under:
+                    p_o, p_u = _vig_free(over["decimal"], under["decimal"])
+                    if p_o is not None:
+                        t["vig_free"] = {
+                            "OVER": f"{p_o * 100:.1f}%",
+                            "UNDER": f"{p_u * 100:.1f}%",
+                        }
+                offers.append(t)
+            record["totals"] = offers
+
+        games.append(record)
+
+    return {
+        "fetched_at": odds.get("fetched_at"),
+        "source": odds.get("source"),
+        "game_count": len(games),
+        "games": games,
+    }
+
+
+def _write_odds_debug_csv(path: Path, debug: dict) -> None:
+    """Flat row-per-offer CSV for quick filtering in Excel/Sheets."""
+    rows = []
+    for g in debug["games"]:
+        game = g["game"]
+        ml = g.get("moneyline") or {}
+        ml_vig = ml.get("vig_free", {})
+        for team, info in ml.items():
+            if team == "vig_free":
+                continue
+            rows.append({
+                "game": game, "market": "moneyline", "side": team,
+                "american": info["american"], "decimal": info["decimal"],
+                "book": info["book"], "vig_free_pct": ml_vig.get(team),
+            })
+        for side, info in (g.get("run_line") or {}).items():
+            rows.append({
+                "game": game, "market": "run_line", "side": side,
+                "american": info["american"], "decimal": info["decimal"],
+                "book": info["book"], "vig_free_pct": None,
+            })
+        for total_offer in (g.get("totals") or []):
+            line = total_offer["line"]
+            vf = total_offer.get("vig_free", {})
+            for side in ("OVER", "UNDER"):
+                info = total_offer.get(side)
+                if not info:
+                    continue
+                rows.append({
+                    "game": game, "market": "totals",
+                    "side": f"{side} {line}",
+                    "american": info["american"], "decimal": info["decimal"],
+                    "book": info["book"], "vig_free_pct": vf.get(side),
+                })
+
+    cols = ["game", "market", "side", "american", "decimal", "book", "vig_free_pct"]
+    with path.open("w", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=cols, extrasaction="ignore")
+        writer.writeheader()
+        writer.writerows(rows)
+
+
 def _sp_fields(p: dict) -> dict:
     """Pull away/home SP + bullpen names and factors out of a projection."""
     away_sp = p.get("away_sp") or {}
@@ -974,6 +1136,15 @@ class DailySpreadsheet:
             odds_path = self.output_dir / "lines.json"
             odds_path.write_text(json.dumps(odds_payload, indent=2, default=str))
             written.append(odds_path)
+
+            debug_view = _build_odds_debug(odds_payload)
+            debug_json = self.output_dir / "odds_debug.json"
+            debug_json.write_text(json.dumps(debug_view, indent=2, default=str))
+            written.append(debug_json)
+
+            debug_csv = self.output_dir / "odds_debug.csv"
+            _write_odds_debug_csv(debug_csv, debug_view)
+            written.append(debug_csv)
 
         backtest_payload = data.get("backtest")
         if backtest_payload is not None:
