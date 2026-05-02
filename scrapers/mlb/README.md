@@ -12,6 +12,7 @@ MLB game results, player props, and pick-settling engine powered by the **MLB St
 | mlb_odds_scraper.py | Pull live ML / Run Line / Totals prices from The Odds API (with DraftKings fallback). |
 | mlb_pitcher_scraper.py | Pull today's probable starting pitchers + their season stats and compute a quality factor used by the projection model. |
 | mlb_player_props_scraper.py | 🟣 EXPERIMENTAL — slate-driven player stats fetcher (pitcher Ks/IP/BAA, batter AVG/SLG/AB) for the sandboxed prop projections. Not used by the live daily card. |
+| mlb_backfill_scraper.py | Multi-season bulk harvester. Pulls historical games (cheap) + per-game boxscores (heavy, opt-in via `--with-boxscores`) into `data/backfill/mlb/<season>/`. One-time bulk operation; not on a cron. Used for offline calibration refits and prop backtest grading. |
 
 ## Quick Start
 

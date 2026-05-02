@@ -12,9 +12,10 @@ from .mlb_pitcher_scraper import MLBPitcherScraper
 from .mlb_weather_scraper import MLBWeatherScraper
 from .mlb_lineup_scraper import MLBLineupScraper
 from .mlb_player_props_scraper import MLBPlayerPropsScraper
+from .mlb_backfill_scraper import MLBBackfillScraper
 
 __all__ = [
     "MLBGameScraper", "MLBPlayerScraper", "MLBSettleEngine",
     "MLBOddsScraper", "MLBPitcherScraper", "MLBWeatherScraper",
-    "MLBLineupScraper", "MLBPlayerPropsScraper",
+    "MLBLineupScraper", "MLBPlayerPropsScraper", "MLBBackfillScraper",
 ]

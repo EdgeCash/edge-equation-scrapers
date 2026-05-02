@@ -31,6 +31,12 @@ python run_mlb_daily.py
 # Or pass through any flag the underlying exporter supports
 python run_mlb_daily.py --date 2026-05-02 --no-odds
 python run_mlb_daily.py --push --branch main
+
+# Sandbox: experimental player-prop projections (offline only)
+python run_mlb_props_experimental.py
+
+# One-time bulk: pull multi-season historical data for offline fine-tuning
+python run_mlb_backfill.py --seasons 2022-2024 --with-boxscores
 ```
 
 Outputs land in `public/data/mlb/` — `mlb_daily.json`, `todays_card.csv`, `backtest.json`, `picks_log.json`, plus per-tab CSVs and a multi-tab XLSX. The Vercel site auto-redeploys on every push.
