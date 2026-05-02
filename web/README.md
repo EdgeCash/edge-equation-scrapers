@@ -1,51 +1,93 @@
-# MLB Dashboard — Next.js components
+# Edge Equation v5.0 — Web
 
-Drop-in React components that render the daily MLB spreadsheet on a
-Vercel-hosted site. They fetch `public/data/mlb/mlb_daily.json` (which is
-generated daily by `exporters/mlb/daily_spreadsheet.py`) and render all 8
-tabs with sortable tables and Kelly badges.
+Production website. Fully self-contained Next.js 15 app with TypeScript and
+TailwindCSS. Implements the brand and content rules locked in
+`docs/BRAND_GUIDE.md`.
 
-## Files
+## Pages
 
-| File | Purpose |
-|------|---------|
-| `types.ts` | TypeScript interfaces matching `mlb_daily.json`. |
-| `components/MLBDashboard.tsx` | Main container: fetches data, manages tab state. Client component. |
-| `components/TabTable.tsx` | Generic table renderer for any tab (projections + backfill sections). |
-| `components/KellyBadge.tsx` | Color-coded Kelly tier badge (PASS / 0.5u / 1u / 2u / 3u). |
-| `app/mlb/page.tsx` | Example App Router page that mounts the dashboard at `/mlb`. |
+| Route | Purpose |
+|-------|---------|
+| `/` | Hero, conviction-tier explainer, core-values pillars, CTA. |
+| `/daily-card` | Today's plays with TierBadge + Kelly units. Empty state when the math says pass. |
+| `/track-record` | Public backtest ledger: per-market ROI, hit rate, Brier, gate status; daily P&L. |
+| `/methodology` | How the model works. The "show your work" page. |
 
-## Setup
+## Visual direction
 
-If your Vercel site is **this repo**:
+"Controlled chaos / analytical juxtaposition" — mathematician's chalkboard
+in the middle of a loud sportsbook. Dark slate base (`#0a1421`), subtle grid
+texture, soft chalk-blue glow accents, electric blue (`#38bdf8`) reserved for
+**Signal Elite** tier and primary CTAs.
 
-1. Move (or symlink) `web/components/` into your existing `components/` dir, and `web/types.ts` into your project's types directory.
-2. Move `web/app/mlb/page.tsx` into your `app/mlb/` directory.
-3. Make sure your Next.js config serves `public/data/mlb/` (it does by default — anything under `public/` is a static asset).
-4. Visit `https://your-site.vercel.app/mlb`.
+Hand-drawn imperfections (Caveat font for accents, eraser-smudge SVG
+underlines) sit alongside clean Inter body type and crisp data tables —
+the chaos and the calm sit together by design.
 
-If your Vercel site is a **different repo**:
+## Local development
 
-1. Copy the files in `web/` into the matching directories of that repo.
-2. The frontend fetches `/data/mlb/mlb_daily.json` — either:
-   - Have the daily build in this repo push the JSON into your site repo's `public/data/mlb/`, or
-   - Host the JSON elsewhere and pass a full URL via `<MLBDashboard dataUrl="https://..." />`.
+```bash
+cd web
+npm install
+npm run dev
+```
 
-## Dependencies
+Then visit http://localhost:3000. The site reads
+`/data/mlb/mlb_daily.json` from the parent repo's `public/data/mlb/`. For
+local dev, copy or symlink that file into `web/public/data/mlb/`:
 
-The components use **TailwindCSS** for styling. If your site already has
-Tailwind, no extra install is needed. If not, either:
+```bash
+mkdir -p public/data/mlb
+ln -s ../../../public/data/mlb/mlb_daily.json public/data/mlb/mlb_daily.json
+```
 
-- Add Tailwind (`npm install -D tailwindcss && npx tailwindcss init`), or
-- Replace the className strings with your own CSS — every component is a
-  thin wrapper, easy to restyle.
+## Production deployment
 
-No other runtime deps. Uses native `fetch` + React hooks.
+Two paths:
 
-## Customization
+### Path A — Deploy this repo's `web/` to Vercel (recommended)
 
-`<MLBDashboard dataUrl="..." />` — override the JSON URL (defaults to
-`/data/mlb/mlb_daily.json`).
+1. In the Vercel project settings, set **Root Directory** to `web`.
+2. **Build Command**: `npm run build` (default Next.js)
+3. The site automatically picks up data files from the repo's
+   `public/data/mlb/` because Next.js serves anything under `public/` at
+   the URL root. The daily GitHub Actions cron commits new data, Vercel
+   redeploys, the site updates.
 
-The tab order is set in `MLBDashboard.tsx::TAB_ORDER` if you'd rather
-default to a different starting tab than Today's Card.
+Note: Vercel will look for `public/` inside the root directory by default.
+You may need to either:
+- Mount `public/data/` at `web/public/data/` with a build step that copies, OR
+- Configure rewrites in `next.config.js` to serve from the parent
+
+The cleanest fix is to add a build script that copies `../public/data` into
+`web/public/data` before `next build`. Add to `web/package.json` if needed:
+
+```json
+"scripts": {
+  "build": "node scripts/copy-data.js && next build"
+}
+```
+
+### Path B — Copy components into your existing site
+
+If you'd rather keep the website on its current Vercel project:
+
+1. Copy `web/app/`, `web/components/`, `web/lib/types.ts`, and the
+   relevant chunks of `web/app/globals.css` into your existing Next.js
+   tree. Adjust paths to match your project's structure.
+2. Copy `web/tailwind.config.ts` color extensions into your existing
+   Tailwind config.
+3. Make sure `mlb_daily.json` is fetchable at `/data/mlb/mlb_daily.json`.
+
+## Data dependencies
+
+All pages fetch from `/data/mlb/mlb_daily.json` — the structured payload
+written by `exporters/mlb/daily_spreadsheet.py`. Schema documented in
+`web/lib/types.ts`. Updated daily by the GitHub Actions cron at 11 AM ET
+per the BRAND_GUIDE operational standard.
+
+## Brand compliance
+
+This site implements the locked brand rules. Changes that affect tier
+names, edge thresholds, or operational standards should update
+`docs/BRAND_GUIDE.md` first, then propagate here.

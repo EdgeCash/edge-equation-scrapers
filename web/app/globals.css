@@ -1,0 +1,131 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ====================================================================
+ * Edge Equation v5.0 — chalkboard aesthetic
+ * Dark slate base + grid texture + soft chalk-blue glow accents.
+ * Math equations and "smudge" effects layered via decorative SVGs in
+ * components/ChalkboardBackground; this file sets the base canvas.
+ * ==================================================================== */
+
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+
+  html {
+    background-color: #0a1421;
+    color: #e2e8f0;
+  }
+
+  body {
+    /* Layered chalkboard surface: subtle grid lines + chalk dust glow.
+       Fixed attachment so the texture doesn't scroll with content. */
+    background-color: #0a1421;
+    background-image:
+      radial-gradient(ellipse at 25% 15%, rgba(56, 189, 248, 0.06), transparent 55%),
+      radial-gradient(ellipse at 80% 75%, rgba(255, 255, 255, 0.03), transparent 60%),
+      linear-gradient(rgba(255, 255, 255, 0.022) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.022) 1px, transparent 1px);
+    background-size: auto, auto, 40px 40px, 40px 40px;
+    background-attachment: fixed;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Fine chalk dust noise — barely-visible texture so cards don't sit on
+     a perfectly flat surface. Generated inline so no asset request. */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.35;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.04 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+    z-index: 0;
+  }
+
+  /* Smooth focus rings in brand color */
+  *:focus-visible {
+    outline: 2px solid #38bdf8;
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+}
+
+@layer components {
+  /* Chalk-style card — semi-transparent dark surface with subtle border
+     glow. Stacks cleanly on the chalkboard background. */
+  .chalk-card {
+    @apply rounded-lg bg-chalkboard-800/80 backdrop-blur-sm
+           border border-chalkboard-600/60
+           shadow-[0_4px_24px_rgba(0,0,0,0.35)]
+           relative z-10;
+  }
+
+  .chalk-card-elite {
+    @apply chalk-card;
+    box-shadow:
+      0 0 0 1px rgba(56, 189, 248, 0.5),
+      0 0 32px rgba(56, 189, 248, 0.18),
+      0 4px 24px rgba(0, 0, 0, 0.4);
+  }
+
+  /* Hand-drawn underline that sits beneath headlines. Light eraser-smudge
+     feel. Use on h1/h2 for accent. */
+  .chalk-underline::after {
+    content: "";
+    display: block;
+    margin-top: 0.35rem;
+    height: 6px;
+    width: 6rem;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 12' preserveAspectRatio='none'><path d='M2 8 Q 50 2 100 6 T 198 5' stroke='%2338bdf8' stroke-width='2.5' stroke-linecap='round' fill='none' opacity='0.85'/></svg>");
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+  }
+
+  /* Electric-blue text accent for inline highlights */
+  .accent-blue {
+    color: #38bdf8;
+  }
+
+  /* "Chalk" hand-drawn label for whimsical accents — used sparingly */
+  .chalk-handwritten {
+    font-family: var(--font-caveat), cursive;
+    color: #cbd5e1;
+    transform: rotate(-2deg);
+    display: inline-block;
+  }
+
+  /* Data table styling — clean and readable on the chalkboard */
+  .data-table {
+    @apply w-full text-sm border-collapse;
+  }
+  .data-table thead th {
+    @apply px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider
+           text-chalk-300 border-b border-chalkboard-600;
+  }
+  .data-table tbody td {
+    @apply px-3 py-2 border-b border-chalkboard-700/60;
+  }
+  .data-table tbody tr:hover {
+    @apply bg-chalkboard-700/40;
+  }
+
+  /* Primary CTA */
+  .btn-primary {
+    @apply inline-flex items-center gap-2 px-5 py-2.5 rounded-md
+           bg-elite text-chalkboard-950 font-semibold
+           hover:bg-sky-300 transition-colors
+           shadow-[0_0_24px_rgba(56,189,248,0.35)];
+  }
+
+  /* Secondary/ghost CTA */
+  .btn-ghost {
+    @apply inline-flex items-center gap-2 px-5 py-2.5 rounded-md
+           border border-chalkboard-600 text-chalk-100
+           hover:bg-chalkboard-800 hover:border-elite/60 transition-colors;
+  }
+}
