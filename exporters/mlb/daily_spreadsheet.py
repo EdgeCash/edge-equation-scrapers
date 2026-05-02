@@ -673,10 +673,21 @@ class DailySpreadsheet:
             odds_source=odds.get("source", "unknown"),
             slate_meta_by_matchup=slate_meta_by_matchup,
         )
+
+        # Grade any unsettled picks whose game has now completed. The
+        # backfill we just pulled covers everything through yesterday,
+        # so any picks dated yesterday-or-earlier should now have a
+        # graded result. Idempotent: already-graded picks are skipped.
+        grade_report = tracker.grade_resolved_picks(backfill)
+        if grade_report["graded"]:
+            print(f"  Graded {grade_report['graded']} resolved pick(s); "
+                  f"{grade_report['still_pending']} await game completion")
+
         clv_summary = tracker.summary()
         print(f"  CLV log: +{added} new picks, "
               f"{clv_summary['picks_with_close']}/{clv_summary['picks_total']} "
-              f"have closing snapshots")
+              f"have closing snapshots, "
+              f"{clv_summary['picks_graded']} graded")
         if clv_summary["picks_with_close"]:
             o = clv_summary["overall"]
             print(f"    overall CLV: {o['mean_clv_pct']:+.2f}% mean ({o['positive']}+ / {o['negative']}-)")
