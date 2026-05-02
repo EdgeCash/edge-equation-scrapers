@@ -64,10 +64,89 @@ def _norm_cdf(x: float) -> float:
 
 
 def prob_over(line: float, mean: float, sd: float) -> float:
-    """P(X > line) for X ~ Normal(mean, sd^2)."""
+    """P(X > line) for X ~ Normal(mean, sd^2). Kept for legacy callers
+    (margin distributions, etc.). Game/team totals should prefer the
+    Poisson form below since runs are non-negative integer counts.
+    """
     if sd <= 0:
         return 1.0 if mean > line else 0.0
     return 1.0 - _norm_cdf((line - mean) / sd)
+
+
+# ---------- Poisson helpers (count-distribution math) -------------------
+#
+# Runs in a baseball game are integer counts and right-skewed; modeling
+# them as Poisson is sharper than normal-CDF, especially in the tails
+# (very low or very high totals) where the normal approximation is worst.
+# Sum of independent Poissons is Poisson, so for a game total we can use
+# λ_total = λ_away + λ_home and stay closed-form.
+
+def poisson_pmf(k: int, lam: float) -> float:
+    """P(X = k) for X ~ Poisson(λ). Stable via log-gamma."""
+    if k < 0 or lam <= 0:
+        return 0.0
+    return math.exp(-lam + k * math.log(lam) - math.lgamma(k + 1))
+
+
+def poisson_cdf(k: int, lam: float) -> float:
+    """P(X <= k) for X ~ Poisson(λ). Direct PMF summation."""
+    if k < 0:
+        return 0.0
+    if lam <= 0:
+        return 1.0
+    total = 0.0
+    for i in range(k + 1):
+        total += poisson_pmf(i, lam)
+    return min(1.0, total)
+
+
+def prob_over_under_poisson(line: float, lam: float) -> tuple[float, float, float]:
+    """Returns (P(over), P(under), P(push)) for a Poisson-distributed
+    integer total at the given betting line.
+
+    Half-point lines (e.g. 8.5) have P(push)=0. Whole-number lines
+    (e.g. 9.0) put the PMF at the line into push.
+    """
+    if lam <= 0:
+        return (0.0, 1.0, 0.0)
+    threshold = math.floor(line)
+    p_le_threshold = poisson_cdf(threshold, lam)
+    p_over = 1.0 - p_le_threshold
+    if abs(line - round(line)) < 1e-9:  # whole-number line
+        p_push = poisson_pmf(int(line), lam)
+        p_under = p_le_threshold - p_push
+    else:
+        p_push = 0.0
+        p_under = p_le_threshold
+    return (p_over, p_under, p_push)
+
+
+def prob_margin_atleast_poisson(threshold: int, lam_a: float, lam_b: float) -> float:
+    """P(X - Y >= threshold) where X ~ Poisson(λ_a), Y ~ Poisson(λ_b).
+
+    X - Y follows a Skellam distribution. We compute the tail via direct
+    summation over Y rather than relying on Bessel functions:
+
+        P(X - Y >= t) = sum_{y >= 0} P(Y=y) * P(X >= y+t)
+
+    Truncated at y = mean(λ_b)+8σ for numerical efficiency; tail mass
+    beyond that is negligible for typical MLB λs (4-7).
+    """
+    if lam_a <= 0 and lam_b <= 0:
+        return 1.0 if threshold <= 0 else 0.0
+    y_max = max(20, int(lam_b + 8 * math.sqrt(lam_b)) + 5)
+    total = 0.0
+    for y in range(y_max + 1):
+        p_y = poisson_pmf(y, lam_b)
+        if p_y < 1e-12:
+            continue
+        x_min = y + threshold
+        if x_min <= 0:
+            p_x = 1.0
+        else:
+            p_x = 1.0 - poisson_cdf(x_min - 1, lam_a)
+        total += p_y * p_x
+    return min(1.0, max(0.0, total))
 
 
 class ProjectionModel:
@@ -303,18 +382,27 @@ class ProjectionModel:
         home_win_prob = _logistic(self.win_prob_slope * margin)
         away_win_prob = 1.0 - home_win_prob
 
-        # Run-line: probability the projected favorite covers -1.5
-        f5_margin = home_f5 - away_f5
+        # Run-line cover probability via Skellam tail (Poisson - Poisson).
+        # For -1.5 favorite cover we need the favorite's run count to
+        # exceed the underdog's by at least 2. This is sharper than the
+        # normal CDF on margin since runs are integer counts.
         if margin >= 0:
-            rl_cover_prob = prob_over(1.5, margin, self.margin_sd)
+            rl_cover_prob = prob_margin_atleast_poisson(2, home_runs, away_runs)
         else:
-            rl_cover_prob = prob_over(1.5, -margin, self.margin_sd)
+            rl_cover_prob = prob_margin_atleast_poisson(2, away_runs, home_runs)
 
-        # First 5: win probability for the projected F5 favorite
-        if f5_margin > 0:
-            f5_win_prob = 1 - _norm_cdf(-f5_margin / self.f5_margin_sd)
-        elif f5_margin < 0:
-            f5_win_prob = 1 - _norm_cdf(f5_margin / self.f5_margin_sd)
+        # First 5 winner probability — same Skellam-tail approach using
+        # F5 lambdas. PUSH (0 margin) lands in neither side.
+        f5_margin = home_f5 - away_f5
+        if home_f5 > 0 or away_f5 > 0:
+            home_f5_wins = prob_margin_atleast_poisson(1, home_f5, away_f5)
+            away_f5_wins = prob_margin_atleast_poisson(1, away_f5, home_f5)
+            if f5_margin > 0:
+                f5_win_prob = home_f5_wins
+            elif f5_margin < 0:
+                f5_win_prob = away_f5_wins
+            else:
+                f5_win_prob = max(home_f5_wins, away_f5_wins)
         else:
             f5_win_prob = 0.5
 

@@ -43,6 +43,7 @@ from scrapers.mlb.mlb_weather_scraper import MLBWeatherScraper
 from exporters.mlb.projections import (
     ProjectionModel,
     prob_over,
+    prob_over_under_poisson,
     TOTAL_SD,
     TEAM_TOTAL_SD,
     F5_TOTAL_SD,
@@ -80,11 +81,16 @@ def _ou_label(actual: float, line: float) -> str:
 
 
 def _best_total_kelly(mean: float, lines: tuple[float, ...], sd: float) -> dict:
-    """Pick the (line, side) with the highest half-Kelly fraction at the default price."""
+    """Pick the (line, side) with the highest half-Kelly at the default price.
+
+    Uses Poisson distribution (runs are non-negative integer counts) so
+    half-point lines have P(push)=0 and whole-number lines correctly
+    isolate the push probability.
+    """
     best = None
     for line in lines:
-        p_over = prob_over(line, mean, sd)
-        for side, prob in (("OVER", p_over), ("UNDER", 1 - p_over)):
+        p_over, p_under, _push = prob_over_under_poisson(line, mean)
+        for side, prob in (("OVER", p_over), ("UNDER", p_under)):
             adv = kelly_advice(prob)
             if best is None or adv["kelly_pct"] > best["kelly_pct"]:
                 best = {**adv, "line": line, "side": side}
@@ -98,19 +104,19 @@ def _market_total_kelly(
 ) -> dict | None:
     """Best Kelly across whichever totals lines the book is actually offering.
 
-    Optimizes for half-Kelly fraction (which is edge-proportional for any
-    fixed price). Returns the (line, side) combo with the highest edge
-    plus the corresponding edge_pct in the result.
+    Uses Poisson distribution for the totals model. Optimizes half-Kelly
+    fraction (edge-proportional at fixed price). Returns the (line, side)
+    combo with the highest edge plus its edge_pct.
     """
     best = None
     for offer in market_totals:
         line = offer.get("point")
         if line is None:
             continue
-        p_over = prob_over(line, mean, sd)
+        p_over, p_under, _push = prob_over_under_poisson(line, mean)
         for side_key, side_label, prob in (
             ("over", "OVER", p_over),
-            ("under", "UNDER", 1 - p_over),
+            ("under", "UNDER", p_under),
         ):
             price = offer.get(side_key)
             if not price:

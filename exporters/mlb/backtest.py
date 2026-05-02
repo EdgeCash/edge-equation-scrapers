@@ -23,7 +23,9 @@ from collections import defaultdict
 from datetime import datetime
 from typing import Iterable
 
-from exporters.mlb.projections import ProjectionModel, prob_over, TOTAL_SD, TEAM_TOTAL_SD
+from exporters.mlb.projections import (
+    ProjectionModel, prob_over, prob_over_under_poisson, TOTAL_SD, TEAM_TOTAL_SD,
+)
 
 
 FLAT_DECIMAL_ODDS = 1.909  # -110
@@ -198,8 +200,8 @@ class BacktestEngine:
         actual = game["total"]
         for line in TOTAL_LINES:
             pick_side = "OVER" if proj["total_proj"] > line else "UNDER"
-            p_over = prob_over(line, proj["total_proj"], TOTAL_SD)
-            prob = p_over if pick_side == "OVER" else 1 - p_over
+            p_over, p_under, _push = prob_over_under_poisson(line, proj["total_proj"])
+            prob = p_over if pick_side == "OVER" else p_under
             push = actual == line
             won = (actual > line) if pick_side == "OVER" else (actual < line)
             out.append(self._bet_record(
@@ -242,8 +244,8 @@ class BacktestEngine:
         ):
             for line in TEAM_TOTAL_LINES:
                 pick_side = "OVER" if runs_proj > line else "UNDER"
-                p_over = prob_over(line, runs_proj, TEAM_TOTAL_SD)
-                prob = p_over if pick_side == "OVER" else 1 - p_over
+                p_over, p_under, _push = prob_over_under_poisson(line, runs_proj)
+                prob = p_over if pick_side == "OVER" else p_under
                 push = runs_actual == line
                 won = (runs_actual > line) if pick_side == "OVER" else (runs_actual < line)
                 out.append(self._bet_record(
