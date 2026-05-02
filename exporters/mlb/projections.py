@@ -149,6 +149,95 @@ def prob_margin_atleast_poisson(threshold: int, lam_a: float, lam_b: float) -> f
     return min(1.0, max(0.0, total))
 
 
+# ---------- Negative Binomial helpers (over-dispersed counts) ------------
+#
+# Real MLB run totals are over-dispersed: empirical variance > mean.
+# Calibrated total_sd from backtest residuals is ~4.6 on a typical mean
+# of ~9 runs (variance 21, dispersion ratio 2.36). Poisson assumes
+# variance = mean, which makes our probabilities overconfident — Phase 1
+# discovered this when 13-20% "edges" appeared on totals (real markets
+# don't leave that on the table).
+#
+# Negative Binomial parameterized by (mean μ, dispersion r):
+#     mean      = μ
+#     variance  = μ + μ²/r
+# Solve for r given mean and target variance:
+#     r = μ² / (variance − μ)        when variance > μ
+# As r → ∞, NegBin collapses to Poisson.
+
+def negbin_pmf(k: int, mu: float, r: float) -> float:
+    """P(X = k) for NegBin parameterized by (mean μ, dispersion r)."""
+    if k < 0 or mu <= 0 or r <= 0:
+        return 0.0
+    log_pmf = (
+        math.lgamma(k + r) - math.lgamma(r) - math.lgamma(k + 1)
+        + r * math.log(r / (r + mu))
+        + k * math.log(mu / (r + mu))
+    )
+    return math.exp(log_pmf)
+
+
+def negbin_cdf(k: int, mu: float, r: float) -> float:
+    """P(X <= k) for NegBin(mean=μ, dispersion=r). Direct PMF summation."""
+    if k < 0:
+        return 0.0
+    if mu <= 0:
+        return 1.0
+    total = 0.0
+    for i in range(k + 1):
+        total += negbin_pmf(i, mu, r)
+    return min(1.0, total)
+
+
+def dispersion_from_sd(mu: float, sd: float) -> float | None:
+    """Solve for NegBin dispersion r given mean and target SD.
+
+    Returns None when the data is NOT over-dispersed (variance ≤ mean),
+    signaling callers to fall back to Poisson.
+    """
+    if mu <= 0 or sd <= 0:
+        return None
+    variance = sd * sd
+    if variance <= mu:
+        return None
+    return mu * mu / (variance - mu)
+
+
+def prob_over_under_negbin(
+    line: float, mu: float, r: float,
+) -> tuple[float, float, float]:
+    """Returns (P(over), P(under), P(push)) for an over-dispersed
+    NegBin(μ, r) integer total at the given betting line.
+    """
+    if mu <= 0 or r is None or r <= 0:
+        return (0.0, 1.0, 0.0)
+    threshold = math.floor(line)
+    p_le_threshold = negbin_cdf(threshold, mu, r)
+    p_over = 1.0 - p_le_threshold
+    if abs(line - round(line)) < 1e-9:
+        p_push = negbin_pmf(int(line), mu, r)
+        p_under = p_le_threshold - p_push
+    else:
+        p_push = 0.0
+        p_under = p_le_threshold
+    return (p_over, p_under, p_push)
+
+
+def prob_over_under_smart(
+    line: float, mu: float, sd: float | None,
+) -> tuple[float, float, float]:
+    """Pick NegBin when calibrated SD implies over-dispersion; otherwise
+    Poisson. Caller passes the calibrated empirical SD; we derive
+    dispersion per-projection so r tracks the actual mean.
+    """
+    if sd is None or sd <= 0:
+        return prob_over_under_poisson(line, mu)
+    r = dispersion_from_sd(mu, sd)
+    if r is None:
+        return prob_over_under_poisson(line, mu)
+    return prob_over_under_negbin(line, mu, r)
+
+
 class ProjectionModel:
     """Aggregates per-team stats and projects matchup outcomes.
 
@@ -382,27 +471,20 @@ class ProjectionModel:
         home_win_prob = _logistic(self.win_prob_slope * margin)
         away_win_prob = 1.0 - home_win_prob
 
-        # Run-line cover probability via Skellam tail (Poisson - Poisson).
-        # For -1.5 favorite cover we need the favorite's run count to
-        # exceed the underdog's by at least 2. This is sharper than the
-        # normal CDF on margin since runs are integer counts.
+        # Run-line cover probability — normal CDF on margin with the
+        # calibrated empirical margin_sd. Counts (Poisson Skellam) would
+        # be tighter in the tails than reality; the calibrated SD is the
+        # honest dispersion estimate. Same logic for F5 win prob.
         if margin >= 0:
-            rl_cover_prob = prob_margin_atleast_poisson(2, home_runs, away_runs)
+            rl_cover_prob = prob_over(1.5, margin, self.margin_sd)
         else:
-            rl_cover_prob = prob_margin_atleast_poisson(2, away_runs, home_runs)
+            rl_cover_prob = prob_over(1.5, -margin, self.margin_sd)
 
-        # First 5 winner probability — same Skellam-tail approach using
-        # F5 lambdas. PUSH (0 margin) lands in neither side.
         f5_margin = home_f5 - away_f5
-        if home_f5 > 0 or away_f5 > 0:
-            home_f5_wins = prob_margin_atleast_poisson(1, home_f5, away_f5)
-            away_f5_wins = prob_margin_atleast_poisson(1, away_f5, home_f5)
-            if f5_margin > 0:
-                f5_win_prob = home_f5_wins
-            elif f5_margin < 0:
-                f5_win_prob = away_f5_wins
-            else:
-                f5_win_prob = max(home_f5_wins, away_f5_wins)
+        if f5_margin > 0:
+            f5_win_prob = 1 - _norm_cdf(-f5_margin / self.f5_margin_sd)
+        elif f5_margin < 0:
+            f5_win_prob = 1 - _norm_cdf(f5_margin / self.f5_margin_sd)
         else:
             f5_win_prob = 0.5
 
