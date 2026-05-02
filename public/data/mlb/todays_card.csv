@@ -1,102 +1,102 @@
-section,date,matchup,starting_pitchers,bet_type,pick,model_prob,fair_odds_dec,market_odds_dec,market_odds_american,book,edge_pct,kelly_pct,kelly_advice
-projection,2026-05-02,AZ@CHC,A: Ryne Nelson · H: Shota Imanaga,totals,OVER 7.0,0.689,1.452,1.85,-118,draftkings,14.83,5.0,2u
-projection,2026-05-02,MIL@WSH,A: Kyle Harrison · H: Foster Griffin,totals,OVER 7.5,0.664,1.506,1.93,-108,mybookieag,14.58,5.0,2u
-projection,2026-05-02,CLE@ATH,A: Slade Cecconi · H: Jacob Lopez,totals,UNDER 10.5,0.641,1.561,1.88,-114,fanduel,10.88,5.0,2u
-projection,2026-05-02,TEX@DET,A: Kumar Rocker · H: Keider Montero,totals,UNDER 8.0,0.596,1.678,2.0,100,betmgm,9.6,5.0,2u
-projection,2026-05-02,PHI@MIA,A: Andrew Painter · H: Max Meyer,totals,UNDER 8.5,0.555,1.801,2.09,109,lowvig,7.68,5.0,2u
-projection,2026-05-02,AZ@CHC,A: Ryne Nelson · H: Shota Imanaga,run_line,CHC,0.488,2.049,2.41,141,lowvig,7.31,5.0,2u
-projection,2026-05-02,HOU@BOS,A: Spencer Arrighetti · H: Connelly Early,totals,OVER 9.0,0.571,1.752,1.98,-102,betmgm,6.56,5.0,2u
-projection,2026-05-02,CIN@PIT,A: Rhett Lowder · H: Carmen Mlodzinski,totals,UNDER 8.0,0.557,1.796,2.0,100,lowvig,5.69,5.0,2u
-projection,2026-05-02,LAD@STL,A: Roki Sasaki · H: Michael McGreevy,moneyline,STL,0.517,1.934,2.17,117,betus,5.62,5.0,2u
-projection,2026-05-02,LAD@STL,A: Roki Sasaki · H: Michael McGreevy,totals,OVER 8.5,0.593,1.685,1.85,-118,lowvig,5.3,5.0,2u
-backfill,2026-05-02,KC@SEA,A: Seth Lugo · H: Emerson Hancock,totals,OVER 8.0,0.529,1.889,2.0,100,betmgm,2.94,2.94,1u
-backfill,2026-05-02,SF@TB,A: Landen Roupp · H: Griffin Jax,moneyline,SF,0.545,1.835,1.93,-108,mybookieag,2.69,2.79,1u
-backfill,2026-05-02,PHI@MIA,A: Andrew Painter · H: Max Meyer,run_line,MIA,0.401,2.494,2.65,165,betmgm,2.36,1.9,1u
-backfill,2026-05-02,NYM@LAA,A: Nolan McLean · H: Reid Detmers,totals,OVER 8.0,0.5,2.0,2.07,107,lowvig,1.69,1.64,1u
-backfill,2026-05-02,SF@TB,A: Landen Roupp · H: Griffin Jax,totals,OVER 7.5,0.519,1.927,1.98,-102,lowvig,1.4,1.41,0.5u
-backfill,2026-05-02,MIL@WSH,A: Kyle Harrison · H: Foster Griffin,moneyline,MIL,0.57,1.754,1.78,-128,lowvig,0.82,0.94,0.5u
-backfill,2026-05-02,CIN@PIT,A: Rhett Lowder · H: Carmen Mlodzinski,run_line,PIT,0.385,2.597,2.65,165,betmgm,0.76,0.61,0.5u
-backfill,2026-05-02,HOU@BOS,A: Spencer Arrighetti · H: Connelly Early,run_line,BOS,0.385,2.597,2.65,165,betmgm,0.76,0.61,0.5u
-backfill,2026-05-02,TOR@MIN,A: Dylan Cease · H: Connor Prielipp,totals,OVER 7.5,0.541,1.847,1.87,-115,mybookieag,0.67,0.72,0.5u
-backfill,2026-05-02,BAL@NYY,A: Kyle Bradish · H: Ryan Weathers,totals,OVER 8.5,0.528,1.895,1.91,-110,lowvig,0.41,0.43,PASS
-backfill,2026-05-02,TEX@DET,A: Kumar Rocker · H: Keider Montero,run_line,DET,0.371,2.695,2.65,165,betrivers,-0.64,0.0,PASS
-backfill,2026-05-02,KC@SEA,A: Seth Lugo · H: Emerson Hancock,run_line,SEA,0.369,2.71,2.65,165,betmgm,-0.84,0.0,PASS
-backfill,2026-05-02,AZ@CHC,A: Ryne Nelson · H: Shota Imanaga,moneyline,CHC,0.595,1.681,1.64,-156,betonlineag,-1.48,0.0,PASS
-backfill,2026-05-02,NYM@LAA,A: Nolan McLean · H: Reid Detmers,run_line,NYM,0.394,2.538,2.4,140,betmgm,-2.27,0.0,PASS
-backfill,2026-05-02,NYM@LAA,A: Nolan McLean · H: Reid Detmers,moneyline,NYM,0.522,1.916,1.81,-123,lowvig,-3.05,0.0,PASS
-backfill,2026-05-02,PHI@MIA,A: Andrew Painter · H: Max Meyer,moneyline,MIA,0.527,1.898,1.79,-127,betrivers,-3.17,0.0,PASS
-backfill,2026-05-02,TOR@MIN,A: Dylan Cease · H: Connor Prielipp,run_line,TOR,0.391,2.558,2.36,136,lowvig,-3.27,0.0,PASS
-backfill,2026-05-02,CLE@ATH,A: Slade Cecconi · H: Jacob Lopez,run_line,ATH,0.371,2.695,2.45,145,bovada,-3.72,0.0,PASS
-backfill,2026-05-02,TOR@MIN,A: Dylan Cease · H: Connor Prielipp,moneyline,TOR,0.519,1.927,1.78,-128,lowvig,-4.28,0.0,PASS
-backfill,2026-05-02,CIN@PIT,A: Rhett Lowder · H: Carmen Mlodzinski,moneyline,PIT,0.515,1.942,1.78,-128,betonlineag,-4.68,0.0,PASS
-backfill,2026-05-02,HOU@BOS,A: Spencer Arrighetti · H: Connelly Early,moneyline,BOS,0.514,1.946,1.77,-130,fanatics,-5.1,0.0,PASS
-backfill,2026-05-02,BAL@NYY,A: Kyle Bradish · H: Ryan Weathers,run_line,NYY,0.407,2.457,2.18,118,betmgm,-5.17,0.0,PASS
-backfill,2026-05-02,TEX@DET,A: Kumar Rocker · H: Keider Montero,moneyline,DET,0.503,1.988,1.77,-130,fanduel,-6.2,0.0,PASS
-backfill,2026-05-02,CLE@ATH,A: Slade Cecconi · H: Jacob Lopez,moneyline,ATH,0.503,1.988,1.76,-132,lowvig,-6.52,0.0,PASS
-backfill,2026-05-02,CWS@SD,A: Sean Burke · H: Michael King,run_line,SD,0.373,2.681,2.25,125,betrivers,-7.14,0.0,PASS
-backfill,2026-05-02,KC@SEA,A: Seth Lugo · H: Emerson Hancock,moneyline,SEA,0.501,1.996,1.72,-139,lowvig,-8.04,0.0,PASS
-backfill,2026-05-02,BAL@NYY,A: Kyle Bradish · H: Ryan Weathers,moneyline,NYY,0.532,1.88,1.6,-167,betonlineag,-9.3,0.0,PASS
-backfill,2026-05-02,ATL@COL,A: Chris Sale,moneyline,ATL,0.565,1.77,1.47,-213,betus,-11.53,0.0,PASS
-backfill,2026-05-02,ATL@COL,A: Chris Sale,run_line,ATL,0.449,2.227,1.75,-133,lowvig,-12.24,0.0,PASS
-backfill,2026-05-02,CWS@SD,A: Sean Burke · H: Michael King,moneyline,SD,0.505,1.98,1.57,-175,betonlineag,-13.19,0.0,PASS
-backfill,2026-05-02,LAD@STL,A: Roki Sasaki · H: Michael McGreevy,run_line,STL,0.388,2.577,,,,,0.0,PASS
-backfill,2026-05-02,BAL@NYY,A: Kyle Bradish · H: Ryan Weathers,first_5,NYY,0.544,1.838,,,,,2.12,1u
-backfill,2026-05-02,TOR@MIN,A: Dylan Cease · H: Connor Prielipp,first_5,TOR,0.522,1.916,,,,,0.0,PASS
-backfill,2026-05-02,AZ@CHC,A: Ryne Nelson · H: Shota Imanaga,first_5,CHC,0.606,1.65,,,,,5.0,2u
-backfill,2026-05-02,CLE@ATH,A: Slade Cecconi · H: Jacob Lopez,first_5,ATH,0.524,1.908,,,,,0.02,PASS
-backfill,2026-05-02,CIN@PIT,A: Rhett Lowder · H: Carmen Mlodzinski,first_5,PIT,0.523,1.912,,,,,0.0,PASS
-backfill,2026-05-02,MIL@WSH,A: Kyle Harrison · H: Foster Griffin,first_5,MIL,0.559,1.789,,,,,3.69,2u
-backfill,2026-05-02,HOU@BOS,A: Spencer Arrighetti · H: Connelly Early,first_5,HOU,0.561,1.783,,,,,3.9,2u
-backfill,2026-05-02,PHI@MIA,A: Andrew Painter · H: Max Meyer,first_5,MIA,0.542,1.845,,,,,1.91,1u
-backfill,2026-05-02,SF@TB,A: Landen Roupp · H: Griffin Jax,first_5,SF,0.544,1.838,,,,,2.12,1u
-backfill,2026-05-02,LAD@STL,A: Roki Sasaki · H: Michael McGreevy,first_5,STL,0.538,1.859,,,,,1.49,0.5u
-backfill,2026-05-02,TEX@DET,A: Kumar Rocker · H: Keider Montero,first_5,DET,0.521,1.919,,,,,0.0,PASS
-backfill,2026-05-02,ATL@COL,A: Chris Sale,first_5,ATL,0.543,1.842,,,,,2.01,1u
-backfill,2026-05-02,CWS@SD,A: Sean Burke · H: Michael King,first_5,CWS,0.534,1.873,,,,,1.07,0.5u
-backfill,2026-05-02,NYM@LAA,A: Nolan McLean · H: Reid Detmers,first_5,NYM,0.513,1.949,,,,,0.0,PASS
-backfill,2026-05-02,KC@SEA,A: Seth Lugo · H: Emerson Hancock,first_5,SEA,0.51,1.961,,,,,0.0,PASS
-backfill,2026-05-02,BAL@NYY,A: Kyle Bradish · H: Ryan Weathers,first_inning,NRFI,0.513,1.949,,,,,0.0,PASS
-backfill,2026-05-02,TOR@MIN,A: Dylan Cease · H: Connor Prielipp,first_inning,NRFI,0.568,1.761,,,,,4.64,2u
-backfill,2026-05-02,AZ@CHC,A: Ryne Nelson · H: Shota Imanaga,first_inning,NRFI,0.558,1.792,,,,,3.59,2u
-backfill,2026-05-02,CLE@ATH,A: Slade Cecconi · H: Jacob Lopez,first_inning,YRFI,0.531,1.883,,,,,0.75,0.5u
-backfill,2026-05-02,CIN@PIT,A: Rhett Lowder · H: Carmen Mlodzinski,first_inning,NRFI,0.503,1.988,,,,,0.0,PASS
-backfill,2026-05-02,MIL@WSH,A: Kyle Harrison · H: Foster Griffin,first_inning,NRFI,0.501,1.996,,,,,0.0,PASS
-backfill,2026-05-02,HOU@BOS,A: Spencer Arrighetti · H: Connelly Early,first_inning,YRFI,0.509,1.965,,,,,0.0,PASS
-backfill,2026-05-02,PHI@MIA,A: Andrew Painter · H: Max Meyer,first_inning,YRFI,0.509,1.965,,,,,0.0,PASS
-backfill,2026-05-02,SF@TB,A: Landen Roupp · H: Griffin Jax,first_inning,NRFI,0.59,1.695,,,,,5.0,2u
-backfill,2026-05-02,LAD@STL,A: Roki Sasaki · H: Michael McGreevy,first_inning,YRFI,0.508,1.969,,,,,0.0,PASS
-backfill,2026-05-02,TEX@DET,A: Kumar Rocker · H: Keider Montero,first_inning,NRFI,0.544,1.838,,,,,2.12,1u
-backfill,2026-05-02,ATL@COL,A: Chris Sale,first_inning,YRFI,0.517,1.934,,,,,0.0,PASS
-backfill,2026-05-02,CWS@SD,A: Sean Burke · H: Michael King,first_inning,NRFI,0.601,1.664,,,,,5.0,2u
-backfill,2026-05-02,NYM@LAA,A: Nolan McLean · H: Reid Detmers,first_inning,YRFI,0.516,1.938,,,,,0.0,PASS
-backfill,2026-05-02,KC@SEA,A: Seth Lugo · H: Emerson Hancock,first_inning,YRFI,0.506,1.976,,,,,0.0,PASS
-backfill,2026-05-02,BAL vs NYY,vs Ryan Weathers,team_totals,OVER 3.5,0.584,1.712,,,,,5.0,2u
-backfill,2026-05-02,NYY vs BAL,vs Kyle Bradish,team_totals,OVER 3.5,0.639,1.564,,,,,5.0,2u
-backfill,2026-05-02,TOR vs MIN,vs Connor Prielipp,team_totals,OVER 3.5,0.577,1.734,,,,,5.0,2u
-backfill,2026-05-02,MIN vs TOR,vs Dylan Cease,team_totals,UNDER 4.5,0.581,1.723,,,,,5.0,2u
-backfill,2026-05-02,AZ vs CHC,vs Shota Imanaga,team_totals,UNDER 4.5,0.568,1.76,,,,,4.66,2u
-backfill,2026-05-02,CHC vs AZ,vs Ryne Nelson,team_totals,OVER 3.5,0.715,1.398,,,,,5.0,2u
-backfill,2026-05-02,CLE vs ATH,vs Jacob Lopez,team_totals,OVER 3.5,0.611,1.637,,,,,5.0,2u
-backfill,2026-05-02,ATH vs CLE,vs Slade Cecconi,team_totals,OVER 3.5,0.616,1.625,,,,,5.0,2u
-backfill,2026-05-02,CIN vs PIT,vs Carmen Mlodzinski,team_totals,UNDER 4.5,0.614,1.628,,,,,5.0,2u
-backfill,2026-05-02,PIT vs CIN,vs Rhett Lowder,team_totals,UNDER 4.5,0.589,1.698,,,,,5.0,2u
-backfill,2026-05-02,MIL vs WSH,vs Foster Griffin,team_totals,OVER 3.5,0.706,1.417,,,,,5.0,2u
-backfill,2026-05-02,WSH vs MIL,vs Kyle Harrison,team_totals,OVER 3.5,0.589,1.698,,,,,5.0,2u
-backfill,2026-05-02,HOU vs BOS,vs Connelly Early,team_totals,OVER 3.5,0.659,1.518,,,,,5.0,2u
-backfill,2026-05-02,BOS vs HOU,vs Spencer Arrighetti,team_totals,OVER 3.5,0.682,1.467,,,,,5.0,2u
-backfill,2026-05-02,PHI vs MIA,vs Max Meyer,team_totals,UNDER 4.5,0.595,1.68,,,,,5.0,2u
-backfill,2026-05-02,MIA vs PHI,vs Andrew Painter,team_totals,OVER 3.5,0.578,1.73,,,,,5.0,2u
-backfill,2026-05-02,SF vs TB,vs Griffin Jax,team_totals,OVER 3.5,0.584,1.712,,,,,5.0,2u
-backfill,2026-05-02,TB vs SF,vs Landen Roupp,team_totals,UNDER 4.5,0.618,1.618,,,,,5.0,2u
-backfill,2026-05-02,LAD vs STL,vs Michael McGreevy,team_totals,OVER 3.5,0.644,1.553,,,,,5.0,2u
-backfill,2026-05-02,STL vs LAD,vs Roki Sasaki,team_totals,OVER 3.5,0.67,1.492,,,,,5.0,2u
-backfill,2026-05-02,TEX vs DET,vs Keider Montero,team_totals,UNDER 4.5,0.632,1.582,,,,,5.0,2u
-backfill,2026-05-02,DET vs TEX,vs Kumar Rocker,team_totals,UNDER 4.5,0.626,1.597,,,,,5.0,2u
-backfill,2026-05-02,ATL vs COL,,team_totals,OVER 3.5,0.751,1.331,,,,,5.0,2u
-backfill,2026-05-02,COL vs ATL,vs Chris Sale,team_totals,OVER 3.5,0.651,1.536,,,,,5.0,2u
-backfill,2026-05-02,CWS vs SD,vs Michael King,team_totals,OVER 3.5,0.584,1.712,,,,,5.0,2u
-backfill,2026-05-02,SD vs CWS,vs Sean Burke,team_totals,OVER 3.5,0.593,1.687,,,,,5.0,2u
-backfill,2026-05-02,NYM vs LAA,vs Reid Detmers,team_totals,OVER 3.5,0.581,1.723,,,,,5.0,2u
-backfill,2026-05-02,LAA vs NYM,vs Nolan McLean,team_totals,UNDER 4.5,0.582,1.719,,,,,5.0,2u
-backfill,2026-05-02,KC vs SEA,vs Emerson Hancock,team_totals,OVER 3.5,0.582,1.719,,,,,5.0,2u
-backfill,2026-05-02,SEA vs KC,vs Seth Lugo,team_totals,OVER 3.5,0.584,1.712,,,,,5.0,2u
+section,date,matchup,starting_pitchers,bet_type,pick,model_prob,fair_odds_dec,market_odds_dec,market_odds_american,book,edge_pct,kelly_pct,kelly_advice,portfolio_scaled_from
+projection,2026-05-02,MIL@WSH,A: Kyle Harrison · H: Foster Griffin,totals,OVER 7.5,0.739,1.354,1.88,-114,lowvig,20.66,5.0,2u,
+projection,2026-05-02,AZ@CHC,A: Ryne Nelson · H: Shota Imanaga,totals,OVER 7.0,0.714,1.4,1.83,-120,fanatics,16.79,3.0,1u,5.0
+projection,2026-05-02,CIN@PIT,A: Rhett Lowder · H: Carmen Mlodzinski,totals,UNDER 8.5,0.684,1.462,1.83,-120,fanatics,13.74,5.0,2u,
+projection,2026-05-02,PHI@MIA,A: Andrew Painter · H: Max Meyer,totals,UNDER 8.5,0.612,1.634,2.09,109,lowvig,13.36,5.0,2u,
+projection,2026-05-02,TEX@DET,A: Kumar Rocker · H: Keider Montero,totals,UNDER 8.0,0.617,1.622,2.0,100,betmgm,11.66,5.0,2u,
+projection,2026-05-02,CLE@ATH,A: Slade Cecconi · H: Jacob Lopez,totals,UNDER 10.0,0.594,1.684,1.95,-105,betrivers,8.12,5.0,2u,
+projection,2026-05-02,LAD@STL,A: Roki Sasaki · H: Michael McGreevy,totals,OVER 8.5,0.617,1.621,1.85,-118,lowvig,7.62,5.0,2u,
+projection,2026-05-02,CWS@SD,A: Sean Burke · H: Michael King,totals,OVER 7.5,0.605,1.652,1.87,-115,betmgm,7.05,5.0,2u,
+projection,2026-05-02,ATL@COL,A: Chris Sale,totals,OVER 9.5,0.62,1.612,1.81,-123,fanduel,6.78,5.0,2u,
+projection,2026-05-02,AZ@CHC,A: Ryne Nelson · H: Shota Imanaga,run_line,CHC,0.481,2.079,2.41,141,lowvig,6.61,3.0,1u,5.0
+backfill,2026-05-02,SF@TB,A: Landen Roupp · H: Griffin Jax,moneyline,SF,0.545,1.835,1.9,-111,betonlineag,1.87,1.97,1u,
+backfill,2026-05-02,TOR@MIN,A: Dylan Cease · H: Connor Prielipp,totals,OVER 7.5,0.565,1.77,1.83,-120,betus,1.86,2.05,1u,
+backfill,2026-05-02,MIL@WSH,A: Kyle Harrison · H: Foster Griffin,run_line,MIL,0.434,2.304,2.36,136,fanduel,1.03,0.89,0.5u,
+backfill,2026-05-02,MIL@WSH,A: Kyle Harrison · H: Foster Griffin,moneyline,MIL,0.571,1.751,1.78,-128,lowvig,0.92,1.05,0.5u,
+backfill,2026-05-02,SF@TB,A: Landen Roupp · H: Griffin Jax,totals,OVER 7.5,0.507,1.971,1.98,-102,lowvig,0.23,0.23,PASS,
+backfill,2026-05-02,NYM@LAA,A: Nolan McLean · H: Reid Detmers,totals,OVER 7.5,0.547,1.828,1.83,-120,bovada,0.06,0.07,PASS,
+backfill,2026-05-02,AZ@CHC,A: Ryne Nelson · H: Shota Imanaga,moneyline,CHC,0.596,1.678,1.64,-156,betonlineag,-1.38,0.0,PASS,
+backfill,2026-05-02,SF@TB,A: Landen Roupp · H: Griffin Jax,run_line,SF,0.374,2.674,2.55,155,betrivers,-1.82,0.0,PASS,
+backfill,2026-05-02,NYM@LAA,A: Nolan McLean · H: Reid Detmers,moneyline,NYM,0.522,1.916,1.83,-120,lowvig,-2.44,0.0,PASS,
+backfill,2026-05-02,PHI@MIA,A: Andrew Painter · H: Max Meyer,moneyline,MIA,0.527,1.898,1.79,-127,betrivers,-3.17,0.0,PASS,
+backfill,2026-05-02,PHI@MIA,A: Andrew Painter · H: Max Meyer,run_line,MIA,0.342,2.924,2.65,165,betmgm,-3.54,0.0,PASS,
+backfill,2026-05-02,CIN@PIT,A: Rhett Lowder · H: Carmen Mlodzinski,moneyline,PIT,0.515,1.942,1.79,-127,betus,-4.37,0.0,PASS,
+backfill,2026-05-02,HOU@BOS,A: Spencer Arrighetti · H: Connelly Early,run_line,BOS,0.337,2.967,2.6,160,bovada,-4.76,0.0,PASS,
+backfill,2026-05-02,TOR@MIN,A: Dylan Cease · H: Connor Prielipp,moneyline,TOR,0.519,1.927,1.76,-132,fanduel,-4.92,0.0,PASS,
+backfill,2026-05-02,HOU@BOS,A: Spencer Arrighetti · H: Connelly Early,moneyline,BOS,0.514,1.946,1.77,-130,fanatics,-5.1,0.0,PASS,
+backfill,2026-05-02,TEX@DET,A: Kumar Rocker · H: Keider Montero,moneyline,DET,0.503,1.988,1.78,-128,betus,-5.88,0.0,PASS,
+backfill,2026-05-02,CLE@ATH,A: Slade Cecconi · H: Jacob Lopez,moneyline,ATH,0.503,1.988,1.77,-130,betmgm,-6.2,0.0,PASS,
+backfill,2026-05-02,CIN@PIT,A: Rhett Lowder · H: Carmen Mlodzinski,run_line,PIT,0.312,3.205,2.65,165,betmgm,-6.54,0.0,PASS,
+backfill,2026-05-02,KC@SEA,A: Seth Lugo · H: Emerson Hancock,run_line,SEA,0.3,3.333,2.65,165,betmgm,-7.74,0.0,PASS,
+backfill,2026-05-02,KC@SEA,A: Seth Lugo · H: Emerson Hancock,moneyline,SEA,0.501,1.996,1.72,-139,lowvig,-8.04,0.0,PASS,
+backfill,2026-05-02,NYM@LAA,A: Nolan McLean · H: Reid Detmers,run_line,NYM,0.333,3.003,2.4,140,betmgm,-8.37,0.0,PASS,
+backfill,2026-05-02,BAL@NYY,A: Kyle Bradish · H: Ryan Weathers,moneyline,NYY,0.533,1.876,1.62,-161,betonlineag,-8.43,0.0,PASS,
+backfill,2026-05-02,TEX@DET,A: Kumar Rocker · H: Keider Montero,run_line,DET,0.285,3.509,2.65,165,betrivers,-9.24,0.0,PASS,
+backfill,2026-05-02,BAL@NYY,A: Kyle Bradish · H: Ryan Weathers,run_line,NYY,0.362,2.762,2.2,120,betrivers,-9.25,0.0,PASS,
+backfill,2026-05-02,CLE@ATH,A: Slade Cecconi · H: Jacob Lopez,run_line,ATH,0.31,3.226,2.44,144,lowvig,-9.98,0.0,PASS,
+backfill,2026-05-02,TOR@MIN,A: Dylan Cease · H: Connor Prielipp,run_line,TOR,0.33,3.03,2.3,130,fanduel,-10.48,0.0,PASS,
+backfill,2026-05-02,ATL@COL,A: Chris Sale,moneyline,ATL,0.566,1.767,1.48,-208,betus,-10.97,0.0,PASS,
+backfill,2026-05-02,CWS@SD,A: Sean Burke · H: Michael King,moneyline,SD,0.505,1.98,1.57,-175,betonlineag,-13.19,0.0,PASS,
+backfill,2026-05-02,CWS@SD,A: Sean Burke · H: Michael King,run_line,SD,0.307,3.257,2.25,125,betrivers,-13.74,0.0,PASS,
+backfill,2026-05-02,ATL@COL,A: Chris Sale,run_line,ATL,0.43,2.326,1.75,-133,lowvig,-14.14,0.0,PASS,
+backfill,2026-05-02,LAD@STL,A: Roki Sasaki · H: Michael McGreevy,run_line,STL,0.338,2.959,,,,,0.0,PASS,
+backfill,2026-05-02,BAL@NYY,A: Kyle Bradish · H: Ryan Weathers,first_5,NYY,0.474,2.11,,,,,0.0,PASS,
+backfill,2026-05-02,TOR@MIN,A: Dylan Cease · H: Connor Prielipp,first_5,TOR,0.436,2.294,,,,,0.0,PASS,
+backfill,2026-05-02,AZ@CHC,A: Ryne Nelson · H: Shota Imanaga,first_5,CHC,0.569,1.757,,,,,4.74,2u,
+backfill,2026-05-02,CLE@ATH,A: Slade Cecconi · H: Jacob Lopez,first_5,ATH,0.446,2.242,,,,,0.0,PASS,
+backfill,2026-05-02,CIN@PIT,A: Rhett Lowder · H: Carmen Mlodzinski,first_5,PIT,0.434,2.304,,,,,0.0,PASS,
+backfill,2026-05-02,MIL@WSH,A: Kyle Harrison · H: Foster Griffin,first_5,MIL,0.499,2.004,,,,,0.0,PASS,
+backfill,2026-05-02,HOU@BOS,A: Spencer Arrighetti · H: Connelly Early,first_5,HOU,0.501,1.996,,,,,0.0,PASS,
+backfill,2026-05-02,PHI@MIA,A: Andrew Painter · H: Max Meyer,first_5,MIA,0.468,2.137,,,,,0.0,PASS,
+backfill,2026-05-02,SF@TB,A: Landen Roupp · H: Griffin Jax,first_5,SF,0.47,2.128,,,,,0.0,PASS,
+backfill,2026-05-02,LAD@STL,A: Roki Sasaki · H: Michael McGreevy,first_5,STL,0.467,2.141,,,,,0.0,PASS,
+backfill,2026-05-02,TEX@DET,A: Kumar Rocker · H: Keider Montero,first_5,DET,0.431,2.32,,,,,0.0,PASS,
+backfill,2026-05-02,ATL@COL,A: Chris Sale,first_5,ATL,0.477,2.096,,,,,0.0,PASS,
+backfill,2026-05-02,CWS@SD,A: Sean Burke · H: Michael King,first_5,CWS,0.455,2.198,,,,,0.0,PASS,
+backfill,2026-05-02,NYM@LAA,A: Nolan McLean · H: Reid Detmers,first_5,NYM,0.419,2.387,,,,,0.0,PASS,
+backfill,2026-05-02,KC@SEA,A: Seth Lugo · H: Emerson Hancock,first_5,SEA,0.413,2.421,,,,,0.0,PASS,
+backfill,2026-05-02,BAL@NYY,A: Kyle Bradish · H: Ryan Weathers,first_inning,NRFI,0.513,1.949,,,,,0.0,PASS,
+backfill,2026-05-02,TOR@MIN,A: Dylan Cease · H: Connor Prielipp,first_inning,NRFI,0.568,1.761,,,,,4.64,2u,
+backfill,2026-05-02,AZ@CHC,A: Ryne Nelson · H: Shota Imanaga,first_inning,NRFI,0.558,1.792,,,,,3.59,2u,
+backfill,2026-05-02,CLE@ATH,A: Slade Cecconi · H: Jacob Lopez,first_inning,YRFI,0.531,1.883,,,,,0.75,0.5u,
+backfill,2026-05-02,CIN@PIT,A: Rhett Lowder · H: Carmen Mlodzinski,first_inning,NRFI,0.503,1.988,,,,,0.0,PASS,
+backfill,2026-05-02,MIL@WSH,A: Kyle Harrison · H: Foster Griffin,first_inning,NRFI,0.501,1.996,,,,,0.0,PASS,
+backfill,2026-05-02,HOU@BOS,A: Spencer Arrighetti · H: Connelly Early,first_inning,YRFI,0.509,1.965,,,,,0.0,PASS,
+backfill,2026-05-02,PHI@MIA,A: Andrew Painter · H: Max Meyer,first_inning,YRFI,0.509,1.965,,,,,0.0,PASS,
+backfill,2026-05-02,SF@TB,A: Landen Roupp · H: Griffin Jax,first_inning,NRFI,0.59,1.695,,,,,5.0,2u,
+backfill,2026-05-02,LAD@STL,A: Roki Sasaki · H: Michael McGreevy,first_inning,YRFI,0.508,1.969,,,,,0.0,PASS,
+backfill,2026-05-02,TEX@DET,A: Kumar Rocker · H: Keider Montero,first_inning,NRFI,0.544,1.838,,,,,2.12,1u,
+backfill,2026-05-02,ATL@COL,A: Chris Sale,first_inning,YRFI,0.517,1.934,,,,,0.0,PASS,
+backfill,2026-05-02,CWS@SD,A: Sean Burke · H: Michael King,first_inning,NRFI,0.601,1.664,,,,,5.0,2u,
+backfill,2026-05-02,NYM@LAA,A: Nolan McLean · H: Reid Detmers,first_inning,YRFI,0.516,1.938,,,,,0.0,PASS,
+backfill,2026-05-02,KC@SEA,A: Seth Lugo · H: Emerson Hancock,first_inning,YRFI,0.506,1.976,,,,,0.0,PASS,
+backfill,2026-05-02,BAL vs NYY,vs Ryan Weathers,team_totals,OVER 3.5,0.614,1.629,,,,,5.0,2u,
+backfill,2026-05-02,NYY vs BAL,vs Kyle Bradish,team_totals,OVER 3.5,0.693,1.442,,,,,5.0,2u,
+backfill,2026-05-02,TOR vs MIN,vs Connor Prielipp,team_totals,OVER 3.5,0.605,1.654,,,,,5.0,2u,
+backfill,2026-05-02,MIN vs TOR,vs Dylan Cease,team_totals,UNDER 4.5,0.643,1.556,,,,,5.0,2u,
+backfill,2026-05-02,AZ vs CHC,vs Shota Imanaga,team_totals,UNDER 4.5,0.633,1.58,,,,,5.0,2u,
+backfill,2026-05-02,CHC vs AZ,vs Ryne Nelson,team_totals,OVER 3.5,0.782,1.279,,,,,5.0,2u,
+backfill,2026-05-02,CLE vs ATH,vs Jacob Lopez,team_totals,OVER 3.5,0.649,1.54,,,,,5.0,2u,
+backfill,2026-05-02,ATH vs CLE,vs Slade Cecconi,team_totals,OVER 3.5,0.658,1.52,,,,,5.0,2u,
+backfill,2026-05-02,CIN vs PIT,vs Carmen Mlodzinski,team_totals,UNDER 4.5,0.712,1.404,,,,,5.0,2u,
+backfill,2026-05-02,PIT vs CIN,vs Rhett Lowder,team_totals,UNDER 4.5,0.672,1.489,,,,,5.0,2u,
+backfill,2026-05-02,MIL vs WSH,vs Foster Griffin,team_totals,OVER 3.5,0.773,1.293,,,,,5.0,2u,
+backfill,2026-05-02,WSH vs MIL,vs Kyle Harrison,team_totals,OVER 3.5,0.619,1.615,,,,,5.0,2u,
+backfill,2026-05-02,HOU vs BOS,vs Connelly Early,team_totals,OVER 3.5,0.718,1.393,,,,,5.0,2u,
+backfill,2026-05-02,BOS vs HOU,vs Spencer Arrighetti,team_totals,OVER 3.5,0.746,1.34,,,,,5.0,2u,
+backfill,2026-05-02,PHI vs MIA,vs Max Meyer,team_totals,UNDER 4.5,0.681,1.468,,,,,5.0,2u,
+backfill,2026-05-02,MIA vs PHI,vs Andrew Painter,team_totals,OVER 3.5,0.592,1.691,,,,,5.0,2u,
+backfill,2026-05-02,SF vs TB,vs Griffin Jax,team_totals,OVER 3.5,0.601,1.664,,,,,5.0,2u,
+backfill,2026-05-02,TB vs SF,vs Landen Roupp,team_totals,UNDER 4.5,0.718,1.393,,,,,5.0,2u,
+backfill,2026-05-02,LAD vs STL,vs Michael McGreevy,team_totals,OVER 3.5,0.686,1.459,,,,,5.0,2u,
+backfill,2026-05-02,STL vs LAD,vs Roki Sasaki,team_totals,OVER 3.5,0.721,1.388,,,,,5.0,2u,
+backfill,2026-05-02,TEX vs DET,vs Keider Montero,team_totals,UNDER 4.5,0.74,1.351,,,,,5.0,2u,
+backfill,2026-05-02,DET vs TEX,vs Kumar Rocker,team_totals,UNDER 4.5,0.731,1.368,,,,,5.0,2u,
+backfill,2026-05-02,ATL vs COL,,team_totals,OVER 3.5,0.83,1.205,,,,,5.0,2u,
+backfill,2026-05-02,COL vs ATL,vs Chris Sale,team_totals,OVER 3.5,0.713,1.402,,,,,5.0,2u,
+backfill,2026-05-02,CWS vs SD,vs Michael King,team_totals,OVER 3.5,0.601,1.664,,,,,5.0,2u,
+backfill,2026-05-02,SD vs CWS,vs Sean Burke,team_totals,OVER 3.5,0.614,1.629,,,,,5.0,2u,
+backfill,2026-05-02,NYM vs LAA,vs Reid Detmers,team_totals,OVER 3.5,0.595,1.68,,,,,5.0,2u,
+backfill,2026-05-02,LAA vs NYM,vs Nolan McLean,team_totals,UNDER 4.5,0.66,1.515,,,,,5.0,2u,
+backfill,2026-05-02,KC vs SEA,vs Emerson Hancock,team_totals,OVER 3.5,0.597,1.675,,,,,5.0,2u,
+backfill,2026-05-02,SEA vs KC,vs Seth Lugo,team_totals,OVER 3.5,0.601,1.664,,,,,5.0,2u,
