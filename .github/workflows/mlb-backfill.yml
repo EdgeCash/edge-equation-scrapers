@@ -1,0 +1,89 @@
+name: MLB Backfill (manual)
+
+# One-click multi-season backfill. Manual trigger only — this is a
+# bulk operation that's expensive and only needs to run when we
+# explicitly want fresh historical data for offline fine-tuning.
+#
+# Default behavior: pull games for the 4 most recent completed seasons
+# (cheap, ~2 minutes). Optionally pull per-game boxscores (heavy,
+# ~45 min per season at the polite default request interval).
+#
+# Boxscores are compacted to per-season tarballs before commit so the
+# repo doesn't bloat. Use scrapers.mlb.mlb_backfill_scraper.
+# read_boxscore_from_tarball() to extract a single game back out.
+
+on:
+  workflow_dispatch:
+    inputs:
+      seasons:
+        description: "Seasons to fetch — '2022,2023,2024' or '2022-2024'. Blank = last 4 completed seasons."
+        required: false
+        default: ""
+      with_boxscores:
+        description: "Also fetch per-game boxscores (~45 min per season). Required for prop backtest grading."
+        type: boolean
+        default: false
+      request_interval:
+        description: "Seconds between boxscore requests (default 1.0 = polite)."
+        required: false
+        default: "1.0"
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    # Allow up to ~5 hours for a 4-season boxscore harvest at 1s/req.
+    timeout-minutes: 330
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Configure git
+        run: |
+          git config user.name  "edge-equation-bot"
+          git config user.email "bot@edge-equation.local"
+
+      - name: Run backfill
+        run: |
+          ARGS=""
+          if [ -n "${{ github.event.inputs.seasons }}" ]; then
+            ARGS="$ARGS --seasons ${{ github.event.inputs.seasons }}"
+          fi
+          if [ "${{ github.event.inputs.with_boxscores }}" = "true" ]; then
+            # Compact boxscores so the commit is git-friendly (~5x smaller).
+            ARGS="$ARGS --with-boxscores --compact"
+          fi
+          if [ -n "${{ github.event.inputs.request_interval }}" ]; then
+            ARGS="$ARGS --request-interval ${{ github.event.inputs.request_interval }}"
+          fi
+          python run_mlb_backfill.py $ARGS
+
+      - name: Commit + push backfill data
+        run: |
+          git add data/backfill/
+          if git diff --staged --quiet; then
+            echo "No backfill changes to commit."
+            exit 0
+          fi
+          # Summarize what got added so the commit body is useful at a glance.
+          ADDED=$(git diff --staged --name-only | wc -l)
+          DATE_TAG=$(date -u +"%Y-%m-%d")
+          MSG="MLB backfill — ${{ github.event.inputs.seasons || 'default seasons' }} ($DATE_TAG, $ADDED files)"
+          if [ "${{ github.event.inputs.with_boxscores }}" = "true" ]; then
+            MSG="$MSG (with boxscores)"
+          fi
+          git commit -m "$MSG"
+          git push

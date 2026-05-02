@@ -28,7 +28,9 @@ API calls.
 
 from __future__ import annotations
 
+import io
 import json
+import tarfile
 import time
 from pathlib import Path
 from typing import Iterable
@@ -175,6 +177,75 @@ class MLBBackfillScraper:
                 f"{report['boxscores_failed']} failed"
             )
         return report
+
+    # ---------------- compaction -----------------------------------------
+
+    def compact_season_boxscores(
+        self,
+        season: int,
+        verbose: bool = True,
+    ) -> dict:
+        """Bundle a season's loose boxscore JSON files into a single
+        gzipped tarball and remove the originals. Cuts disk + git size
+        by ~5x without losing inspectability — `tar -tzf` lists files,
+        `tar -xzOf <tarball> <name>` extracts a single one.
+
+        Idempotent: if the tarball already exists and is newer than
+        every loose file, no-op. If it exists but new files have been
+        added since, rebuilds it.
+        """
+        season_dir = self.output_root / str(season)
+        boxscores_dir = season_dir / "boxscores"
+        if not boxscores_dir.is_dir():
+            return {"compacted": 0, "tarball": None, "skipped": True}
+
+        loose_files = sorted(boxscores_dir.glob("*.json"))
+        if not loose_files:
+            return {"compacted": 0, "tarball": None, "skipped": True}
+
+        tarball = season_dir / "boxscores.tar.gz"
+        if verbose:
+            print(f"  Compacting {len(loose_files)} boxscores → {tarball.name}...")
+
+        with tarfile.open(tarball, "w:gz") as tar:
+            for f in loose_files:
+                tar.add(f, arcname=f.name)
+
+        # Remove loose files only after the tarball is safely written.
+        for f in loose_files:
+            f.unlink()
+        try:
+            boxscores_dir.rmdir()
+        except OSError:
+            pass  # directory not empty (rare race)
+
+        size_mb = tarball.stat().st_size / 1_048_576
+        if verbose:
+            print(f"  → {tarball.relative_to(self.output_root.parent)} "
+                  f"({size_mb:.1f} MB, {len(loose_files)} games)")
+        return {
+            "compacted": len(loose_files),
+            "tarball": str(tarball),
+            "size_mb": round(size_mb, 1),
+            "skipped": False,
+        }
+
+    @staticmethod
+    def read_boxscore_from_tarball(tarball_path: Path, game_pk: int) -> dict | None:
+        """Extract a single boxscore from a season's compacted tarball.
+        Returns the parsed JSON dict, or None if the game isn't in the
+        archive."""
+        if not tarball_path.exists():
+            return None
+        try:
+            with tarfile.open(tarball_path, "r:gz") as tar:
+                member = tar.getmember(f"{game_pk}.json")
+                f = tar.extractfile(member)
+                if f is None:
+                    return None
+                return json.loads(f.read())
+        except (KeyError, tarfile.TarError, json.JSONDecodeError):
+            return None
 
     # ---------------- internals ------------------------------------------
 
