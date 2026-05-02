@@ -71,6 +71,14 @@ TEAM_TOTAL_LINES = (3.5, 4.5)
 #     so we want at least a 4% edge before believing it.
 DEFAULT_MIN_EDGE_PCT = 3.0
 DEFAULT_TOP_N = 10
+
+# Market gating — per BRAND_GUIDE Product Rules: "A market is included
+# on the daily card only when its rolling 200+ bet backtest shows ≥+1%
+# ROI AND Brier <0.246." Markets that fail still appear in their own
+# tabs (transparency) but stay off the headline card.
+DEFAULT_MIN_GATE_BETS = 200
+DEFAULT_MIN_GATE_ROI = 1.0
+DEFAULT_MAX_GATE_BRIER = 0.246
 DEFAULT_EDGE_THRESHOLDS_BY_MARKET = {
     "moneyline":     4.0,
     "run_line":      3.0,
@@ -325,6 +333,46 @@ def _write_odds_debug_csv(path: Path, debug: dict) -> None:
         writer.writerows(rows)
 
 
+def _market_gate(
+    backtest_summary: list[dict] | None,
+    min_bets: int = DEFAULT_MIN_GATE_BETS,
+    min_roi: float = DEFAULT_MIN_GATE_ROI,
+    max_brier: float = DEFAULT_MAX_GATE_BRIER,
+) -> tuple[set[str] | None, dict[str, str]]:
+    """Apply the BRAND_GUIDE market-gating rule to backtest summary rows.
+
+    Returns (passed_set, notes_dict). passed_set is None when there's no
+    backtest data (cold start — let everything through). notes_dict maps
+    bet_type → reason it didn't pass, useful for surfacing in the
+    Today's Card section title so users see WHY a market was excluded.
+    """
+    if not backtest_summary:
+        return None, {}
+
+    passed: set[str] = set()
+    notes: dict[str, str] = {}
+    for row in backtest_summary:
+        bt = row.get("bet_type")
+        if not bt:
+            continue
+        bets = row.get("bets", 0) or 0
+        roi = row.get("roi_pct") if row.get("roi_pct") is not None else 0.0
+        brier = row.get("brier")
+
+        if bets < min_bets:
+            notes[bt] = f"sample {bets}<{min_bets}"
+            continue
+        if roi < min_roi:
+            notes[bt] = f"ROI {roi:+.2f}%"
+            continue
+        if brier is None or brier >= max_brier:
+            brier_str = f"{brier:.4f}" if brier is not None else "n/a"
+            notes[bt] = f"Brier {brier_str}"
+            continue
+        passed.add(bt)
+    return passed, notes
+
+
 def _sp_fields(p: dict) -> dict:
     """Pull away/home SP + bullpen names and factors out of a projection."""
     away_sp = p.get("away_sp") or {}
@@ -423,6 +471,10 @@ class DailySpreadsheet:
         top_n: int = DEFAULT_TOP_N,
         edge_thresholds: dict[str, float] | None = None,
         portfolio_cap_per_game: float = DEFAULT_PORTFOLIO_CAP_PER_GAME,
+        gate_min_bets: int = DEFAULT_MIN_GATE_BETS,
+        gate_min_roi: float = DEFAULT_MIN_GATE_ROI,
+        gate_max_brier: float = DEFAULT_MAX_GATE_BRIER,
+        skip_market_gate: bool = False,
     ):
         self.season = season
         self.target_date = target_date or _today_et()
@@ -439,6 +491,10 @@ class DailySpreadsheet:
         self.top_n = top_n
         self.edge_thresholds = edge_thresholds or dict(DEFAULT_EDGE_THRESHOLDS_BY_MARKET)
         self.portfolio_cap_per_game = portfolio_cap_per_game
+        self.gate_min_bets = gate_min_bets
+        self.gate_min_roi = gate_min_roi
+        self.gate_max_brier = gate_max_brier
+        self.skip_market_gate = skip_market_gate
 
     # --------- data assembly ------------------------------------------------
 
@@ -535,12 +591,25 @@ class DailySpreadsheet:
                 backfill, projections, odds, model.team_total_sd
             ),
         }
+        # Apply BRAND_GUIDE market gate from the backtest summary, then
+        # build Today's Card with that filter active.
+        gate_passed, gate_notes = (None, {}) if self.skip_market_gate else _market_gate(
+            backtest.get("summary_by_bet_type"),
+            min_bets=self.gate_min_bets,
+            min_roi=self.gate_min_roi,
+            max_brier=self.gate_max_brier,
+        )
+        if gate_passed is not None:
+            print(f"  Market gate: {sorted(gate_passed) or '(none passed)'} pass; "
+                  f"excluded: {gate_notes}")
         tabs["todays_card"] = self._build_todays_card(
             tabs,
             min_edge_pct=self.min_edge_pct,
             top_n=self.top_n,
             edge_thresholds=self.edge_thresholds,
             portfolio_cap_per_game=self.portfolio_cap_per_game,
+            gate_passed=gate_passed,
+            gate_notes=gate_notes,
         )
 
         # Persist today's actionable picks to the CLV log, then load CLV
@@ -1007,23 +1076,35 @@ class DailySpreadsheet:
         top_n: int = DEFAULT_TOP_N,
         edge_thresholds: dict[str, float] | None = None,
         portfolio_cap_per_game: float = DEFAULT_PORTFOLIO_CAP_PER_GAME,
+        gate_passed: set[str] | None = None,
+        gate_notes: dict[str, str] | None = None,
     ) -> dict:
         """Cross-tab roll-up of the highest-edge plays.
 
         Inclusion rules:
-          1. Pick must have a real market price (no synthetic -110).
-          2. edge_pct ≥ per-market threshold (or min_edge_pct as fallback).
-          3. Sort by edge desc, take top N.
-          4. Cap total Kelly% per game at portfolio_cap_per_game (same-game
+          1. **Market gate** (BRAND_GUIDE Product Rules): bet_type must
+             have passed the rolling backtest gate (≥+1% ROI AND
+             Brier <0.246 over 200+ bets). Markets that fail still appear
+             in their own tabs; just not on the headline card.
+          2. Pick must have a real market price (no synthetic -110).
+          3. edge_pct ≥ per-market threshold (or min_edge_pct as fallback).
+          4. Sort by edge desc, take top N.
+          5. Cap total Kelly% per game at portfolio_cap_per_game (same-game
              bets are correlated; full-Kelly on each over-stakes).
 
-        Picks failing rule 2 land in the FADE / SKIP list. Picks scaled by
-        rule 4 carry a `portfolio_scaled_from` field showing the original.
+        Picks failing rule 1 are dropped entirely (not visible on card or
+        FADE list — the market is "off"). Picks failing rule 3 land in
+        the FADE / SKIP list. Picks scaled by rule 5 carry a
+        `portfolio_scaled_from` field showing the original.
+
+        gate_passed: set of bet_types that passed the market gate, or
+        None when no gating is in effect (cold start / disabled).
         """
         thresholds = edge_thresholds or {}
+        gate_notes = gate_notes or {}
         sources = (
             ("moneyline",   "ml_pick"),
-            ("run_line",    "rl_fav"),
+            ("run_line",    "rl_pick"),     # underdog +1.5 (post-inversion)
             ("totals",      "kelly_line"),
             ("first_5",     "f5_pick"),
             ("first_inning","nrfi_pick"),
@@ -1031,6 +1112,10 @@ class DailySpreadsheet:
         )
         rows = []
         for tab_key, pick_key in sources:
+            # Market gate: drop the entire bet_type's contributions if it
+            # didn't pass the rolling backtest filter. None means no gate.
+            if gate_passed is not None and tab_key not in gate_passed:
+                continue
             for r in tabs[tab_key]["projections"]:
                 if r.get("kelly_pct") is None:
                     continue
@@ -1108,6 +1193,14 @@ class DailySpreadsheet:
         scaled_note = (
             f" · {scaled_count} portfolio-scaled" if scaled_count else ""
         )
+        if gate_passed is not None:
+            gate_in = ", ".join(sorted(gate_passed)) or "none"
+            gate_out = ", ".join(
+                f"{m}({reason})" for m, reason in sorted(gate_notes.items())
+            ) or "none"
+            gate_note = f" · markets IN: {gate_in} · OUT: {gate_out}"
+        else:
+            gate_note = " · gate disabled"
 
         return {
             "title": "Today's Card",
@@ -1117,7 +1210,7 @@ class DailySpreadsheet:
             "backfill_section_title":
                 f"FADE / SKIP — leans below threshold ({len(leans)}) · "
                 f"negative-EV ({len(negative_edge)}) · "
-                f"no-market ({len(no_market)})",
+                f"no-market ({len(no_market)}){gate_note}",
             "projection_columns": [
                 "date", "matchup", "starting_pitchers",
                 "bet_type", "pick", "model_prob",
@@ -1432,6 +1525,26 @@ def main(argv: list[str] | None = None) -> int:
         help="Override per-market edge threshold, e.g. --edge-threshold totals=2.0 "
              "--edge-threshold moneyline=5.0. Repeat for multiple markets.",
     )
+    parser.add_argument(
+        "--gate-min-bets", type=int, default=DEFAULT_MIN_GATE_BETS,
+        help=f"Minimum backtest sample size for a market to clear the "
+             f"BRAND_GUIDE gate (default {DEFAULT_MIN_GATE_BETS}).",
+    )
+    parser.add_argument(
+        "--gate-min-roi", type=float, default=DEFAULT_MIN_GATE_ROI,
+        help=f"Minimum backtest ROI%% for a market to clear the "
+             f"BRAND_GUIDE gate (default {DEFAULT_MIN_GATE_ROI}).",
+    )
+    parser.add_argument(
+        "--gate-max-brier", type=float, default=DEFAULT_MAX_GATE_BRIER,
+        help=f"Maximum backtest Brier for a market to clear the "
+             f"BRAND_GUIDE gate (default {DEFAULT_MAX_GATE_BRIER}).",
+    )
+    parser.add_argument(
+        "--no-market-gate", action="store_true", default=False,
+        help="Disable the market gate entirely (useful for cold-start runs "
+             "or A/B comparisons; defeats the BRAND_GUIDE rule).",
+    )
     args = parser.parse_args(argv)
 
     # Parse --edge-threshold overrides into a dict, falling back to defaults.
@@ -1453,6 +1566,10 @@ def main(argv: list[str] | None = None) -> int:
         top_n=args.top_n,
         edge_thresholds=thresholds,
         portfolio_cap_per_game=args.portfolio_cap,
+        gate_min_bets=args.gate_min_bets,
+        gate_min_roi=args.gate_min_roi,
+        gate_max_brier=args.gate_max_brier,
+        skip_market_gate=args.no_market_gate,
     )
 
     print(f"MLB Daily Spreadsheet — target {spreadsheet.target_date}")
