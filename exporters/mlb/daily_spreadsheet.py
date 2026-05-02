@@ -386,6 +386,9 @@ def _sp_fields(p: dict) -> dict:
         "home_sp_era": home_sp.get("era"),
         "away_sp_fip": away_sp.get("fip"),
         "home_sp_fip": home_sp.get("fip"),
+        # Phase 2B: blended factor + recent-form context for transparency.
+        "away_sp_recent_fip": away_sp.get("recent_fip"),
+        "home_sp_recent_fip": home_sp.get("recent_fip"),
         "away_sp_factor": away_sp.get("factor"),
         "home_sp_factor": home_sp.get("factor"),
         "away_bp_era": away_bp.get("era"),
