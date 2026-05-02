@@ -5,17 +5,26 @@ Fetches today's probable starting pitchers from statsapi.mlb.com and
 each pitcher's current-season stats, then derives a per-pitcher quality
 factor used by the projection model to scale the opposing offense.
 
-Quality factor (multiplicative, 1.0 = league average):
-    weighted_era = (era * ip + LEAGUE_ERA * IP_PRIOR) / (ip + IP_PRIOR)
-    factor       = weighted_era / LEAGUE_ERA   clamped to [0.70, 1.30]
+Quality factor uses **FIP** (Fielding Independent Pitching) rather than
+raw ERA, since FIP normalizes for defensive luck (BABIP variance) and
+is more predictive of future performance:
 
-A factor of 0.85 means the pitcher suppresses opposing run scoring 15%
-below league average. The IP-based shrinkage prior keeps a pitcher with
-6 IP and a 1.50 ERA from being projected as the next Bob Gibson.
+    FIP = (13*HR + 3*(BB+HBP) - 2*K) / IP + cFIP    cFIP ≈ 3.10
+    weighted_fip = (fip * ip + LEAGUE_FIP * IP_PRIOR) / (ip + IP_PRIOR)
+    factor       = weighted_fip / LEAGUE_FIP        clamped to [0.70, 1.30]
+
+If we can't compute FIP for a pitcher (missing components), we fall back
+to ERA. The IP-based shrinkage prior keeps a pitcher with 6 great
+innings from being projected as the next Bob Gibson.
+
+Also exposes per-team **bullpen** quality factors fetched from the
+team's relief pitching split, used by the projection to weight the
+late-innings (5/9 SP + 4/9 BP) of full-game runs.
 
 Usage:
     scraper = MLBPitcherScraper(season=2026)
     sp_map  = scraper.fetch_factors_for_slate(slate)   # game_pk -> SP dicts
+    bp_map  = scraper.fetch_bullpen_factors(team_codes)
 """
 
 from __future__ import annotations
@@ -25,11 +34,27 @@ import requests
 BASE_URL = "https://statsapi.mlb.com/api/v1"
 
 LEAGUE_ERA = 4.20            # rough MLB average ERA
+LEAGUE_FIP = 4.20            # FIP is calibrated to ERA scale (cFIP does this)
 LEAGUE_WHIP = 1.30
+FIP_CONSTANT = 3.10          # additive constant so league-avg FIP ≈ league-avg ERA
 IP_PRIOR = 50.0              # ghost innings of league-average performance
+IP_PRIOR_BULLPEN = 150.0     # bullpens accumulate IP faster across many arms
 MIN_IP_FOR_SIGNAL = 5.0      # below this, factor falls back to 1.0
 FACTOR_MIN = 0.70
 FACTOR_MAX = 1.30
+
+
+# Reverse lookup of TEAM_MAP (id -> code) so we can take a team code in
+# and ask the API for that team's stats by id.
+TEAM_CODE_TO_ID = {
+    "LAA": 108, "AZ": 109, "BAL": 110, "BOS": 111, "CHC": 112,
+    "CIN": 113, "CLE": 114, "COL": 115, "DET": 116, "HOU": 117,
+    "KC": 118,  "LAD": 119, "WSH": 120, "NYM": 121, "ATH": 133,
+    "PIT": 134, "SD": 135,  "SEA": 136, "SF": 137,  "STL": 138,
+    "TB": 139,  "TEX": 140, "TOR": 141, "MIN": 142, "PHI": 143,
+    "ATL": 144, "CWS": 145, "MIA": 146, "NYY": 147, "MIL": 158,
+    "ARI": 109, "OAK": 133,
+}
 
 
 def _ip_to_float(ip_str: str | float | int | None) -> float:
@@ -46,13 +71,48 @@ def _ip_to_float(ip_str: str | float | int | None) -> float:
         return 0.0
 
 
-def sp_factor(era: float | None, ip: float | None) -> float:
-    """Quality multiplier for a pitcher's runs-suppression vs league avg."""
-    if era is None or ip is None or ip < MIN_IP_FOR_SIGNAL:
+def compute_fip(
+    hr: int | None, bb: int | None, hbp: int | None,
+    k: int | None, ip: float | None,
+) -> float | None:
+    """Standard FIP formula. Returns None if any component is missing."""
+    if not all(x is not None for x in (hr, bb, hbp, k)) or ip is None or ip < 1:
+        return None
+    return (13 * hr + 3 * (bb + hbp) - 2 * k) / ip + FIP_CONSTANT
+
+
+def quality_factor(
+    rate: float | None,
+    ip: float | None,
+    *,
+    league_rate: float = LEAGUE_FIP,
+    ip_prior: float = IP_PRIOR,
+) -> float:
+    """Generic shrinkage-style quality multiplier vs league average.
+
+    `rate` is ERA or FIP (both ERA-scale). Lower = better pitcher = lower
+    factor = scales opposing offense down. Output is clamped to a
+    [FACTOR_MIN, FACTOR_MAX] band so even extreme samples can't break
+    the projection.
+    """
+    if rate is None or ip is None or ip < MIN_IP_FOR_SIGNAL:
         return 1.0
-    weighted = (era * ip + LEAGUE_ERA * IP_PRIOR) / (ip + IP_PRIOR)
-    factor = weighted / LEAGUE_ERA
+    weighted = (rate * ip + league_rate * ip_prior) / (ip + ip_prior)
+    factor = weighted / league_rate
     return max(FACTOR_MIN, min(FACTOR_MAX, factor))
+
+
+def sp_factor(era: float | None, ip: float | None, fip: float | None = None) -> float:
+    """Starting-pitcher quality multiplier. Prefers FIP, falls back to ERA."""
+    if fip is not None:
+        return quality_factor(fip, ip)
+    return quality_factor(era, ip)
+
+
+def bullpen_factor(era: float | None, ip: float | None) -> float:
+    """Team-bullpen quality multiplier. Higher IP prior since bullpens
+    aggregate quickly across many relievers."""
+    return quality_factor(era, ip, ip_prior=IP_PRIOR_BULLPEN)
 
 
 class MLBPitcherScraper:
@@ -62,6 +122,7 @@ class MLBPitcherScraper:
         self.season = season
         self.base_url = BASE_URL
         self._stat_cache: dict[int, dict] = {}
+        self._bullpen_cache: dict[int, dict] = {}
 
     # ---------------- probable pitchers ----------------------------------
 
@@ -139,12 +200,21 @@ class MLBPitcherScraper:
         except (TypeError, ValueError):
             whip = None
 
+        hr = stat.get("homeRuns")
+        bb = stat.get("baseOnBalls")
+        hbp = stat.get("hitByPitch")
+        k = stat.get("strikeOuts")
+        fip = compute_fip(hr, bb, hbp, k, ip)
+
         out = {
             "ip": ip,
             "era": era,
+            "fip": round(fip, 2) if fip is not None else None,
             "whip": whip,
-            "k": stat.get("strikeOuts"),
-            "bb": stat.get("baseOnBalls"),
+            "k": k,
+            "bb": bb,
+            "hbp": hbp,
+            "hr": hr,
             "starts": stat.get("gamesStarted"),
         }
         self._stat_cache[pitcher_id] = out
@@ -191,11 +261,77 @@ class MLBPitcherScraper:
                     "id": pitcher["id"],
                     "name": pitcher["name"],
                     "era": stats.get("era"),
+                    "fip": stats.get("fip"),
                     "ip": stats.get("ip"),
                     "whip": stats.get("whip"),
-                    "factor": sp_factor(stats.get("era"), stats.get("ip")),
+                    "factor": sp_factor(
+                        stats.get("era"), stats.get("ip"), fip=stats.get("fip"),
+                    ),
                 }
             out[game_pk] = game_dict
+        return out
+
+    # ---------------- bullpen --------------------------------------------
+
+    def fetch_team_bullpen_stats(self, team_id: int) -> dict | None:
+        """Fetch a team's relief-pitching split for the season."""
+        if team_id in self._bullpen_cache:
+            return self._bullpen_cache[team_id]
+
+        # statSplits with sitCodes=rp returns relief-only aggregated stats.
+        url = (
+            f"{self.base_url}/teams/{team_id}/stats"
+            f"?stats=statSplits&sitCodes=rp&group=pitching&season={self.season}"
+        )
+        try:
+            resp = requests.get(url, timeout=30)
+            resp.raise_for_status()
+            payload = resp.json()
+        except requests.RequestException:
+            self._bullpen_cache[team_id] = None
+            return None
+
+        try:
+            splits = payload["stats"][0]["splits"]
+        except (KeyError, IndexError):
+            self._bullpen_cache[team_id] = None
+            return None
+
+        if not splits:
+            self._bullpen_cache[team_id] = None
+            return None
+
+        stat = splits[0].get("stat", {})
+        ip = _ip_to_float(stat.get("inningsPitched"))
+        try:
+            era = float(stat.get("era")) if stat.get("era") not in (None, "-.--") else None
+        except (TypeError, ValueError):
+            era = None
+
+        out = {
+            "ip": ip,
+            "era": era,
+            "factor": bullpen_factor(era, ip),
+        }
+        self._bullpen_cache[team_id] = out
+        return out
+
+    def fetch_bullpen_factors(self, team_codes: list[str]) -> dict[str, dict]:
+        """Return {team_code: {era, ip, factor}} for each requested team.
+
+        Teams whose bullpen stats can't be fetched fall back to factor=1.0.
+        """
+        out: dict[str, dict] = {}
+        for code in team_codes:
+            team_id = TEAM_CODE_TO_ID.get(code)
+            if team_id is None:
+                out[code] = {"era": None, "ip": None, "factor": 1.0}
+                continue
+            stats = self.fetch_team_bullpen_stats(team_id)
+            if stats is None:
+                out[code] = {"era": None, "ip": None, "factor": 1.0}
+            else:
+                out[code] = stats
         return out
 
 

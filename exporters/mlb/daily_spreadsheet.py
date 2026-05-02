@@ -133,16 +133,24 @@ def _ml_market_price(market: dict, side: str) -> dict | None:
 
 
 def _sp_fields(p: dict) -> dict:
-    """Pull away/home SP names + factors out of a projection dict."""
+    """Pull away/home SP + bullpen names and factors out of a projection."""
     away_sp = p.get("away_sp") or {}
     home_sp = p.get("home_sp") or {}
+    away_bp = p.get("away_bp") or {}
+    home_bp = p.get("home_bp") or {}
     return {
         "away_sp_name": away_sp.get("name"),
         "home_sp_name": home_sp.get("name"),
         "away_sp_era": away_sp.get("era"),
         "home_sp_era": home_sp.get("era"),
+        "away_sp_fip": away_sp.get("fip"),
+        "home_sp_fip": home_sp.get("fip"),
         "away_sp_factor": away_sp.get("factor"),
         "home_sp_factor": home_sp.get("factor"),
+        "away_bp_era": away_bp.get("era"),
+        "home_bp_era": home_bp.get("era"),
+        "away_bp_factor": away_bp.get("factor"),
+        "home_bp_factor": home_bp.get("factor"),
     }
 
 
@@ -252,6 +260,22 @@ class DailySpreadsheet:
             and (g.get("home_sp") or {}).get("name")
         )
         print(f"    {named}/{len(slate)} games have both probable SPs identified")
+
+        print("  Fetching team bullpen factors...")
+        team_codes = sorted({g["away_team"] for g in slate} | {g["home_team"] for g in slate})
+        try:
+            bp_map = self.pitcher_scraper.fetch_bullpen_factors(team_codes)
+        except Exception as e:
+            print(f"    Bullpen fetch failed ({type(e).__name__}: {e}); proceeding without BP adjustment")
+            bp_map = {}
+        for g in slate:
+            g["away_bp"] = bp_map.get(g["away_team"])
+            g["home_bp"] = bp_map.get(g["home_team"])
+        bp_seen = sum(
+            1 for code, info in bp_map.items()
+            if info and info.get("era") is not None
+        )
+        print(f"    {bp_seen}/{len(team_codes)} teams returned bullpen stats")
 
         if self.skip_odds:
             odds = {"fetched_at": None, "source": "skipped", "games": []}
@@ -366,8 +390,9 @@ class DailySpreadsheet:
             "projection_columns": [
                 "date", "away", "home",
                 "away_sp_name", "home_sp_name",
-                "away_sp_era", "home_sp_era",
+                "away_sp_fip", "home_sp_fip",
                 "away_sp_factor", "home_sp_factor",
+                "away_bp_factor", "home_bp_factor",
                 "away_runs_proj", "home_runs_proj",
                 "away_win_prob", "home_win_prob", "ml_pick",
                 "model_prob", "fair_odds_dec",
@@ -443,6 +468,7 @@ class DailySpreadsheet:
                 "date", "away", "home",
                 "away_sp_name", "home_sp_name",
                 "away_sp_factor", "home_sp_factor",
+                "away_bp_factor", "home_bp_factor",
                 "rl_fav", "rl_margin_proj",
                 "rl_cover_prob", "rl_fav_covers_1_5",
                 "model_prob", "fair_odds_dec",
@@ -526,6 +552,7 @@ class DailySpreadsheet:
                 "date", "away", "home",
                 "away_sp_name", "home_sp_name",
                 "away_sp_factor", "home_sp_factor",
+                "away_bp_factor", "home_bp_factor",
                 "away_runs_proj", "home_runs_proj", "total_proj",
             ] + [f"pick_{l}" for l in TOTAL_LINES] + [
                 "kelly_line", "model_prob", "fair_odds_dec",
@@ -651,9 +678,11 @@ class DailySpreadsheet:
     ) -> dict:
         proj_rows = []
         for p in projections:
-            for side, team, opp, runs, opp_sp in (
-                ("AWAY", p["away_team"], p["home_team"], p["away_runs_proj"], p.get("home_sp")),
-                ("HOME", p["home_team"], p["away_team"], p["home_runs_proj"], p.get("away_sp")),
+            for side, team, opp, runs, opp_sp, opp_bp in (
+                ("AWAY", p["away_team"], p["home_team"], p["away_runs_proj"],
+                 p.get("home_sp"), p.get("home_bp")),
+                ("HOME", p["home_team"], p["away_team"], p["home_runs_proj"],
+                 p.get("away_sp"), p.get("away_bp")),
             ):
                 row = {
                     "date": p["date"],
@@ -662,6 +691,7 @@ class DailySpreadsheet:
                     "side": side,
                     "opp_sp_name": (opp_sp or {}).get("name"),
                     "opp_sp_factor": (opp_sp or {}).get("factor"),
+                    "opp_bp_factor": (opp_bp or {}).get("factor"),
                     "team_total_proj": runs,
                 }
                 for line in TEAM_TOTAL_LINES:
@@ -697,7 +727,7 @@ class DailySpreadsheet:
             "title": "Team Totals",
             "projection_columns": [
                 "date", "team", "opponent", "side",
-                "opp_sp_name", "opp_sp_factor",
+                "opp_sp_name", "opp_sp_factor", "opp_bp_factor",
                 "team_total_proj",
             ] + [f"pick_{l}" for l in TEAM_TOTAL_LINES] + [
                 "kelly_line", "model_prob", "fair_odds_dec", "kelly_pct", "kelly_advice",

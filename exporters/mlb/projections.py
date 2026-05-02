@@ -208,15 +208,23 @@ class ProjectionModel:
         home: str,
         away_sp: dict | None = None,
         home_sp: dict | None = None,
+        away_bp: dict | None = None,
+        home_bp: dict | None = None,
     ) -> dict:
         """Project all six bet metrics for a single matchup.
 
-        away_sp / home_sp are optional dicts from MLBPitcherScraper:
-            {"name": str, "era": float, "ip": float, "factor": float, ...}
-        When provided, the OPPOSING team's offense is scaled by that
-        pitcher's quality factor (so home_sp suppresses away_runs and
-        vice versa). F5 projections get a slightly stronger SP weight
-        since the SP is usually the only pitcher of record through 5.
+        away_sp / home_sp / away_bp / home_bp are optional dicts:
+            {"name": str, "era": float, "factor": float, ...}
+
+        Pitching influence on the OPPOSING team's runs:
+          - Full-game runs blend 5/9 SP factor + 4/9 bullpen factor
+            (matches typical SP-vs-RP innings split).
+          - F5 runs blend 90% SP / 10% bullpen — SP usually carries the
+            whole window.
+
+        When a factor isn't supplied (no probable SP, missing bullpen
+        stats) it falls back to 1.0 and the corresponding share has no
+        adjustment effect.
         """
         a = self.team_summary(away)
         h = self.team_summary(home)
@@ -235,15 +243,21 @@ class ProjectionModel:
             h["season"]["f5_rs_pg"], h["recent"]["f5_rs_pg"], a["season"]["f5_ra_pg"]
         )
 
-        # Starting-pitcher adjustment. Full-game blend is 70/30
-        # (SP / bullpen baseline); F5 leans 90/10 since the SP usually
-        # carries those innings.
         away_sp_factor = (away_sp or {}).get("factor", 1.0)
         home_sp_factor = (home_sp or {}).get("factor", 1.0)
-        away_runs *= 0.70 * home_sp_factor + 0.30
-        home_runs *= 0.70 * away_sp_factor + 0.30
-        away_f5 *= 0.90 * home_sp_factor + 0.10
-        home_f5 *= 0.90 * away_sp_factor + 0.10
+        away_bp_factor = (away_bp or {}).get("factor", 1.0)
+        home_bp_factor = (home_bp or {}).get("factor", 1.0)
+
+        SP_SHARE = 5.0 / 9.0
+        BP_SHARE = 4.0 / 9.0
+        F5_SP_SHARE = 0.90
+        F5_BP_SHARE = 0.10
+
+        # OPP pitching staff suppresses each team's offense.
+        away_runs *= SP_SHARE * home_sp_factor + BP_SHARE * home_bp_factor
+        home_runs *= SP_SHARE * away_sp_factor + BP_SHARE * away_bp_factor
+        away_f5 *= F5_SP_SHARE * home_sp_factor + F5_BP_SHARE * home_bp_factor
+        home_f5 *= F5_SP_SHARE * away_sp_factor + F5_BP_SHARE * away_bp_factor
 
         # Park factor — both teams' offensive output is scaled equally
         # by the home venue's run environment.
@@ -326,6 +340,8 @@ class ProjectionModel:
             "home_total_proj": round(home_runs, 2),
             "away_sp": away_sp,
             "home_sp": home_sp,
+            "away_bp": away_bp,
+            "home_bp": home_bp,
             "model_meta": {
                 "season_weight": SEASON_WEIGHT,
                 "recent_weight": RECENT_WEIGHT,
@@ -335,6 +351,8 @@ class ProjectionModel:
                 "park_factor": pf,
                 "away_sp_factor": away_sp_factor,
                 "home_sp_factor": home_sp_factor,
+                "away_bp_factor": away_bp_factor,
+                "home_bp_factor": home_bp_factor,
                 "total_sd": self.total_sd,
                 "margin_sd": self.margin_sd,
                 "win_prob_slope": self.win_prob_slope,
@@ -358,6 +376,8 @@ class ProjectionModel:
                 g["away_team"], g["home_team"],
                 away_sp=g.get("away_sp"),
                 home_sp=g.get("home_sp"),
+                away_bp=g.get("away_bp"),
+                home_bp=g.get("home_bp"),
             )
             proj["date"] = g.get("date")
             proj["game_pk"] = g.get("game_pk")
