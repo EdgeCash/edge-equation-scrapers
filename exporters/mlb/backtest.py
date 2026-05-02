@@ -277,7 +277,24 @@ class BacktestEngine:
         }
 
     @staticmethod
-    def _summarize(bets: list[dict]) -> list[dict]:
+    def _brier(bets: list[dict]) -> float | None:
+        """Brier score = mean((predicted_prob - actual)^2) for binary
+        outcomes. Lower is better. 0.25 = pure noise (random 50/50);
+        anything below means the probabilities carry signal.
+
+        Pushes are excluded since they have no clean binary outcome.
+        """
+        scored = [
+            (b["model_prob"], 1 if b["result"] == "WIN" else 0)
+            for b in bets
+            if b["result"] in ("WIN", "LOSS") and b.get("model_prob") is not None
+        ]
+        if not scored:
+            return None
+        return round(sum((p - y) ** 2 for p, y in scored) / len(scored), 4)
+
+    @classmethod
+    def _summarize(cls, bets: list[dict]) -> list[dict]:
         groups: dict[str, list[dict]] = defaultdict(list)
         for b in bets:
             groups[b["bet_type"]].append(b)
@@ -299,11 +316,12 @@ class BacktestEngine:
                 "hit_rate": round(wins / graded * 100, 1) if graded else 0.0,
                 "units_pl": units,
                 "roi_pct": round(units / len(grp) * 100, 2) if grp else 0.0,
+                "brier": cls._brier(grp),
             })
         return rows
 
-    @staticmethod
-    def _overall(bets: list[dict]) -> dict:
+    @classmethod
+    def _overall(cls, bets: list[dict]) -> dict:
         wins = sum(1 for b in bets if b["result"] == "WIN")
         losses = sum(1 for b in bets if b["result"] == "LOSS")
         pushes = sum(1 for b in bets if b["result"] == "PUSH")
@@ -317,6 +335,7 @@ class BacktestEngine:
             "hit_rate": round(wins / graded * 100, 1) if graded else 0.0,
             "units_pl": units,
             "roi_pct": round(units / len(bets) * 100, 2) if bets else 0.0,
+            "brier": cls._brier(bets),
         }
 
     @staticmethod

@@ -1071,6 +1071,7 @@ class DailySpreadsheet:
             "hit_rate": overall["hit_rate"],
             "units_pl": overall["units_pl"],
             "roi_pct": overall["roi_pct"],
+            "brier": overall.get("brier"),
         }]
         for row in backtest["summary_by_bet_type"]:
             summary_rows.append({"scope": "BY TYPE", **row})
@@ -1119,7 +1120,7 @@ class DailySpreadsheet:
             "backfill_section_title": "DAILY P&L (cumulative units, flat 1u @ -110)",
             "projection_columns": [
                 "scope", "bet_type", "bets", "wins", "losses", "pushes",
-                "hit_rate", "units_pl", "roi_pct",
+                "hit_rate", "units_pl", "roi_pct", "brier",
             ],
             "backfill_columns": ["date", "daily_units", "cumulative_units"],
             "projections": summary_rows,
