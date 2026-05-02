@@ -235,7 +235,10 @@ class DailySpreadsheet:
         self.target_date = target_date or _today_et()
         self.output_dir = Path(output_dir) if output_dir else DEFAULT_OUTPUT_DIR
         self.scraper = MLBGameScraper()
-        self.odds_scraper = MLBOddsScraper(api_key=odds_api_key)
+        self.odds_scraper = MLBOddsScraper(
+            api_key=odds_api_key,
+            quota_log_path=self.output_dir / "quota_log.json",
+        )
         self.pitcher_scraper = MLBPitcherScraper(season=season)
         self.weather_scraper = MLBWeatherScraper()
         self.skip_odds = skip_odds
@@ -344,14 +347,17 @@ class DailySpreadsheet:
         # Persist today's actionable picks to the CLV log, then load CLV
         # summary stats from any prior closing-snapshot runs.
         tracker = ClvTracker(self.output_dir)
-        game_pks_by_matchup = {
-            f"{g['away_team']}@{g['home_team']}": g.get("game_pk")
+        slate_meta_by_matchup = {
+            f"{g['away_team']}@{g['home_team']}": {
+                "game_pk": g.get("game_pk"),
+                "game_time": g.get("game_time"),
+            }
             for g in slate
         }
         added = tracker.record_picks(
             tabs["todays_card"]["projections"],
             odds_source=odds.get("source", "unknown"),
-            game_pks_by_matchup=game_pks_by_matchup,
+            slate_meta_by_matchup=slate_meta_by_matchup,
         )
         clv_summary = tracker.summary()
         print(f"  CLV log: +{added} new picks, "

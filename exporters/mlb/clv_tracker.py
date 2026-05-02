@@ -146,12 +146,17 @@ class ClvTracker:
         self,
         card_rows: list[dict],
         odds_source: str,
-        game_pks_by_matchup: Optional[dict[str, int]] = None,
+        slate_meta_by_matchup: Optional[dict[str, dict]] = None,
     ) -> int:
-        """Append today's actionable picks to the log. Idempotent on pick_id."""
+        """Append today's actionable picks to the log. Idempotent on pick_id.
+
+        slate_meta_by_matchup maps "AWAY@HOME" to {"game_pk": int, "game_time": iso}
+        so the closing-snapshot job can later gate on first-pitch proximity.
+        """
         data = self.load()
         existing_ids = {p["pick_id"] for p in data["picks"]}
         now = datetime.utcnow().isoformat() + "Z"
+        meta = slate_meta_by_matchup or {}
         added = 0
 
         for row in card_rows:
@@ -161,11 +166,13 @@ class ClvTracker:
             pid = self.make_pick_id(row)
             if pid in existing_ids:
                 continue
+            game_meta = meta.get(row.get("matchup")) or {}
             data["picks"].append({
                 "pick_id": pid,
                 "date": row.get("date"),
                 "matchup": row.get("matchup"),
-                "game_pk": (game_pks_by_matchup or {}).get(row.get("matchup")),
+                "game_pk": game_meta.get("game_pk"),
+                "game_time": game_meta.get("game_time"),
                 "bet_type": row.get("bet_type"),
                 "pick": row.get("pick"),
                 "spec": spec,
@@ -191,6 +198,48 @@ class ClvTracker:
         if added:
             self.save(data)
         return added
+
+    def pending_today(self, max_minutes_to_first_pitch: int | None = None) -> list[dict]:
+        """Return unsettled picks for today, optionally filtered to those
+        whose game starts within max_minutes_to_first_pitch minutes from
+        now. Used by the closing-snapshot job to decide whether it's
+        worth burning an Odds API call.
+        """
+        data = self.load()
+        today = datetime.utcnow().date().isoformat()
+        now = datetime.utcnow()
+
+        out = []
+        for p in data["picks"]:
+            if p.get("closing_price_dec") is not None:
+                continue
+            if p.get("date") != today:
+                continue
+            if max_minutes_to_first_pitch is None:
+                out.append(p)
+                continue
+
+            game_time_str = p.get("game_time")
+            if not game_time_str:
+                # No game time on file → include (better safe than miss the close).
+                out.append(p)
+                continue
+            try:
+                game_dt = datetime.fromisoformat(game_time_str.replace("Z", "+00:00"))
+                # Strip timezone for naive comparison (game_dt is UTC-aware,
+                # now is naive UTC).
+                game_dt_naive = game_dt.replace(tzinfo=None)
+            except (TypeError, ValueError):
+                out.append(p)
+                continue
+
+            minutes_until = (game_dt_naive - now).total_seconds() / 60
+            # Include picks where first pitch is within the window (and
+            # for ~30 min after, so we still snap if a snapshot fires
+            # right at first pitch).
+            if -30 <= minutes_until <= max_minutes_to_first_pitch:
+                out.append(p)
+        return out
 
     # ---------------- snapshot (closing) --------------------------------
 

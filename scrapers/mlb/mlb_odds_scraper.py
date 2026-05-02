@@ -42,8 +42,10 @@ across all bookmakers seen, so the consumer can shop the line.
 
 from __future__ import annotations
 
+import json
 import os
 from datetime import datetime
+from pathlib import Path
 from typing import Iterable
 
 import requests
@@ -110,11 +112,65 @@ def _better_price(existing: dict | None, candidate: dict) -> dict:
     return existing
 
 
+QUOTA_LOG_NAME = "quota_log.json"
+QUOTA_LOG_MAX_HISTORY = 200
+
+
+def _log_quota(path: Path, headers: dict, endpoint: str) -> None:
+    """Append The Odds API rate-limit headers to a small persistent log.
+
+    Each call returns x-requests-used / x-requests-remaining headers that
+    expose the shared monthly quota. Logging them gives visibility into
+    burn rate when the same API key is used across multiple projects.
+    """
+    try:
+        used = int(headers.get("x-requests-used", "") or 0)
+        remaining = int(headers.get("x-requests-remaining", "") or 0)
+        last = headers.get("x-requests-last", "")
+    except (TypeError, ValueError):
+        return
+
+    if not (used or remaining):
+        return  # not an Odds API response; nothing to log
+
+    entry = {
+        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "used": used,
+        "remaining": remaining,
+        "last_cost": last,
+        "endpoint": endpoint,
+    }
+
+    try:
+        if path.exists():
+            data = json.loads(path.read_text())
+        else:
+            data = {"updated_at": None, "current": {}, "recent": []}
+    except (json.JSONDecodeError, OSError):
+        data = {"updated_at": None, "current": {}, "recent": []}
+
+    data["updated_at"] = entry["timestamp"]
+    data["current"] = {"used": used, "remaining": remaining}
+    history = data.get("recent", [])
+    history.append(entry)
+    data["recent"] = history[-QUOTA_LOG_MAX_HISTORY:]
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(".json.tmp")
+    tmp.write_text(json.dumps(data, indent=2, default=str))
+    tmp.replace(path)
+
+
 class MLBOddsScraper:
     """Fetch and normalize MLB game-level lines from a free source."""
 
-    def __init__(self, api_key: str | None = None):
+    def __init__(
+        self,
+        api_key: str | None = None,
+        quota_log_path: Path | None = None,
+    ):
         self.api_key = api_key or os.environ.get("ODDS_API_KEY")
+        self.quota_log_path = quota_log_path
 
     # ---------------- public ---------------------------------------------
 
@@ -148,6 +204,8 @@ class MLBOddsScraper:
         }
         resp = requests.get(ODDS_API_URL, params=params, timeout=30)
         resp.raise_for_status()
+        if self.quota_log_path is not None:
+            _log_quota(self.quota_log_path, resp.headers, "baseball_mlb/odds")
         events = resp.json()
 
         games = []

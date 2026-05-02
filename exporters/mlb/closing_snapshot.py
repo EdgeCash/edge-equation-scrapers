@@ -51,6 +51,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--branch", type=str, default=None,
     )
+    parser.add_argument(
+        "--window-min", type=int, default=90,
+        help="Only fetch odds if any unsettled pick's game starts within "
+             "this many minutes (default 90). Set 0 to disable the gate.",
+    )
     args = parser.parse_args(argv)
 
     output_dir = Path(args.output_dir)
@@ -61,8 +66,23 @@ def main(argv: list[str] | None = None) -> int:
     initial = tracker.load()
     print(f"    {len(initial['picks'])} picks logged total")
 
+    # Smart gate: skip the API call when there's nothing to snap. Saves
+    # ~70-80% of closing-snapshot API calls on the average MLB day.
+    window = args.window_min or None
+    pending = tracker.pending_today(max_minutes_to_first_pitch=window)
+    if not pending:
+        print(
+            f"  No unsettled picks within {args.window_min}-min window; "
+            "skipping odds fetch (saves an API call)."
+        )
+        return 0
+    print(f"  {len(pending)} unsettled pick(s) within the window")
+
     print("  Fetching market odds...")
-    odds_scraper = MLBOddsScraper(api_key=args.odds_api_key)
+    odds_scraper = MLBOddsScraper(
+        api_key=args.odds_api_key,
+        quota_log_path=output_dir / "quota_log.json",
+    )
     odds = odds_scraper.fetch()
     print(f"    {odds['source']} -> {len(odds['games'])} priced games")
 
