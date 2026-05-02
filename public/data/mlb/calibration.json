@@ -1,0 +1,9 @@
+{
+  "total_sd": 4.608,
+  "team_total_sd": 3.199,
+  "margin_sd": 4.433,
+  "f5_total_sd": 3.255,
+  "f5_margin_sd": 3.406,
+  "win_prob_slope": 0.281,
+  "n_residuals": 542
+}
