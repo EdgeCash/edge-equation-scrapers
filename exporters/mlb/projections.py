@@ -210,6 +210,7 @@ class ProjectionModel:
         home_sp: dict | None = None,
         away_bp: dict | None = None,
         home_bp: dict | None = None,
+        weather: dict | None = None,
     ) -> dict:
         """Project all six bet metrics for a single matchup.
 
@@ -266,6 +267,16 @@ class ProjectionModel:
         home_runs *= pf
         away_f5 *= pf
         home_f5 *= pf
+
+        # Weather — temperature scales total run environment. Domes and
+        # missing data both produce a neutral 1.0. Applied to F5 too at
+        # half magnitude (less of the game is played, smaller swing).
+        wf = (weather or {}).get("factor", 1.0)
+        wf_f5 = 1.0 + (wf - 1.0) * 0.5
+        away_runs *= wf
+        home_runs *= wf
+        away_f5 *= wf_f5
+        home_f5 *= wf_f5
 
         away_f1 = self._blend(
             a["season"]["f1_rs_pg"], a["recent"]["f1_rs_pg"], h["season"]["f1_ra_pg"]
@@ -342,6 +353,7 @@ class ProjectionModel:
             "home_sp": home_sp,
             "away_bp": away_bp,
             "home_bp": home_bp,
+            "weather": weather,
             "model_meta": {
                 "season_weight": SEASON_WEIGHT,
                 "recent_weight": RECENT_WEIGHT,
@@ -349,6 +361,7 @@ class ProjectionModel:
                 "recent_window": RECENT_WINDOW,
                 "shrinkage_k": self.shrinkage_k,
                 "park_factor": pf,
+                "weather_factor": wf,
                 "away_sp_factor": away_sp_factor,
                 "home_sp_factor": home_sp_factor,
                 "away_bp_factor": away_bp_factor,
@@ -378,6 +391,7 @@ class ProjectionModel:
                 home_sp=g.get("home_sp"),
                 away_bp=g.get("away_bp"),
                 home_bp=g.get("home_bp"),
+                weather=g.get("weather"),
             )
             proj["date"] = g.get("date")
             proj["game_pk"] = g.get("game_pk")

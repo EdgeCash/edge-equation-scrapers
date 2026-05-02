@@ -9,8 +9,9 @@ from .mlb_player_scraper import MLBPlayerScraper
 from .mlb_settle_engine import MLBSettleEngine
 from .mlb_odds_scraper import MLBOddsScraper
 from .mlb_pitcher_scraper import MLBPitcherScraper
+from .mlb_weather_scraper import MLBWeatherScraper
 
 __all__ = [
     "MLBGameScraper", "MLBPlayerScraper", "MLBSettleEngine",
-    "MLBOddsScraper", "MLBPitcherScraper",
+    "MLBOddsScraper", "MLBPitcherScraper", "MLBWeatherScraper",
 ]

@@ -39,6 +39,7 @@ if str(REPO_ROOT) not in sys.path:
 from scrapers.mlb.mlb_game_scraper import MLBGameScraper, TEAM_MAP
 from scrapers.mlb.mlb_odds_scraper import MLBOddsScraper
 from scrapers.mlb.mlb_pitcher_scraper import MLBPitcherScraper
+from scrapers.mlb.mlb_weather_scraper import MLBWeatherScraper
 from exporters.mlb.projections import (
     ProjectionModel,
     prob_over,
@@ -154,6 +155,18 @@ def _sp_fields(p: dict) -> dict:
     }
 
 
+def _weather_fields(p: dict) -> dict:
+    """Pull weather context out of a projection."""
+    w = p.get("weather") or {}
+    return {
+        "venue": w.get("venue"),
+        "temp_f": w.get("temp_f"),
+        "wind_mph": w.get("wind_mph"),
+        "wind_dir": w.get("wind_dir"),
+        "weather_factor": w.get("factor"),
+    }
+
+
 def _rl_market_price(rl_offers: list[dict], side: str, point: float) -> dict | None:
     """Find the run-line price for (side, point); tolerate small numeric drift."""
     for o in rl_offers or []:
@@ -223,6 +236,7 @@ class DailySpreadsheet:
         self.scraper = MLBGameScraper()
         self.odds_scraper = MLBOddsScraper(api_key=odds_api_key)
         self.pitcher_scraper = MLBPitcherScraper(season=season)
+        self.weather_scraper = MLBWeatherScraper()
         self.skip_odds = skip_odds
         self.min_edge_pct = min_edge_pct
         self.top_n = top_n
@@ -276,6 +290,21 @@ class DailySpreadsheet:
             if info and info.get("era") is not None
         )
         print(f"    {bp_seen}/{len(team_codes)} teams returned bullpen stats")
+
+        print("  Fetching weather for each home venue...")
+        try:
+            weather_map = self.weather_scraper.fetch_for_slate(slate)
+        except Exception as e:
+            print(f"    Weather fetch failed ({type(e).__name__}: {e}); proceeding with neutral weather")
+            weather_map = {}
+        for g in slate:
+            g["weather"] = weather_map.get(g.get("game_pk"))
+        wx_with_temp = sum(
+            1 for w in weather_map.values()
+            if w and w.get("temp_f") is not None
+        )
+        domes = sum(1 for w in weather_map.values() if w and w.get("dome"))
+        print(f"    {wx_with_temp} outdoor games with weather, {domes} domes")
 
         if self.skip_odds:
             odds = {"fetched_at": None, "source": "skipped", "games": []}
@@ -497,6 +526,7 @@ class DailySpreadsheet:
                 "away": p["away_team"],
                 "home": p["home_team"],
                 **_sp_fields(p),
+                **_weather_fields(p),
                 "away_runs_proj": p["away_runs_proj"],
                 "home_runs_proj": p["home_runs_proj"],
                 "total_proj": p["total_proj"],
@@ -553,6 +583,7 @@ class DailySpreadsheet:
                 "away_sp_name", "home_sp_name",
                 "away_sp_factor", "home_sp_factor",
                 "away_bp_factor", "home_bp_factor",
+                "venue", "temp_f", "wind_mph", "wind_dir", "weather_factor",
                 "away_runs_proj", "home_runs_proj", "total_proj",
             ] + [f"pick_{l}" for l in TOTAL_LINES] + [
                 "kelly_line", "model_prob", "fair_odds_dec",
