@@ -103,6 +103,7 @@ export interface MLBDailyData {
 }
 
 const DATA_URL = "/data/mlb/mlb_daily.json";
+const PICKS_LOG_URL = "/data/mlb/picks_log.json";
 
 /** Fetch the daily payload. Server-side; called from a Server Component. */
 export async function getDailyData(origin?: string): Promise<MLBDailyData | null> {
@@ -114,4 +115,87 @@ export async function getDailyData(origin?: string): Promise<MLBDailyData | null
   } catch {
     return null;
   }
+}
+
+export interface PickLogEntry {
+  pick_id: string;
+  date: string;
+  matchup: string;
+  bet_type: string;
+  pick: string;
+  model_prob?: number;
+  edge_pct_at_pick?: number;
+  kelly_pct?: number;
+  pick_price_dec?: number;
+  pick_price_american?: number;
+  book_at_pick?: string;
+  closing_price_dec?: number | null;
+  closing_price_american?: number | null;
+  clv_pct?: number | null;
+  result?: "WIN" | "LOSS" | "PUSH" | null;
+  units?: number | null;
+  graded_at?: string | null;
+}
+
+export interface PicksLog {
+  picks: PickLogEntry[];
+}
+
+export async function getPicksLog(origin?: string): Promise<PicksLog | null> {
+  const url = origin ? `${origin}${PICKS_LOG_URL}` : PICKS_LOG_URL;
+  try {
+    const res = await fetch(url, { cache: "no-store" });
+    if (!res.ok) return null;
+    return (await res.json()) as PicksLog;
+  } catch {
+    return null;
+  }
+}
+
+/** Compute summary stats over a list of graded picks. */
+export interface PicksSummary {
+  n: number;
+  graded: number;
+  wins: number;
+  losses: number;
+  pushes: number;
+  hit_rate: number;
+  units_pl: number;
+  roi_pct: number;
+  mean_clv_pct: number | null;
+  n_with_clv: number;
+}
+
+export function summarizePicks(picks: PickLogEntry[]): PicksSummary {
+  const wins = picks.filter((p) => p.result === "WIN").length;
+  const losses = picks.filter((p) => p.result === "LOSS").length;
+  const pushes = picks.filter((p) => p.result === "PUSH").length;
+  const graded = wins + losses;
+  const units = picks.reduce((s, p) => s + (p.units ?? 0), 0);
+  const clvs = picks
+    .map((p) => p.clv_pct)
+    .filter((c): c is number => c !== null && c !== undefined);
+  return {
+    n: picks.length,
+    graded,
+    wins,
+    losses,
+    pushes,
+    hit_rate: graded ? +(wins / graded * 100).toFixed(1) : 0,
+    units_pl: +units.toFixed(2),
+    roi_pct: picks.length ? +(units / picks.length * 100).toFixed(2) : 0,
+    mean_clv_pct: clvs.length ? +(clvs.reduce((a, b) => a + b, 0) / clvs.length).toFixed(3) : null,
+    n_with_clv: clvs.length,
+  };
+}
+
+/** Filter picks to the last N days (UTC date comparison). */
+export function lastNDaysPicks(picks: PickLogEntry[], n: number): PickLogEntry[] {
+  const cutoff = new Date();
+  cutoff.setUTCDate(cutoff.getUTCDate() - n);
+  cutoff.setUTCHours(0, 0, 0, 0);
+  return picks.filter((p) => {
+    const d = new Date(`${p.date}T00:00:00Z`);
+    return !isNaN(d.getTime()) && d >= cutoff;
+  });
 }

@@ -29,7 +29,7 @@ from __future__ import annotations
 import json
 import statistics
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Optional
 
@@ -100,6 +100,17 @@ def find_closing_price(odds_game: dict, spec: dict) -> Optional[dict]:
         return None
 
     return None
+
+
+def _settle(pick: dict, won: bool, push: bool) -> dict:
+    """Translate (won, push) into a {result, units} dict using the pick's
+    actual market price when available; falls back to -110 default."""
+    if push:
+        return {"result": "PUSH", "units": 0.0}
+    price = pick.get("pick_price_dec") or 1.909
+    if won:
+        return {"result": "WIN", "units": round(price - 1, 4)}
+    return {"result": "LOSS", "units": -1.0}
 
 
 def compute_clv(pick_decimal: float, closing_decimal: float) -> float:
@@ -293,25 +304,180 @@ class ClvTracker:
             "total_picks_in_log": len(data["picks"]),
         }
 
+    # ---------------- grading (post-game) --------------------------------
+
+    def grade_resolved_picks(self, completed_games: list[dict]) -> dict:
+        """Grade any logged picks whose game has now completed.
+
+        Idempotent: picks that already have a non-null `result` are
+        skipped. Picks for matchups that aren't in the supplied
+        completed_games list are left alone (the game probably hasn't
+        finished or wasn't surfaced to this scraper run).
+
+        Returns a small report dict with counts.
+        """
+        data = self.load()
+
+        # Index games by both AWAY@HOME and (away, home) tuple — picks
+        # logged from team_totals use "TEAM vs OPP" format which we
+        # also need to handle.
+        by_matchup: dict[str, dict] = {}
+        by_pair: dict[tuple[str, str], dict] = {}
+        for g in completed_games:
+            away, home = g["away_team"], g["home_team"]
+            by_matchup[f"{away}@{home}"] = g
+            by_pair[(away, home)] = g
+            by_pair[(home, away)] = g
+
+        graded = 0
+        not_yet = 0
+        for pick in data["picks"]:
+            if pick.get("result") is not None:
+                continue
+            matchup = pick.get("matchup", "")
+            game = by_matchup.get(matchup)
+            if not game and " vs " in matchup:
+                team, opp = matchup.split(" vs ", 1)
+                game = by_pair.get((team, opp)) or by_pair.get((opp, team))
+            if not game:
+                not_yet += 1
+                continue
+            outcome = self._grade_pick(pick, game)
+            if outcome is None:
+                continue
+            pick["result"] = outcome["result"]
+            pick["units"] = outcome["units"]
+            pick["graded_at"] = datetime.utcnow().isoformat() + "Z"
+            graded += 1
+
+        if graded:
+            self.save(data)
+        return {
+            "graded": graded,
+            "still_pending": not_yet,
+            "total_picks_in_log": len(data["picks"]),
+        }
+
+    @staticmethod
+    def _grade_pick(pick: dict, game: dict) -> dict | None:
+        """Grade a single pick against a completed game. Returns
+        {"result": WIN/LOSS/PUSH, "units": float} or None for bet types
+        we can't grade."""
+        spec = pick.get("spec") or {}
+        bt = spec.get("type")
+        away = game["away_team"]
+        home = game["home_team"]
+
+        if bt == "moneyline":
+            won = (game["ml_winner"] == spec.get("team"))
+            return _settle(pick, won, push=False)
+
+        if bt == "run_line":
+            # We bet underdog +1.5; we win on a 1-run loss or better.
+            team = spec.get("team")
+            if team == home:
+                margin = game["home_score"] - game["away_score"]
+            elif team == away:
+                margin = game["away_score"] - game["home_score"]
+            else:
+                return None
+            won = margin >= -1
+            return _settle(pick, won, push=False)
+
+        if bt == "totals":
+            line = spec.get("line")
+            side = spec.get("side")
+            actual = game.get("total")
+            if line is None or actual is None:
+                return None
+            if abs(actual - line) < 1e-9:
+                return _settle(pick, won=False, push=True)
+            if side == "OVER":
+                return _settle(pick, won=actual > line, push=False)
+            return _settle(pick, won=actual < line, push=False)
+
+        if bt == "first_5":
+            team = spec.get("team")
+            winner = game.get("f5_winner")
+            if winner == "PUSH":
+                return _settle(pick, won=False, push=True)
+            return _settle(pick, won=(winner == team), push=False)
+
+        if bt == "first_inning":
+            side = spec.get("side")
+            if side == "NRFI":
+                return _settle(pick, won=bool(game.get("nrfi")), push=False)
+            return _settle(pick, won=not bool(game.get("nrfi")), push=False)
+
+        return None
+
     # ---------------- summary -------------------------------------------
 
     def summary(self) -> dict:
         data = self.load()
         picks = data["picks"]
         with_close = [p for p in picks if p.get("clv_pct") is not None]
+        graded = [p for p in picks if p.get("result") in ("WIN", "LOSS", "PUSH")]
+        last_30 = self._last_n_days_picks(graded, 30)
 
-        overall = self._clv_stats(with_close)
-        by_type: dict[str, dict] = defaultdict(list)
+        clv_overall = self._clv_stats(with_close)
+        record_overall = self._record_stats(graded)
+        record_30d = self._record_stats(last_30)
+
+        clv_by_type: dict[str, list] = defaultdict(list)
         for p in with_close:
-            by_type[p["bet_type"]].append(p)
+            clv_by_type[p["bet_type"]].append(p)
+        record_by_type: dict[str, list] = defaultdict(list)
+        for p in graded:
+            record_by_type[p["bet_type"]].append(p)
 
         return {
             "picks_total": len(picks),
             "picks_with_close": len(with_close),
-            "overall": overall,
+            "picks_graded": len(graded),
+            "overall": clv_overall,           # backwards compat: CLV summary
+            "clv_overall": clv_overall,
+            "record_overall": record_overall,  # full-history W-L-P + units
+            "record_30d": record_30d,          # rolling 30-day window
             "by_bet_type": {
-                bt: self._clv_stats(rows) for bt, rows in by_type.items()
+                bt: self._clv_stats(rows) for bt, rows in clv_by_type.items()
             },
+            "record_by_bet_type": {
+                bt: self._record_stats(rows) for bt, rows in record_by_type.items()
+            },
+        }
+
+    @staticmethod
+    def _last_n_days_picks(picks: list[dict], n: int) -> list[dict]:
+        cutoff = datetime.utcnow().date() - timedelta(days=n)
+        out = []
+        for p in picks:
+            try:
+                d = datetime.strptime(p["date"], "%Y-%m-%d").date()
+            except (KeyError, TypeError, ValueError):
+                continue
+            if d >= cutoff:
+                out.append(p)
+        return out
+
+    @staticmethod
+    def _record_stats(rows: list[dict]) -> dict:
+        wins = sum(1 for r in rows if r.get("result") == "WIN")
+        losses = sum(1 for r in rows if r.get("result") == "LOSS")
+        pushes = sum(1 for r in rows if r.get("result") == "PUSH")
+        graded = wins + losses
+        units = round(sum((r.get("units") or 0.0) for r in rows), 2)
+        clv_vals = [r["clv_pct"] for r in rows if r.get("clv_pct") is not None]
+        return {
+            "n": len(rows),
+            "wins": wins,
+            "losses": losses,
+            "pushes": pushes,
+            "hit_rate": round(wins / graded * 100, 1) if graded else 0.0,
+            "units_pl": units,
+            "roi_pct": round(units / len(rows) * 100, 2) if rows else 0.0,
+            "mean_clv_pct": round(sum(clv_vals) / len(clv_vals), 3) if clv_vals else None,
+            "n_with_clv": len(clv_vals),
         }
 
     @staticmethod
