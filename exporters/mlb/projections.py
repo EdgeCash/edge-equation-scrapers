@@ -471,14 +471,24 @@ class ProjectionModel:
         home_win_prob = _logistic(self.win_prob_slope * margin)
         away_win_prob = 1.0 - home_win_prob
 
-        # Run-line cover probability — normal CDF on margin with the
-        # calibrated empirical margin_sd. Counts (Poisson Skellam) would
-        # be tighter in the tails than reality; the calibrated SD is the
-        # honest dispersion estimate. Same logic for F5 win prob.
+        # Run-line: bet the projected UNDERDOG at +1.5 rather than the
+        # projected favorite at -1.5. Backtest evidence: when picking the
+        # favorite to cover -1.5 the model hit 36% (huge -ROI). The model
+        # IS sharp on which team is the favorite — it's just that
+        # favorites historically cover -1.5 only ~40% of the time. Taking
+        # the contrary side at +1.5 inverts that math.
+        #
+        # P(underdog +1.5 covers) = P(fav_margin <= 1) = 1 - P(fav_margin >= 2)
+        # No push possible since 1.5 isn't an integer margin.
         if margin >= 0:
-            rl_cover_prob = prob_over(1.5, margin, self.margin_sd)
+            fav_cover_prob = prob_over(1.5, margin, self.margin_sd)
+            rl_fav_team = home
+            rl_underdog_team = away
         else:
-            rl_cover_prob = prob_over(1.5, -margin, self.margin_sd)
+            fav_cover_prob = prob_over(1.5, -margin, self.margin_sd)
+            rl_fav_team = away
+            rl_underdog_team = home
+        rl_cover_prob = 1.0 - fav_cover_prob
 
         f5_margin = home_f5 - away_f5
         if f5_margin > 0:
@@ -498,10 +508,13 @@ class ProjectionModel:
             "ml_pick": home if home_win_prob >= 0.5 else away,
             "home_win_prob": round(home_win_prob, 3),
             "away_win_prob": round(away_win_prob, 3),
-            "rl_fav": home if margin >= 0 else away,
+            "rl_fav": rl_fav_team,
+            "rl_pick": rl_underdog_team,           # the side we ACTUALLY bet
+            "rl_pick_point": 1.5,                  # +1.5 underdog spread
             "rl_margin_proj": round(abs(margin), 2),
             "rl_fav_covers_1_5": abs(margin) >= 1.5,
-            "rl_cover_prob": round(rl_cover_prob, 3),
+            "rl_fav_cover_prob": round(fav_cover_prob, 3),
+            "rl_cover_prob": round(rl_cover_prob, 3),  # P(rl_pick covers +1.5)
             "f5_away_proj": round(away_f5, 2),
             "f5_home_proj": round(home_f5, 2),
             "f5_total_proj": round(away_f5 + home_f5, 2),
