@@ -86,6 +86,13 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--output-dir", type=str, default=str(DEFAULT_OUTPUT_DIR),
     )
+    parser.add_argument(
+        "--compact", action="store_true", default=False,
+        help="After fetching boxscores, bundle each season's loose JSON "
+             "files into boxscores.tar.gz (~5x size reduction). Useful "
+             "before committing to git. Use scrapers/mlb/mlb_backfill_"
+             "scraper.py:read_boxscore_from_tarball() to extract one back.",
+    )
     args = parser.parse_args(argv)
 
     seasons = parse_seasons(args.seasons) or default_seasons()
@@ -104,18 +111,25 @@ def main(argv: list[str] | None = None) -> int:
     )
     report = scraper.fetch_seasons(seasons, with_boxscores=args.with_boxscores)
 
+    if args.compact and args.with_boxscores:
+        print("\nCompacting boxscore directories...")
+        for season in seasons:
+            result = scraper.compact_season_boxscores(season)
+            if not result["skipped"]:
+                report[season]["compact_size_mb"] = result.get("size_mb")
+
     print("\n=== Summary ===")
     for season, stats in sorted(report.items()):
-        print(
-            f"  {season}: {stats['games']} games"
-            + (
+        line = f"  {season}: {stats['games']} games"
+        if args.with_boxscores:
+            line += (
                 f", boxscores +{stats['boxscores_fetched']} new "
                 f"({stats['boxscores_skipped']} cached, "
                 f"{stats['boxscores_failed']} failed)"
-                if args.with_boxscores
-                else ""
             )
-        )
+        if "compact_size_mb" in stats:
+            line += f", compacted to {stats['compact_size_mb']} MB"
+        print(line)
     return 0
 
 
