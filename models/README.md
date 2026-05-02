@@ -1,6 +1,14 @@
 # models/
 
-Sport-agnostic and forward-looking model components. **Currently a placeholder** — the MLB projection model lives at `exporters/mlb/projections.py` for historical reasons.
+Sport-agnostic and forward-looking model components.
+
+## Current contents
+
+| Module | Status |
+|--------|--------|
+| `mlb/player_props.py` | 🟣 EXPERIMENTAL — pitcher Ks, batter hits, batter total bases. Sandboxed; outputs only land in `data/experimental/mlb-props/`. See [BRAND_GUIDE Sandbox section](../docs/BRAND_GUIDE.md). |
+
+The MLB **game-level** projection model still lives at `exporters/mlb/projections.py` for historical reasons (it grew up alongside the daily exporter).
 
 ## Why it exists today
 

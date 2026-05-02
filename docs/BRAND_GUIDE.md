@@ -39,6 +39,20 @@ The colored tier indicates how strong the model thinks the edge is. The Kelly un
 - **Market gating:** A market is included on the daily card only when its rolling 200+ bet backtest shows **≥+1% ROI AND Brier <0.246**. Re-evaluated weekly. Removing a market from publication is a normal part of the process.
 - **Props / NRFI / YRFI / player props:** Gradual rollout, gated on the game-level model proving consistent +CLV first. NRFI/YRFI ships under the existing First Inning market; player-level props (Ks, hits, HRs) wait until the game-level model is profitable for 30+ consecutive days.
 
+## Sandbox protocol
+
+Some markets (currently: MLB player props) are under active development but **not yet earning their way onto the daily card**. We build them out so backtest evidence can accumulate, but everything generated lives outside `public/` — no website surface, no X/social posts, no daily card mention.
+
+**Rules for sandboxed markets:**
+
+- Outputs land in `data/experimental/<market>/` (deliberately NOT under `public/`).
+- No web routes consume sandbox data.
+- No tier badges, no Kelly units published anywhere user-facing.
+- Sandboxed work moves out of the sandbox **only** when it passes the same market gate as live markets: ≥+1% ROI AND Brier <0.246 over 200+ rolling backtest bets.
+- Removing a sandboxed market that doesn't earn its way out is a normal, expected outcome. Building doesn't entitle anything to publication.
+
+This protects the brand promise that everything visible has been measured. Building in the open is fine; publishing in the open without evidence is not.
+
 ## Operational Standards (the floor for "elite")
 
 1. **Daily card published by 11:00 AM ET** (gives lineups time to set)
