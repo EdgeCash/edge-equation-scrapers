@@ -6,7 +6,7 @@ Output assembly and the entry-point pipelines that chain scrapers → projection
 
 | Subdirectory | Purpose |
 |--------------|---------|
-| [`mlb/`](mlb/README.md) | Daily MLB pipeline. Projection model, Kelly sizing, backtest, CLV tracker, daily spreadsheet builder, closing snapshot CLI, auto-grader. |
+| [`mlb/`](mlb/README.md) | Daily MLB pipeline. Projection model, Kelly sizing, backtest, CLV tracker, daily spreadsheet builder, closing snapshot CLI, auto-grader. Plus 🟣 `player_props_experimental.py` — sandboxed prop projections that write to `data/experimental/mlb-props/` for offline auditing only. |
 
 ## Convention
 

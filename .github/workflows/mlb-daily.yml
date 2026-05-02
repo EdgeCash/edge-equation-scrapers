@@ -62,9 +62,20 @@ jobs:
           fi
           python -m exporters.mlb.daily_spreadsheet $ARGS
 
+      - name: Build experimental player props (sandbox only)
+        # Runs after the main build. Outputs land in
+        # data/experimental/mlb-props/ — NOT under public/, so the
+        # website cannot surface them. Per BRAND_GUIDE Sandbox
+        # protocol: no prop ships to the daily card until it passes
+        # the same gate as game-level markets. We still generate
+        # daily so we accumulate evidence to backtest against.
+        # `|| true` so a props failure doesn't block the main build.
+        run: |
+          python run_mlb_props_experimental.py || true
+
       - name: Commit and push outputs
         run: |
-          git add public/data/mlb/
+          git add public/data/mlb/ data/experimental/mlb-props/ || true
           if git diff --staged --quiet; then
             echo "No data changes to commit."
             exit 0
