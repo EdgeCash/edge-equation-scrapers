@@ -38,6 +38,7 @@ if str(REPO_ROOT) not in sys.path:
 
 from scrapers.mlb.mlb_game_scraper import MLBGameScraper, TEAM_MAP
 from scrapers.mlb.mlb_odds_scraper import MLBOddsScraper
+from scrapers.mlb.mlb_pitcher_scraper import MLBPitcherScraper
 from exporters.mlb.projections import (
     ProjectionModel,
     prob_over,
@@ -131,6 +132,20 @@ def _ml_market_price(market: dict, side: str) -> dict | None:
     return (market or {}).get(side)
 
 
+def _sp_fields(p: dict) -> dict:
+    """Pull away/home SP names + factors out of a projection dict."""
+    away_sp = p.get("away_sp") or {}
+    home_sp = p.get("home_sp") or {}
+    return {
+        "away_sp_name": away_sp.get("name"),
+        "home_sp_name": home_sp.get("name"),
+        "away_sp_era": away_sp.get("era"),
+        "home_sp_era": home_sp.get("era"),
+        "away_sp_factor": away_sp.get("factor"),
+        "home_sp_factor": home_sp.get("factor"),
+    }
+
+
 def _rl_market_price(rl_offers: list[dict], side: str, point: float) -> dict | None:
     """Find the run-line price for (side, point); tolerate small numeric drift."""
     for o in rl_offers or []:
@@ -199,6 +214,7 @@ class DailySpreadsheet:
         self.output_dir = Path(output_dir) if output_dir else DEFAULT_OUTPUT_DIR
         self.scraper = MLBGameScraper()
         self.odds_scraper = MLBOddsScraper(api_key=odds_api_key)
+        self.pitcher_scraper = MLBPitcherScraper(season=season)
         self.skip_odds = skip_odds
         self.min_edge_pct = min_edge_pct
         self.top_n = top_n
@@ -219,6 +235,23 @@ class DailySpreadsheet:
         print(f"  Fetching slate for {self.target_date}...")
         slate = fetch_slate(self.target_date)
         print(f"    {len(slate)} scheduled games")
+
+        print("  Fetching probable starting pitchers...")
+        try:
+            sp_map = self.pitcher_scraper.fetch_factors_for_slate(slate)
+        except Exception as e:
+            print(f"    SP fetch failed ({type(e).__name__}: {e}); proceeding without SP adjustment")
+            sp_map = {}
+        for g in slate:
+            sp = sp_map.get(g.get("game_pk"), {})
+            g["away_sp"] = sp.get("away")
+            g["home_sp"] = sp.get("home")
+        named = sum(
+            1 for g in slate
+            if (g.get("away_sp") or {}).get("name")
+            and (g.get("home_sp") or {}).get("name")
+        )
+        print(f"    {named}/{len(slate)} games have both probable SPs identified")
 
         if self.skip_odds:
             odds = {"fetched_at": None, "source": "skipped", "games": []}
@@ -302,6 +335,7 @@ class DailySpreadsheet:
                 "date": p["date"],
                 "away": p["away_team"],
                 "home": p["home_team"],
+                **_sp_fields(p),
                 "away_runs_proj": p["away_runs_proj"],
                 "home_runs_proj": p["home_runs_proj"],
                 "away_win_prob": p["away_win_prob"],
@@ -330,7 +364,11 @@ class DailySpreadsheet:
         return {
             "title": "Moneyline",
             "projection_columns": [
-                "date", "away", "home", "away_runs_proj", "home_runs_proj",
+                "date", "away", "home",
+                "away_sp_name", "home_sp_name",
+                "away_sp_era", "home_sp_era",
+                "away_sp_factor", "home_sp_factor",
+                "away_runs_proj", "home_runs_proj",
                 "away_win_prob", "home_win_prob", "ml_pick",
                 "model_prob", "fair_odds_dec",
                 "market_odds_dec", "market_odds_american", "book",
@@ -371,6 +409,7 @@ class DailySpreadsheet:
                 "date": p["date"],
                 "away": p["away_team"],
                 "home": p["home_team"],
+                **_sp_fields(p),
                 "rl_fav": p["rl_fav"],
                 "rl_margin_proj": p["rl_margin_proj"],
                 "rl_cover_prob": p["rl_cover_prob"],
@@ -401,7 +440,10 @@ class DailySpreadsheet:
         return {
             "title": "Run Line",
             "projection_columns": [
-                "date", "away", "home", "rl_fav", "rl_margin_proj",
+                "date", "away", "home",
+                "away_sp_name", "home_sp_name",
+                "away_sp_factor", "home_sp_factor",
+                "rl_fav", "rl_margin_proj",
                 "rl_cover_prob", "rl_fav_covers_1_5",
                 "model_prob", "fair_odds_dec",
                 "market_odds_dec", "market_odds_american", "book",
@@ -428,6 +470,7 @@ class DailySpreadsheet:
                 "date": p["date"],
                 "away": p["away_team"],
                 "home": p["home_team"],
+                **_sp_fields(p),
                 "away_runs_proj": p["away_runs_proj"],
                 "home_runs_proj": p["home_runs_proj"],
                 "total_proj": p["total_proj"],
@@ -480,7 +523,10 @@ class DailySpreadsheet:
         return {
             "title": "Totals",
             "projection_columns": [
-                "date", "away", "home", "away_runs_proj", "home_runs_proj", "total_proj",
+                "date", "away", "home",
+                "away_sp_name", "home_sp_name",
+                "away_sp_factor", "home_sp_factor",
+                "away_runs_proj", "home_runs_proj", "total_proj",
             ] + [f"pick_{l}" for l in TOTAL_LINES] + [
                 "kelly_line", "model_prob", "fair_odds_dec",
                 "market_odds_dec", "market_odds_american", "book",
@@ -506,6 +552,7 @@ class DailySpreadsheet:
                 "date": p["date"],
                 "away": p["away_team"],
                 "home": p["home_team"],
+                **_sp_fields(p),
                 "f5_away_proj": p["f5_away_proj"],
                 "f5_home_proj": p["f5_home_proj"],
                 "f5_total_proj": p["f5_total_proj"],
@@ -531,7 +578,10 @@ class DailySpreadsheet:
         return {
             "title": "First 5",
             "projection_columns": [
-                "date", "away", "home", "f5_away_proj", "f5_home_proj",
+                "date", "away", "home",
+                "away_sp_name", "home_sp_name",
+                "away_sp_factor", "home_sp_factor",
+                "f5_away_proj", "f5_home_proj",
                 "f5_total_proj", "f5_pick", "f5_win_prob",
                 "model_prob", "fair_odds_dec", "kelly_pct", "kelly_advice",
             ],
@@ -554,6 +604,7 @@ class DailySpreadsheet:
                 "date": p["date"],
                 "away": p["away_team"],
                 "home": p["home_team"],
+                **_sp_fields(p),
                 "f1_total_proj": p["f1_total_proj"],
                 "nrfi_prob": p["nrfi_prob"],
                 "yrfi_prob": p["yrfi_prob"],
@@ -578,7 +629,9 @@ class DailySpreadsheet:
         return {
             "title": "First Inning",
             "projection_columns": [
-                "date", "away", "home", "f1_total_proj",
+                "date", "away", "home",
+                "away_sp_name", "home_sp_name",
+                "f1_total_proj",
                 "nrfi_prob", "yrfi_prob", "nrfi_pick",
                 "model_prob", "fair_odds_dec", "kelly_pct", "kelly_advice",
             ],
@@ -598,15 +651,17 @@ class DailySpreadsheet:
     ) -> dict:
         proj_rows = []
         for p in projections:
-            for side, team, opp, runs in (
-                ("AWAY", p["away_team"], p["home_team"], p["away_runs_proj"]),
-                ("HOME", p["home_team"], p["away_team"], p["home_runs_proj"]),
+            for side, team, opp, runs, opp_sp in (
+                ("AWAY", p["away_team"], p["home_team"], p["away_runs_proj"], p.get("home_sp")),
+                ("HOME", p["home_team"], p["away_team"], p["home_runs_proj"], p.get("away_sp")),
             ):
                 row = {
                     "date": p["date"],
                     "team": team,
                     "opponent": opp,
                     "side": side,
+                    "opp_sp_name": (opp_sp or {}).get("name"),
+                    "opp_sp_factor": (opp_sp or {}).get("factor"),
                     "team_total_proj": runs,
                 }
                 for line in TEAM_TOTAL_LINES:
@@ -641,7 +696,9 @@ class DailySpreadsheet:
         return {
             "title": "Team Totals",
             "projection_columns": [
-                "date", "team", "opponent", "side", "team_total_proj",
+                "date", "team", "opponent", "side",
+                "opp_sp_name", "opp_sp_factor",
+                "team_total_proj",
             ] + [f"pick_{l}" for l in TEAM_TOTAL_LINES] + [
                 "kelly_line", "model_prob", "fair_odds_dec", "kelly_pct", "kelly_advice",
             ],
@@ -684,9 +741,20 @@ class DailySpreadsheet:
                     matchup = f"{r['team']} vs {r['opponent']}"
                 else:
                     matchup = f"{r.get('away')}@{r.get('home')}"
+                # Pitcher context — game-level tabs have away/home_sp_name,
+                # team_totals has opp_sp_name. Surface whichever is present.
+                sp_context_parts = []
+                if r.get("away_sp_name"):
+                    sp_context_parts.append(f"A: {r['away_sp_name']}")
+                if r.get("home_sp_name"):
+                    sp_context_parts.append(f"H: {r['home_sp_name']}")
+                if r.get("opp_sp_name") and not sp_context_parts:
+                    sp_context_parts.append(f"vs {r['opp_sp_name']}")
+
                 rows.append({
                     "date": r.get("date"),
                     "matchup": matchup,
+                    "starting_pitchers": " · ".join(sp_context_parts) or None,
                     "bet_type": tab_key,
                     "pick": r.get(pick_key),
                     "model_prob": r.get("model_prob"),
@@ -719,12 +787,14 @@ class DailySpreadsheet:
                 f"negative-EV ({len(negative_edge)}) · "
                 f"no-market ({len(no_market)})",
             "projection_columns": [
-                "date", "matchup", "bet_type", "pick", "model_prob",
+                "date", "matchup", "starting_pitchers",
+                "bet_type", "pick", "model_prob",
                 "fair_odds_dec", "market_odds_dec", "market_odds_american",
                 "book", "edge_pct", "kelly_pct", "kelly_advice",
             ],
             "backfill_columns": [
-                "date", "matchup", "bet_type", "pick", "model_prob",
+                "date", "matchup", "starting_pitchers",
+                "bet_type", "pick", "model_prob",
                 "market_odds_dec", "edge_pct", "kelly_pct",
             ],
             "projections": plays,

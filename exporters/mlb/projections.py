@@ -202,8 +202,22 @@ class ProjectionModel:
             + OPPONENT_WEIGHT * opp
         )
 
-    def project_matchup(self, away: str, home: str) -> dict:
-        """Project all six bet metrics for a single matchup."""
+    def project_matchup(
+        self,
+        away: str,
+        home: str,
+        away_sp: dict | None = None,
+        home_sp: dict | None = None,
+    ) -> dict:
+        """Project all six bet metrics for a single matchup.
+
+        away_sp / home_sp are optional dicts from MLBPitcherScraper:
+            {"name": str, "era": float, "ip": float, "factor": float, ...}
+        When provided, the OPPOSING team's offense is scaled by that
+        pitcher's quality factor (so home_sp suppresses away_runs and
+        vice versa). F5 projections get a slightly stronger SP weight
+        since the SP is usually the only pitcher of record through 5.
+        """
         a = self.team_summary(away)
         h = self.team_summary(home)
 
@@ -220,6 +234,16 @@ class ProjectionModel:
         home_f5 = self._blend(
             h["season"]["f5_rs_pg"], h["recent"]["f5_rs_pg"], a["season"]["f5_ra_pg"]
         )
+
+        # Starting-pitcher adjustment. Full-game blend is 70/30
+        # (SP / bullpen baseline); F5 leans 90/10 since the SP usually
+        # carries those innings.
+        away_sp_factor = (away_sp or {}).get("factor", 1.0)
+        home_sp_factor = (home_sp or {}).get("factor", 1.0)
+        away_runs *= 0.70 * home_sp_factor + 0.30
+        home_runs *= 0.70 * away_sp_factor + 0.30
+        away_f5 *= 0.90 * home_sp_factor + 0.10
+        home_f5 *= 0.90 * away_sp_factor + 0.10
 
         # Park factor — both teams' offensive output is scaled equally
         # by the home venue's run environment.
@@ -300,6 +324,8 @@ class ProjectionModel:
             "nrfi_pick": "NRFI" if nrfi_prob >= 0.5 else "YRFI",
             "away_total_proj": round(away_runs, 2),
             "home_total_proj": round(home_runs, 2),
+            "away_sp": away_sp,
+            "home_sp": home_sp,
             "model_meta": {
                 "season_weight": SEASON_WEIGHT,
                 "recent_weight": RECENT_WEIGHT,
@@ -307,6 +333,8 @@ class ProjectionModel:
                 "recent_window": RECENT_WINDOW,
                 "shrinkage_k": self.shrinkage_k,
                 "park_factor": pf,
+                "away_sp_factor": away_sp_factor,
+                "home_sp_factor": home_sp_factor,
                 "total_sd": self.total_sd,
                 "margin_sd": self.margin_sd,
                 "win_prob_slope": self.win_prob_slope,
@@ -319,11 +347,18 @@ class ProjectionModel:
     def project_slate(self, slate: list[dict]) -> list[dict]:
         """Project every matchup in today's slate.
 
-        slate items must have at least: away_team, home_team, game_pk, game_time
+        slate items must have at least: away_team, home_team, game_pk,
+        game_time. They MAY also carry away_sp / home_sp dicts (from
+        MLBPitcherScraper); when present, those flow into the projection
+        as starting-pitcher adjustments.
         """
         out = []
         for g in slate:
-            proj = self.project_matchup(g["away_team"], g["home_team"])
+            proj = self.project_matchup(
+                g["away_team"], g["home_team"],
+                away_sp=g.get("away_sp"),
+                home_sp=g.get("home_sp"),
+            )
             proj["date"] = g.get("date")
             proj["game_pk"] = g.get("game_pk")
             proj["game_time"] = g.get("game_time")

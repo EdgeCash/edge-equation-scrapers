@@ -82,6 +82,32 @@ Both teams' projected runs are scaled by the home venue's park factor
 most parks within ±5% of neutral. This is a fixed table — re-pull from
 Baseball-Reference / FanGraphs once per off-season for fresh values.
 
+### Starting pitcher adjustment
+
+Each game's projected runs are scaled by the OPPOSING starting
+pitcher's quality factor:
+
+```
+weighted_era = (sp_era * sp_ip + LEAGUE_ERA * 50) / (sp_ip + 50)
+factor       = weighted_era / LEAGUE_ERA   clamped to [0.70, 1.30]
+```
+
+A factor of 0.73 means the SP suppresses opposing offense ~27%; 1.17
+means the SP gives up runs ~17% above league average. The 50-IP
+shrinkage prior keeps a pitcher with 6 great innings from being
+projected as the next Bob Gibson.
+
+Full-game runs blend 70% SP factor / 30% league baseline (acknowledging
+that the bullpen carries 3-4 innings). F5 projections blend 90% / 10%
+since the SP usually pitches all of those innings. If no probable SP
+is listed for a game (TBD, doubleheader noise, network failure), the
+factor falls back to 1.0 and projections work without it.
+
+Probable pitchers are fetched from `statsapi.mlb.com` via the
+`hydrate=probablePitcher` schedule field. Each SP's season stats
+(ERA, WHIP, IP) come from the `/people/{id}/stats?stats=season&group=pitching`
+endpoint and are cached per run.
+
 ### Self-calibration
 
 Every daily run executes a season-long backtest that records residuals

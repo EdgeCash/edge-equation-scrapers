@@ -10,6 +10,7 @@ MLB game results, player props, and pick-settling engine powered by the **MLB St
 | mlb_player_scraper.py | Fetch player game logs and grade prop results (K lines for pitchers, Hits/TB/HR/SB for batters). |
 | mlb_settle_engine.py | Grade published Edge Equation picks against actual results for the Track Record page. |
 | mlb_odds_scraper.py | Pull live ML / Run Line / Totals prices from The Odds API (with DraftKings fallback). |
+| mlb_pitcher_scraper.py | Pull today's probable starting pitchers + their season stats and compute a quality factor used by the projection model. |
 
 ## Quick Start
 
