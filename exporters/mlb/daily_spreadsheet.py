@@ -43,11 +43,12 @@ from scrapers.mlb.mlb_weather_scraper import MLBWeatherScraper
 from exporters.mlb.projections import (
     ProjectionModel,
     prob_over,
+    prob_over_under_poisson,
     TOTAL_SD,
     TEAM_TOTAL_SD,
     F5_TOTAL_SD,
 )
-from exporters.mlb.kelly import kelly_advice, edge_pct, DEFAULT_DECIMAL_ODDS
+from exporters.mlb.kelly import kelly_advice, edge_pct, tier_from_pct, DEFAULT_DECIMAL_ODDS
 from exporters.mlb.backtest import BacktestEngine
 from exporters.mlb.clv_tracker import ClvTracker
 
@@ -59,10 +60,30 @@ TOTAL_LINES = (8.5, 9.0, 9.5)
 TEAM_TOTAL_LINES = (3.5, 4.5)
 
 # Today's Card filtering — the user's strategy is to play only the
-# highest-edge plays, so default to a 3% edge threshold and cap at the
-# top 10 picks per day. Tunable via CLI.
+# highest-edge plays. Edge thresholds are tuned per market because
+# variance and typical vig differ:
+#   - Moneyline: heavy favorites (-200+) have huge price-induced variance,
+#     so demand a meatier edge.
+#   - Run line / Team totals: moderate variance, moderate vig (~-115).
+#   - Totals / First 5: low vig (-110/-110), can act on tighter edges.
+#   - First inning (NRFI/YRFI): binary but the market is less efficient,
+#     so we want at least a 4% edge before believing it.
 DEFAULT_MIN_EDGE_PCT = 3.0
 DEFAULT_TOP_N = 10
+DEFAULT_EDGE_THRESHOLDS_BY_MARKET = {
+    "moneyline":     4.0,
+    "run_line":      3.0,
+    "totals":        2.5,
+    "first_5":       2.5,
+    "first_inning":  4.0,
+    "team_totals":   3.0,
+}
+
+# Portfolio sizing — sum of half-Kelly% across all bets on a single
+# game is capped at this value (% of bankroll). Same-game bets are
+# correlated (an OVER total + a fav ML are both juiced by an offensive
+# eruption), so full-Kelly across all of them over-stakes the slate.
+DEFAULT_PORTFOLIO_CAP_PER_GAME = 6.0
 
 
 def _today_et() -> str:
@@ -80,11 +101,16 @@ def _ou_label(actual: float, line: float) -> str:
 
 
 def _best_total_kelly(mean: float, lines: tuple[float, ...], sd: float) -> dict:
-    """Pick the (line, side) with the highest half-Kelly fraction at the default price."""
+    """Pick the (line, side) with the highest half-Kelly at the default price.
+
+    Uses Poisson distribution (runs are non-negative integer counts) so
+    half-point lines have P(push)=0 and whole-number lines correctly
+    isolate the push probability.
+    """
     best = None
     for line in lines:
-        p_over = prob_over(line, mean, sd)
-        for side, prob in (("OVER", p_over), ("UNDER", 1 - p_over)):
+        p_over, p_under, _push = prob_over_under_poisson(line, mean)
+        for side, prob in (("OVER", p_over), ("UNDER", p_under)):
             adv = kelly_advice(prob)
             if best is None or adv["kelly_pct"] > best["kelly_pct"]:
                 best = {**adv, "line": line, "side": side}
@@ -98,19 +124,19 @@ def _market_total_kelly(
 ) -> dict | None:
     """Best Kelly across whichever totals lines the book is actually offering.
 
-    Optimizes for half-Kelly fraction (which is edge-proportional for any
-    fixed price). Returns the (line, side) combo with the highest edge
-    plus the corresponding edge_pct in the result.
+    Uses Poisson distribution for the totals model. Optimizes half-Kelly
+    fraction (edge-proportional at fixed price). Returns the (line, side)
+    combo with the highest edge plus its edge_pct.
     """
     best = None
     for offer in market_totals:
         line = offer.get("point")
         if line is None:
             continue
-        p_over = prob_over(line, mean, sd)
+        p_over, p_under, _push = prob_over_under_poisson(line, mean)
         for side_key, side_label, prob in (
             ("over", "OVER", p_over),
-            ("under", "UNDER", 1 - p_over),
+            ("under", "UNDER", p_under),
         ):
             price = offer.get(side_key)
             if not price:
@@ -392,6 +418,8 @@ class DailySpreadsheet:
         skip_odds: bool = False,
         min_edge_pct: float = DEFAULT_MIN_EDGE_PCT,
         top_n: int = DEFAULT_TOP_N,
+        edge_thresholds: dict[str, float] | None = None,
+        portfolio_cap_per_game: float = DEFAULT_PORTFOLIO_CAP_PER_GAME,
     ):
         self.season = season
         self.target_date = target_date or _today_et()
@@ -406,6 +434,8 @@ class DailySpreadsheet:
         self.skip_odds = skip_odds
         self.min_edge_pct = min_edge_pct
         self.top_n = top_n
+        self.edge_thresholds = edge_thresholds or dict(DEFAULT_EDGE_THRESHOLDS_BY_MARKET)
+        self.portfolio_cap_per_game = portfolio_cap_per_game
 
     # --------- data assembly ------------------------------------------------
 
@@ -503,7 +533,11 @@ class DailySpreadsheet:
             ),
         }
         tabs["todays_card"] = self._build_todays_card(
-            tabs, min_edge_pct=self.min_edge_pct, top_n=self.top_n
+            tabs,
+            min_edge_pct=self.min_edge_pct,
+            top_n=self.top_n,
+            edge_thresholds=self.edge_thresholds,
+            portfolio_cap_per_game=self.portfolio_cap_per_game,
         )
 
         # Persist today's actionable picks to the CLV log, then load CLV
@@ -965,16 +999,22 @@ class DailySpreadsheet:
         tabs: dict,
         min_edge_pct: float = DEFAULT_MIN_EDGE_PCT,
         top_n: int = DEFAULT_TOP_N,
+        edge_thresholds: dict[str, float] | None = None,
+        portfolio_cap_per_game: float = DEFAULT_PORTFOLIO_CAP_PER_GAME,
     ) -> dict:
         """Cross-tab roll-up of the highest-edge plays.
 
-        Inclusion rules (the "play only the sharpest spots" filter):
-          1. The pick must have a real market price (no synthetic -110).
-          2. edge_pct (model_prob − implied_market_prob) must be ≥ min_edge_pct.
-          3. Sort by edge desc, then take the top N.
+        Inclusion rules:
+          1. Pick must have a real market price (no synthetic -110).
+          2. edge_pct ≥ per-market threshold (or min_edge_pct as fallback).
+          3. Sort by edge desc, take top N.
+          4. Cap total Kelly% per game at portfolio_cap_per_game (same-game
+             bets are correlated; full-Kelly on each over-stakes).
 
-        Anything that fails 1 or 2 lands in the PASS list for transparency.
+        Picks failing rule 2 land in the FADE / SKIP list. Picks scaled by
+        rule 4 carry a `portfolio_scaled_from` field showing the original.
         """
+        thresholds = edge_thresholds or {}
         sources = (
             ("moneyline",   "ml_pick"),
             ("run_line",    "rl_fav"),
@@ -1021,18 +1061,53 @@ class DailySpreadsheet:
         priced = [r for r in rows if r.get("edge_pct") is not None]
         priced.sort(key=lambda r: r["edge_pct"], reverse=True)
 
-        plays = [r for r in priced if r["edge_pct"] >= min_edge_pct]
+        def _meets_threshold(r: dict) -> bool:
+            t = thresholds.get(r["bet_type"], min_edge_pct)
+            return r["edge_pct"] >= t
+
+        plays = [r for r in priced if _meets_threshold(r)]
         if top_n and len(plays) > top_n:
             plays = plays[:top_n]
-        leans = [r for r in priced if 0 < r["edge_pct"] < min_edge_pct]
+
+        # Portfolio cap — same-game bets are correlated; cap the sum of
+        # half-Kelly across one matchup at portfolio_cap_per_game (% of
+        # bankroll). Scale down proportionally when exceeded and re-tier.
+        from collections import defaultdict
+        by_game: dict[str, list[dict]] = defaultdict(list)
+        for p in plays:
+            by_game[p["matchup"]].append(p)
+        for matchup, game_plays in by_game.items():
+            total_pct = sum(p.get("kelly_pct") or 0 for p in game_plays)
+            if total_pct > portfolio_cap_per_game and total_pct > 0:
+                scale = portfolio_cap_per_game / total_pct
+                for p in game_plays:
+                    original = p["kelly_pct"]
+                    scaled = round(original * scale, 2)
+                    p["portfolio_scaled_from"] = original
+                    p["portfolio_total_pct"] = round(total_pct, 2)
+                    p["kelly_pct"] = scaled
+                    p["kelly_advice"] = tier_from_pct(scaled)
+
+        leans = [
+            r for r in priced
+            if r["edge_pct"] > 0 and not _meets_threshold(r)
+        ]
         no_market = [r for r in rows if r.get("edge_pct") is None]
         negative_edge = [r for r in priced if r["edge_pct"] <= 0]
+
+        scaled_count = sum(
+            1 for p in plays if p.get("portfolio_scaled_from") is not None
+        )
+        threshold_note = "per-market" if thresholds else f"≥ {min_edge_pct:.1f}%"
+        scaled_note = (
+            f" · {scaled_count} portfolio-scaled" if scaled_count else ""
+        )
 
         return {
             "title": "Today's Card",
             "projection_section_title":
-                f"PLAYS — edge ≥ {min_edge_pct:.1f}% (top {top_n}) — "
-                f"{len(plays)} of {len(priced)} priced picks",
+                f"PLAYS — edge {threshold_note} (top {top_n}) — "
+                f"{len(plays)} of {len(priced)} priced picks{scaled_note}",
             "backfill_section_title":
                 f"FADE / SKIP — leans below threshold ({len(leans)}) · "
                 f"negative-EV ({len(negative_edge)}) · "
@@ -1042,6 +1117,7 @@ class DailySpreadsheet:
                 "bet_type", "pick", "model_prob",
                 "fair_odds_dec", "market_odds_dec", "market_odds_american",
                 "book", "edge_pct", "kelly_pct", "kelly_advice",
+                "portfolio_scaled_from",
             ],
             "backfill_columns": [
                 "date", "matchup", "starting_pitchers",
@@ -1065,6 +1141,7 @@ class DailySpreadsheet:
             "hit_rate": overall["hit_rate"],
             "units_pl": overall["units_pl"],
             "roi_pct": overall["roi_pct"],
+            "brier": overall.get("brier"),
         }]
         for row in backtest["summary_by_bet_type"]:
             summary_rows.append({"scope": "BY TYPE", **row})
@@ -1113,7 +1190,7 @@ class DailySpreadsheet:
             "backfill_section_title": "DAILY P&L (cumulative units, flat 1u @ -110)",
             "projection_columns": [
                 "scope", "bet_type", "bets", "wins", "losses", "pushes",
-                "hit_rate", "units_pl", "roi_pct",
+                "hit_rate", "units_pl", "roi_pct", "brier",
             ],
             "backfill_columns": ["date", "daily_units", "cumulative_units"],
             "projections": summary_rows,
@@ -1338,7 +1415,27 @@ def main(argv: list[str] | None = None) -> int:
         help=f"Cap Today's Card at this many plays (default {DEFAULT_TOP_N}; "
              f"set 0 to disable)",
     )
+    parser.add_argument(
+        "--portfolio-cap", type=float, default=DEFAULT_PORTFOLIO_CAP_PER_GAME,
+        help=f"Max sum of half-Kelly%% across all bets on one game "
+             f"(default {DEFAULT_PORTFOLIO_CAP_PER_GAME})",
+    )
+    parser.add_argument(
+        "--edge-threshold", action="append", default=[],
+        metavar="MARKET=PCT",
+        help="Override per-market edge threshold, e.g. --edge-threshold totals=2.0 "
+             "--edge-threshold moneyline=5.0. Repeat for multiple markets.",
+    )
     args = parser.parse_args(argv)
+
+    # Parse --edge-threshold overrides into a dict, falling back to defaults.
+    thresholds = dict(DEFAULT_EDGE_THRESHOLDS_BY_MARKET)
+    for spec in args.edge_threshold:
+        try:
+            market, pct = spec.split("=", 1)
+            thresholds[market.strip()] = float(pct)
+        except (ValueError, TypeError):
+            print(f"  Ignoring malformed --edge-threshold: {spec!r}")
 
     spreadsheet = DailySpreadsheet(
         season=args.season,
@@ -1348,6 +1445,8 @@ def main(argv: list[str] | None = None) -> int:
         skip_odds=args.no_odds,
         min_edge_pct=args.min_edge,
         top_n=args.top_n,
+        edge_thresholds=thresholds,
+        portfolio_cap_per_game=args.portfolio_cap,
     )
 
     print(f"MLB Daily Spreadsheet — target {spreadsheet.target_date}")

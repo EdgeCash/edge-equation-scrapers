@@ -61,6 +61,13 @@ def _tier(fraction: float) -> str:
     return "3u"
 
 
+def tier_from_pct(kelly_pct: float | None) -> str:
+    """Public tier helper — accepts a half-Kelly percentage (e.g. 2.5)."""
+    if kelly_pct is None:
+        return "PASS"
+    return _tier(max(0.0, kelly_pct) / 100.0)
+
+
 def kelly_advice(
     prob: float,
     decimal_odds: float = DEFAULT_DECIMAL_ODDS,
