@@ -34,9 +34,29 @@ LEAGUE_F1_SCORE_RATE = 0.27
 
 WIN_PROB_SLOPE = 0.45
 
+# Standard deviations for deriving probabilities from point projections.
+# Calibrated to typical MLB game-to-game variance.
+TOTAL_SD = 3.0          # full-game total runs
+TEAM_TOTAL_SD = 2.2     # one team's runs
+MARGIN_SD = 3.5         # full-game run margin
+F5_TOTAL_SD = 2.2       # first-5-innings total
+F5_MARGIN_SD = 2.2      # first-5-innings margin
+
 
 def _logistic(x: float) -> float:
     return 1.0 / (1.0 + math.exp(-x))
+
+
+def _norm_cdf(x: float) -> float:
+    """Standard normal CDF via erf — no scipy dependency."""
+    return 0.5 * (1 + math.erf(x / math.sqrt(2)))
+
+
+def prob_over(line: float, mean: float, sd: float) -> float:
+    """P(X > line) for X ~ Normal(mean, sd^2)."""
+    if sd <= 0:
+        return 1.0 if mean > line else 0.0
+    return 1.0 - _norm_cdf((line - mean) / sd)
 
 
 class ProjectionModel:
@@ -168,6 +188,21 @@ class ProjectionModel:
         home_win_prob = _logistic(WIN_PROB_SLOPE * margin)
         away_win_prob = 1.0 - home_win_prob
 
+        # Run-line: probability the projected favorite covers -1.5
+        f5_margin = home_f5 - away_f5
+        if margin >= 0:
+            rl_cover_prob = prob_over(1.5, margin, MARGIN_SD)
+        else:
+            rl_cover_prob = prob_over(1.5, -margin, MARGIN_SD)
+
+        # First 5: win probability for the projected F5 favorite
+        if f5_margin > 0:
+            f5_win_prob = 1 - _norm_cdf(-f5_margin / F5_MARGIN_SD)
+        elif f5_margin < 0:
+            f5_win_prob = 1 - _norm_cdf(f5_margin / F5_MARGIN_SD)
+        else:
+            f5_win_prob = 0.5
+
         return {
             "away_team": away,
             "home_team": home,
@@ -181,6 +216,7 @@ class ProjectionModel:
             "rl_fav": home if margin >= 0 else away,
             "rl_margin_proj": round(abs(margin), 2),
             "rl_fav_covers_1_5": abs(margin) >= 1.5,
+            "rl_cover_prob": round(rl_cover_prob, 3),
             "f5_away_proj": round(away_f5, 2),
             "f5_home_proj": round(home_f5, 2),
             "f5_total_proj": round(away_f5 + home_f5, 2),
@@ -189,6 +225,7 @@ class ProjectionModel:
                 else away if away_f5 > home_f5
                 else "PUSH"
             ),
+            "f5_win_prob": round(f5_win_prob, 3),
             "f1_away_proj": round(away_f1, 2),
             "f1_home_proj": round(home_f1, 2),
             "f1_total_proj": round(away_f1 + home_f1, 2),

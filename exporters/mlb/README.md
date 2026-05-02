@@ -59,11 +59,46 @@ calibrated to MLB's typical run-differential to win-rate slope. Per-bet
 outputs:
 
 - **Moneyline:** `away_win_prob`, `home_win_prob`, `ml_pick`
-- **Run Line:** `rl_fav`, `rl_margin_proj`, `rl_fav_covers_1_5`
+- **Run Line:** `rl_fav`, `rl_margin_proj`, `rl_cover_prob`, `rl_fav_covers_1_5`
 - **Totals:** `total_proj` plus pick at 8.5 / 9.0 / 9.5
-- **First 5:** `f5_total_proj`, `f5_pick`
+- **First 5:** `f5_total_proj`, `f5_pick`, `f5_win_prob`
 - **First Inning:** `nrfi_prob`, `yrfi_prob`, `nrfi_pick` (independence assumed across teams)
 - **Team Totals:** `team_total_proj` plus pick at 3.5 / 4.5
+
+### Kelly sizing
+
+Every projection row carries a Kelly recommendation:
+
+| Column | Meaning |
+|--------|---------|
+| `model_prob` | Probability the model assigns to the recommended pick. |
+| `fair_odds_dec` | Decimal odds implied by `model_prob` (i.e. `1 / model_prob`). Compare against the market line. |
+| `kelly_pct` | Recommended bet size as a percentage of bankroll. **Half-Kelly, capped at 5%.** |
+| `kelly_advice` | Categorical tier: `PASS` / `0.5u` / `1u` / `2u` / `3u`. |
+| `kelly_line` | (Totals & Team Totals only) Which line + side the Kelly recommendation refers to (e.g. `OVER 8.5`). |
+
+Sizing assumes a default market price of **-110 (decimal 1.909)** since that's
+the standard juice on spreads, totals, F5, F1, and team totals. Moneyline
+prices vary, so treat the ML Kelly as a sanity check — when you have the real
+price, recompute with `kelly_advice(prob, decimal_odds=...)` from
+`exporters.mlb.kelly`.
+
+The full Kelly fraction is `(b*p - q) / b` where `b = decimal_odds - 1`,
+`p = model_prob`, `q = 1 - p`. We halve it (Kelly is well-known to be too
+aggressive when probability estimates are noisy) and cap at 5% of bankroll
+to keep one bad day from wrecking the bankroll.
+
+For non-binary markets (totals, run-line, team totals, F5) the model produces
+a point estimate; we derive a probability via a normal-CDF transform using
+calibrated standard deviations:
+
+| Market | SD assumed |
+|--------|-----------|
+| Game total runs | 3.0 |
+| Team total runs | 2.2 |
+| Game run margin | 3.5 |
+| First 5 total | 2.2 |
+| First 5 margin | 2.2 |
 
 ## Daily Cron
 

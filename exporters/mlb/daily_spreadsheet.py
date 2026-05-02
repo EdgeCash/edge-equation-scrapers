@@ -37,7 +37,14 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from scrapers.mlb.mlb_game_scraper import MLBGameScraper, TEAM_MAP
-from exporters.mlb.projections import ProjectionModel
+from exporters.mlb.projections import (
+    ProjectionModel,
+    prob_over,
+    TOTAL_SD,
+    TEAM_TOTAL_SD,
+    F5_TOTAL_SD,
+)
+from exporters.mlb.kelly import kelly_advice, DEFAULT_DECIMAL_ODDS
 
 
 SEASON_DEFAULT = 2026
@@ -59,6 +66,18 @@ def _ou_label(actual: float, line: float) -> str:
     if actual < line:
         return "UNDER"
     return "PUSH"
+
+
+def _best_total_kelly(mean: float, lines: tuple[float, ...], sd: float) -> dict:
+    """Pick the (line, side) with the highest half-Kelly fraction."""
+    best = None
+    for line in lines:
+        p_over = prob_over(line, mean, sd)
+        for side, prob in (("OVER", p_over), ("UNDER", 1 - p_over)):
+            adv = kelly_advice(prob)
+            if best is None or adv["kelly_pct"] > best["kelly_pct"]:
+                best = {**adv, "line": line, "side": side}
+    return best
 
 
 def fetch_slate(date: str) -> list[dict]:
@@ -158,8 +177,14 @@ class DailySpreadsheet:
 
     @staticmethod
     def _build_moneyline(backfill: list[dict], projections: list[dict]) -> dict:
-        proj_rows = [
-            {
+        proj_rows = []
+        for p in projections:
+            pick_prob = (
+                p["home_win_prob"] if p["ml_pick"] == p["home_team"]
+                else p["away_win_prob"]
+            )
+            adv = kelly_advice(pick_prob)
+            proj_rows.append({
                 "date": p["date"],
                 "away": p["away_team"],
                 "home": p["home_team"],
@@ -168,9 +193,11 @@ class DailySpreadsheet:
                 "away_win_prob": p["away_win_prob"],
                 "home_win_prob": p["home_win_prob"],
                 "ml_pick": p["ml_pick"],
-            }
-            for p in projections
-        ]
+                "model_prob": adv["model_prob"],
+                "fair_odds_dec": adv["fair_odds_dec"],
+                "kelly_pct": adv["kelly_pct"],
+                "kelly_advice": adv["kelly_advice"],
+            })
         backfill_rows = [
             {
                 "date": g["date"],
@@ -187,6 +214,7 @@ class DailySpreadsheet:
             "projection_columns": [
                 "date", "away", "home", "away_runs_proj", "home_runs_proj",
                 "away_win_prob", "home_win_prob", "ml_pick",
+                "model_prob", "fair_odds_dec", "kelly_pct", "kelly_advice",
             ],
             "backfill_columns": [
                 "date", "away", "home", "away_score", "home_score", "ml_winner",
@@ -197,17 +225,22 @@ class DailySpreadsheet:
 
     @staticmethod
     def _build_run_line(backfill: list[dict], projections: list[dict]) -> dict:
-        proj_rows = [
-            {
+        proj_rows = []
+        for p in projections:
+            adv = kelly_advice(p["rl_cover_prob"])
+            proj_rows.append({
                 "date": p["date"],
                 "away": p["away_team"],
                 "home": p["home_team"],
                 "rl_fav": p["rl_fav"],
                 "rl_margin_proj": p["rl_margin_proj"],
+                "rl_cover_prob": p["rl_cover_prob"],
                 "rl_fav_covers_1_5": "YES" if p["rl_fav_covers_1_5"] else "NO",
-            }
-            for p in projections
-        ]
+                "model_prob": adv["model_prob"],
+                "fair_odds_dec": adv["fair_odds_dec"],
+                "kelly_pct": adv["kelly_pct"],
+                "kelly_advice": adv["kelly_advice"],
+            })
         backfill_rows = []
         for g in sorted(backfill, key=lambda g: g["date"], reverse=True):
             margin = g["away_score"] - g["home_score"]
@@ -225,7 +258,9 @@ class DailySpreadsheet:
         return {
             "title": "Run Line",
             "projection_columns": [
-                "date", "away", "home", "rl_fav", "rl_margin_proj", "rl_fav_covers_1_5",
+                "date", "away", "home", "rl_fav", "rl_margin_proj",
+                "rl_cover_prob", "rl_fav_covers_1_5",
+                "model_prob", "fair_odds_dec", "kelly_pct", "kelly_advice",
             ],
             "backfill_columns": [
                 "date", "away", "home", "away_score", "home_score",
@@ -249,6 +284,15 @@ class DailySpreadsheet:
             }
             for line in TOTAL_LINES:
                 row[f"pick_{line}"] = "OVER" if p["total_proj"] > line else "UNDER"
+
+            best = _best_total_kelly(p["total_proj"], TOTAL_LINES, TOTAL_SD)
+            row.update({
+                "kelly_line": f"{best['side']} {best['line']}",
+                "model_prob": best["model_prob"],
+                "fair_odds_dec": best["fair_odds_dec"],
+                "kelly_pct": best["kelly_pct"],
+                "kelly_advice": best["kelly_advice"],
+            })
             proj_rows.append(row)
 
         backfill_rows = []
@@ -267,7 +311,9 @@ class DailySpreadsheet:
             "title": "Totals",
             "projection_columns": [
                 "date", "away", "home", "away_runs_proj", "home_runs_proj", "total_proj",
-            ] + [f"pick_{l}" for l in TOTAL_LINES],
+            ] + [f"pick_{l}" for l in TOTAL_LINES] + [
+                "kelly_line", "model_prob", "fair_odds_dec", "kelly_pct", "kelly_advice",
+            ],
             "backfill_columns": [
                 "date", "away", "home", "total_runs",
             ] + [f"result_{l}" for l in TOTAL_LINES],
@@ -277,8 +323,12 @@ class DailySpreadsheet:
 
     @staticmethod
     def _build_first_5(backfill: list[dict], projections: list[dict]) -> dict:
-        proj_rows = [
-            {
+        proj_rows = []
+        for p in projections:
+            adv = kelly_advice(p["f5_win_prob"]) if p["f5_pick"] != "PUSH" \
+                else {"model_prob": 0.5, "fair_odds_dec": 2.0,
+                      "kelly_pct": 0.0, "kelly_advice": "PASS"}
+            proj_rows.append({
                 "date": p["date"],
                 "away": p["away_team"],
                 "home": p["home_team"],
@@ -286,9 +336,12 @@ class DailySpreadsheet:
                 "f5_home_proj": p["f5_home_proj"],
                 "f5_total_proj": p["f5_total_proj"],
                 "f5_pick": p["f5_pick"],
-            }
-            for p in projections
-        ]
+                "f5_win_prob": p["f5_win_prob"],
+                "model_prob": adv["model_prob"],
+                "fair_odds_dec": adv["fair_odds_dec"],
+                "kelly_pct": adv["kelly_pct"],
+                "kelly_advice": adv["kelly_advice"],
+            })
         backfill_rows = [
             {
                 "date": g["date"],
@@ -305,7 +358,8 @@ class DailySpreadsheet:
             "title": "First 5",
             "projection_columns": [
                 "date", "away", "home", "f5_away_proj", "f5_home_proj",
-                "f5_total_proj", "f5_pick",
+                "f5_total_proj", "f5_pick", "f5_win_prob",
+                "model_prob", "fair_odds_dec", "kelly_pct", "kelly_advice",
             ],
             "backfill_columns": [
                 "date", "away", "home", "f5_away", "f5_home", "f5_total", "f5_winner",
@@ -316,8 +370,11 @@ class DailySpreadsheet:
 
     @staticmethod
     def _build_first_inning(backfill: list[dict], projections: list[dict]) -> dict:
-        proj_rows = [
-            {
+        proj_rows = []
+        for p in projections:
+            pick_prob = p["nrfi_prob"] if p["nrfi_pick"] == "NRFI" else p["yrfi_prob"]
+            adv = kelly_advice(pick_prob)
+            proj_rows.append({
                 "date": p["date"],
                 "away": p["away_team"],
                 "home": p["home_team"],
@@ -325,9 +382,11 @@ class DailySpreadsheet:
                 "nrfi_prob": p["nrfi_prob"],
                 "yrfi_prob": p["yrfi_prob"],
                 "nrfi_pick": p["nrfi_pick"],
-            }
-            for p in projections
-        ]
+                "model_prob": adv["model_prob"],
+                "fair_odds_dec": adv["fair_odds_dec"],
+                "kelly_pct": adv["kelly_pct"],
+                "kelly_advice": adv["kelly_advice"],
+            })
         backfill_rows = [
             {
                 "date": g["date"],
@@ -345,6 +404,7 @@ class DailySpreadsheet:
             "projection_columns": [
                 "date", "away", "home", "f1_total_proj",
                 "nrfi_prob", "yrfi_prob", "nrfi_pick",
+                "model_prob", "fair_odds_dec", "kelly_pct", "kelly_advice",
             ],
             "backfill_columns": [
                 "date", "away", "home", "f1_away", "f1_home", "f1_total", "nrfi_yrfi",
@@ -370,6 +430,14 @@ class DailySpreadsheet:
                 }
                 for line in TEAM_TOTAL_LINES:
                     row[f"pick_{line}"] = "OVER" if runs > line else "UNDER"
+                best = _best_total_kelly(runs, TEAM_TOTAL_LINES, TEAM_TOTAL_SD)
+                row.update({
+                    "kelly_line": f"{best['side']} {best['line']}",
+                    "model_prob": best["model_prob"],
+                    "fair_odds_dec": best["fair_odds_dec"],
+                    "kelly_pct": best["kelly_pct"],
+                    "kelly_advice": best["kelly_advice"],
+                })
                 proj_rows.append(row)
 
         backfill_rows = []
@@ -393,7 +461,9 @@ class DailySpreadsheet:
             "title": "Team Totals",
             "projection_columns": [
                 "date", "team", "opponent", "side", "team_total_proj",
-            ] + [f"pick_{l}" for l in TEAM_TOTAL_LINES],
+            ] + [f"pick_{l}" for l in TEAM_TOTAL_LINES] + [
+                "kelly_line", "model_prob", "fair_odds_dec", "kelly_pct", "kelly_advice",
+            ],
             "backfill_columns": [
                 "date", "team", "opponent", "side", "runs",
             ] + [f"result_{l}" for l in TEAM_TOTAL_LINES],
