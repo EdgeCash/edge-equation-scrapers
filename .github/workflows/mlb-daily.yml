@@ -5,10 +5,12 @@ name: MLB Daily Spreadsheet
 # triggers an automatic Vercel redeploy.
 on:
   schedule:
-    # 13:30 UTC = 8:30 AM Central / 9:30 AM Eastern. Late enough that
-    # yesterday's slate is final on statsapi.mlb.com, early enough to
-    # publish today's projections before first pitch.
-    - cron: "30 13 * * *"
+    # 15:00 UTC = 11:00 AM ET during DST (covers entire MLB regular
+    # season Mar–Oct). Matches the BRAND_GUIDE operational standard:
+    # "Daily card published by 11:00 AM ET" — gives lineups enough time
+    # to set before publication. During the brief late-October window
+    # after DST ends this fires at 10:00 AM ET, still well within spec.
+    - cron: "0 15 * * *"
   workflow_dispatch:
     inputs:
       date:

@@ -668,11 +668,13 @@ class DailySpreadsheet:
     ) -> dict:
         proj_rows = []
         for p in projections:
-            fav_side = "home" if p["rl_fav"] == p["home_team"] else "away"
+            # We bet the projected UNDERDOG at +1.5 (see ProjectionModel
+            # comment for the backtest evidence behind this inversion).
+            pick_side = "home" if p["rl_pick"] == p["home_team"] else "away"
 
             game_odds = MLBOddsScraper.find_game(odds, p["away_team"], p["home_team"])
             market = _rl_market_price(
-                (game_odds or {}).get("run_line", []), fav_side, -1.5,
+                (game_odds or {}).get("run_line", []), pick_side, 1.5,
             )
 
             if market:
@@ -692,6 +694,7 @@ class DailySpreadsheet:
                 "home": p["home_team"],
                 **_sp_fields(p),
                 "rl_fav": p["rl_fav"],
+                "rl_pick": p["rl_pick"],          # team we're betting (underdog +1.5)
                 "rl_margin_proj": p["rl_margin_proj"],
                 "rl_cover_prob": p["rl_cover_prob"],
                 "rl_fav_covers_1_5": "YES" if p["rl_fav_covers_1_5"] else "NO",

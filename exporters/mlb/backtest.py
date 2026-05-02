@@ -183,15 +183,19 @@ class BacktestEngine:
         )]
 
     def _grade_run_line(self, proj: dict, game: dict) -> list[dict]:
-        # Pick: projected favorite at -1.5
-        fav = proj["rl_fav"]
-        if fav == game["home_team"]:
-            margin = game["home_score"] - game["away_score"]
+        # Pick: projected UNDERDOG at +1.5 (the inversion of the old
+        # "favorite covers -1.5" pick). +1.5 wins when the favorite's
+        # margin is 0 or 1 — i.e., we win unless the favorite covers.
+        pick = proj["rl_pick"]
+        if pick == game["home_team"]:
+            # We bet home as the underdog; we win if home's margin >= -1
+            # (equivalently, away wins by 1 or fewer, or home wins).
+            margin_for_pick = game["home_score"] - game["away_score"]
         else:
-            margin = game["away_score"] - game["home_score"]
-        won = margin >= 2  # covers -1.5
+            margin_for_pick = game["away_score"] - game["home_score"]
+        won = margin_for_pick >= -1  # covers +1.5
         return [self._bet_record(
-            game, "run_line", f"{fav} -1.5",
+            game, "run_line", f"{pick} +1.5",
             prob=proj["rl_cover_prob"], won=won, push=False,
         )]
 
