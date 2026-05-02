@@ -24,7 +24,7 @@ from datetime import datetime
 from typing import Iterable
 
 from exporters.mlb.projections import (
-    ProjectionModel, prob_over, prob_over_under_poisson, TOTAL_SD, TEAM_TOTAL_SD,
+    ProjectionModel, prob_over, prob_over_under_smart, TOTAL_SD, TEAM_TOTAL_SD,
 )
 
 
@@ -200,7 +200,9 @@ class BacktestEngine:
         actual = game["total"]
         for line in TOTAL_LINES:
             pick_side = "OVER" if proj["total_proj"] > line else "UNDER"
-            p_over, p_under, _push = prob_over_under_poisson(line, proj["total_proj"])
+            p_over, p_under, _push = prob_over_under_smart(
+                line, proj["total_proj"], TOTAL_SD,
+            )
             prob = p_over if pick_side == "OVER" else p_under
             push = actual == line
             won = (actual > line) if pick_side == "OVER" else (actual < line)
@@ -244,7 +246,9 @@ class BacktestEngine:
         ):
             for line in TEAM_TOTAL_LINES:
                 pick_side = "OVER" if runs_proj > line else "UNDER"
-                p_over, p_under, _push = prob_over_under_poisson(line, runs_proj)
+                p_over, p_under, _push = prob_over_under_smart(
+                    line, runs_proj, TEAM_TOTAL_SD,
+                )
                 prob = p_over if pick_side == "OVER" else p_under
                 push = runs_actual == line
                 won = (runs_actual > line) if pick_side == "OVER" else (runs_actual < line)
