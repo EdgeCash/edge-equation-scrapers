@@ -1,49 +1,87 @@
-# Edge Equation Scrapers
+# Edge Equation
 
-This project consists of various web scrapers for different sports to gather data and provide insights.
+> **Facts. Not Feelings.** — Transparent sports analytics with honest modeling, rigorous testing, and public learning.
 
-## Structure
+Edge Equation is the data, model, and publishing pipeline behind [edge-equation.vercel.app](https://edge-equation.vercel.app). MLB is live; NFL and NCAAF are in the offseason build queue. Every play we publish carries a model probability, a Kelly unit size, an edge calculation against the live market, and a closing-line snapshot. We grade ourselves in public.
 
-- `scrapers/` — per-sport data ingestion modules.
-  - `scrapers/mlb/` — MLB pipeline: games, odds, probable pitchers, bullpen, weather, lineups, settle engine.
-  - `scrapers/nfl/` — NFL game scraper (foundation; full pipeline mid-summer).
-  - `scrapers/ncaaf/` — NCAAF game scraper (subclasses NFL; same trajectory).
-  - `scrapers/nhl/`, `scrapers/soccer/` — legacy game scrapers from earlier prototypes.
-- `exporters/mlb/` — daily MLB spreadsheet (Today's Card + 6 bet tabs + Backtest), CLV tracker, projection model, backtest engine, auto-grader. Writes `public/data/mlb/`.
-- `web/` — production Next.js v5.0 site (chalkboard aesthetic). Deployed to Vercel with `web/` as Root Directory; `npm run build` mirrors data files into the build automatically. See `web/README.md`.
-- `docs/BRAND_GUIDE.md` — single source of truth for brand identity, conviction tiers, market gating, and operational standards. Locked at v0.2.
-- `.github/workflows/` — daily build cron (11:00 AM ET) + closing-line snapshot cron (every 30 min through game windows).
-- `public/data/` — static outputs served by Vercel; updated by the daily cron.
+The single source of truth for brand, product rules, and operational standards is **[`docs/BRAND_GUIDE.md`](docs/BRAND_GUIDE.md)**. Read it first — every architectural decision in this repo defers to it.
 
-## Requirements
+## What's live
 
-To install the required packages, use: 
+| Sport | Pipeline | Web | Status |
+|-------|----------|-----|--------|
+| MLB | ✅ Daily build, NegBin model, market gating, CLV tracking, auto-grading | ✅ Daily card + track record + methodology pages | Production |
+| NFL | 🟡 Game scraper landed; odds + projection model June–August | — | Off-season build |
+| NCAAF | 🟡 Game scraper landed; same trajectory as NFL | — | Off-season build |
+| NHL / Soccer | ⚪ Legacy stubs from earlier prototypes | — | Not in v5.0 scope |
+
+## Quick start
 
 ```bash
+# Install deps (Python 3.11+)
 pip install -r requirements.txt
+
+# Optional: free tier from https://the-odds-api.com — without this,
+# the pipeline falls back to a DraftKings public scraper.
+export ODDS_API_KEY=...
+
+# Run today's full MLB pipeline
+python run_mlb_daily.py
+
+# Or pass through any flag the underlying exporter supports
+python run_mlb_daily.py --date 2026-05-02 --no-odds
+python run_mlb_daily.py --push --branch main
 ```
 
-## Usage
+Outputs land in `public/data/mlb/` — `mlb_daily.json`, `todays_card.csv`, `backtest.json`, `picks_log.json`, plus per-tab CSVs and a multi-tab XLSX. The Vercel site auto-redeploys on every push.
 
-```bash
-# MLB: full daily build (backfill, projections, odds, gating, output files)
-python -m exporters.mlb.daily_spreadsheet --push --branch main
+## Architecture map
 
-# MLB: closing-line snapshot (called by the closing-lines cron)
-python -m exporters.mlb.closing_snapshot --push
-
-# NFL: pull a date or week of games
-python -m scrapers.nfl.nfl_game_scraper 2025-12-28
-python -m scrapers.nfl.nfl_game_scraper week 2025 17
-
-# NCAAF: same shape as NFL
-python -m scrapers.ncaaf.ncaaf_game_scraper 2025-11-29
+```
+edge-equation-scrapers/
+├── docs/BRAND_GUIDE.md       Single source of truth (locked v0.2)
+├── run_mlb_daily.py          Top-level pipeline entry point
+│
+├── scrapers/                 Per-sport data ingestion
+│   ├── mlb/                  Games, odds, pitchers, bullpen, weather, lineups, settle
+│   ├── nfl/                  Game scraper (rest of pipeline coming)
+│   ├── ncaaf/                Game scraper (subclasses NFL)
+│   └── nhl/, soccer/         Legacy from earlier prototypes
+│
+├── exporters/                Output assembly
+│   └── mlb/                  Projection model, Kelly sizing, backtest, CLV tracker,
+│                             daily spreadsheet builder, closing snapshot CLI
+│
+├── models/                   Reserved for sport-agnostic model work
+├── global_utils/             Cross-sport helpers (Odds API quota log, etc.)
+│
+├── web/                      Production Next.js v5.0 site
+│   └── app/, components/     Chalkboard aesthetic, conviction tiers, daily card
+│
+├── public/data/mlb/          Daily-build outputs (auto-generated; gitignored content)
+│
+└── .github/workflows/        Daily cron (11 AM ET) + closing-line snapshot cron
 ```
 
-## Roadmap (BRAND_GUIDE Dev Priorities)
+Each major folder has a `README.md` with details. Start with the brand guide, then drop into the folder you need.
 
-- ✅ MLB: NegBin projections, run-line inversion, CLV tracking, market gating, auto-grading
-- ✅ Site: v5.0 chalkboard design, conviction tiers, live daily card + track record
-- 🟡 NFL: schedule/results scraper landed; odds + projection model coming June–August
-- 🟡 NCAAF: same trajectory as NFL
-- ⏸️ Player props: gated on game-level model proving consistent +CLV first
+## How the model works (one paragraph)
+
+For each game we project per-team run scoring as a weighted blend of season pace, recent form (with 14-day exponential decay), and opponent context — with Bayesian shrinkage, park factor, weather factor, opposing starting pitcher (FIP-blended with last-3-starts), opposing bullpen, and day-of lineup scratches stacked on top. Run totals are modeled Negative-Binomial (over-dispersed counts) rather than Poisson. The half-Kelly bet size is capped at 5% per play and 6% across same-game correlated bets. A pick only ships on the daily card if its market clears the rolling-backtest gate (≥+1% ROI **and** Brier <0.246 over 200+ bets). Some days that means publishing zero plays — that's a feature, not a bug. Full methodology: [`/methodology`](https://edge-equation.vercel.app/methodology) on the live site or [`exporters/mlb/README.md`](exporters/mlb/README.md).
+
+## Daily automation
+
+Two GitHub Actions cron jobs ship the live experience without human input:
+
+- **`mlb-daily.yml`** — 15:00 UTC (11:00 AM ET during DST) — runs `run_mlb_daily.py`, commits outputs, triggers Vercel redeploy.
+- **`mlb-closing-lines.yml`** — every 30 min through game windows — re-snaps live odds for unsettled picks, computes CLV.
+
+`ODDS_API_KEY` lives in repo secrets. Smart-gating in the closing-snapshot job keeps Odds API burn around 5–8 calls/day on a typical slate.
+
+## Contributing
+
+See [`CONTRIBUTING.md`](CONTRIBUTING.md). Briefly: feature branch → PR → merge to `main`. Reference the BRAND_GUIDE section your work advances. Don't add markets or bet types that haven't earned their way through the gate.
+
+## License + responsibility
+
+Edge Equation is sports analytics, not financial or gambling advice. Past performance does not guarantee future results. Models can and will be wrong. Never wager more than you can afford to lose. US problem-gambling helpline: **1-800-522-4700**.
