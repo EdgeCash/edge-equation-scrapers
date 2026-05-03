@@ -153,10 +153,16 @@ def main(argv: list[str] | None = None) -> int:
 
     csv_path = out_dir / f"props_{date_tag}_{seasons_tag}.csv"
     with csv_path.open("w", newline="") as f:
-        w = csv.DictWriter(f, fieldnames=[
-            "scope", "season", "prop_type", "n", "wins", "losses",
-            "hit_rate", "units_pl", "roi_pct", "brier",
-        ])
+        w = csv.DictWriter(
+            f,
+            fieldnames=[
+                "scope", "season", "prop_type", "n", "wins", "losses",
+                "hit_rate", "units_pl", "roi_pct", "brier",
+                "over_n", "over_hit_rate", "over_units_pl", "over_brier",
+                "under_n", "under_hit_rate", "under_units_pl", "under_brier",
+            ],
+            extrasaction="ignore",
+        )
         w.writeheader()
         for row in result["overall"]["by_prop_type"]:
             w.writerow({"scope": "OVERALL", "season": "all", **row})
