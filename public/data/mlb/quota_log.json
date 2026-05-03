@@ -1,8 +1,8 @@
 {
-  "updated_at": "2026-05-03T16:25:43.847499Z",
+  "updated_at": "2026-05-03T17:36:11.957841Z",
   "current": {
-    "used": 694,
-    "remaining": 19306
+    "used": 697,
+    "remaining": 19303
   },
   "recent": [
     {
@@ -30,6 +30,13 @@
       "timestamp": "2026-05-03T16:25:43.847499Z",
       "used": 694,
       "remaining": 19306,
+      "last_cost": "3",
+      "endpoint": "baseball_mlb/odds"
+    },
+    {
+      "timestamp": "2026-05-03T17:36:11.957841Z",
+      "used": 697,
+      "remaining": 19303,
       "last_cost": "3",
       "endpoint": "baseball_mlb/odds"
     }
