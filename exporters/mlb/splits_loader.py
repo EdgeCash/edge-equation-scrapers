@@ -186,6 +186,18 @@ class SplitsLoader:
             return None
         return row.get("xba")
 
+    def pitcher_xwoba(self, player_id: int, season: int) -> float | None:
+        """Prior-season Statcast expected wOBA against this pitcher.
+        wOBA captures contact quality across all PA outcomes (HR, BB,
+        singles, etc.) weighted by run value, which is a better
+        single-number proxy for run-suppression talent than ERA or FIP."""
+        row = self._prior_xstats_player(player_id, season, "pitching")
+        if not row:
+            return None
+        if self._to_int(row.get("pa")) < MIN_XSTATS_PA:
+            return None
+        return row.get("xwoba")
+
     @staticmethod
     def _to_int(v) -> int:
         if v is None or v == "":

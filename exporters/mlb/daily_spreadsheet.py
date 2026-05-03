@@ -53,6 +53,7 @@ from exporters.mlb.projections import (
 from exporters.mlb.kelly import kelly_advice, edge_pct, tier_from_pct, DEFAULT_DECIMAL_ODDS
 from exporters.mlb.backtest import BacktestEngine
 from exporters.mlb.clv_tracker import ClvTracker
+from exporters.mlb.splits_loader import SplitsLoader
 
 
 SEASON_DEFAULT = 2026
@@ -563,9 +564,19 @@ class DailySpreadsheet:
         slate = fetch_slate(self.target_date)
         print(f"    {len(slate)} scheduled games")
 
-        print("  Fetching probable starting pitchers...")
+        print("  Fetching probable starting pitchers (with prior-season xwOBA blend)...")
+        # The splits_loader exposes prior-season Statcast xwOBA-against
+        # to the pitcher scraper as a stabilizing prior. When the loader
+        # has the data on disk for a given pitcher with >=100 PA last
+        # season, it blends 30% prior-xwOBA factor + 70% current
+        # ERA/FIP-based factor; otherwise the current factor is used
+        # unchanged. See scrapers/mlb/mlb_pitcher_scraper.py:
+        # blend_with_xwoba for the math.
+        splits_loader = SplitsLoader(self.backfill_dir)
         try:
-            sp_map = self.pitcher_scraper.fetch_factors_for_slate(slate)
+            sp_map = self.pitcher_scraper.fetch_factors_for_slate(
+                slate, splits_loader=splits_loader,
+            )
         except Exception as e:
             print(f"    SP fetch failed ({type(e).__name__}: {e}); proceeding without SP adjustment")
             sp_map = {}
@@ -578,7 +589,20 @@ class DailySpreadsheet:
             if (g.get("away_sp") or {}).get("name")
             and (g.get("home_sp") or {}).get("name")
         )
+        # Tally xwOBA coverage so the workflow log shows whether the
+        # Statcast prior actually contributed today.
+        xwoba_hits = sum(
+            1 for sides in sp_map.values()
+            for side in sides.values()
+            if side.get("prior_xwoba") is not None
+        )
+        sp_total = sum(
+            1 for sides in sp_map.values()
+            for side in sides.values()
+            if side.get("id") is not None
+        )
         print(f"    {named}/{len(slate)} games have both probable SPs identified")
+        print(f"    {xwoba_hits}/{sp_total} probable SPs got prior-season xwOBA data")
 
         print("  Fetching team bullpen factors (season + last-3-day workload)...")
         team_codes = sorted({g["away_team"] for g in slate} | {g["home_team"] for g in slate})
