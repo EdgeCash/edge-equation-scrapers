@@ -501,6 +501,8 @@ class DailySpreadsheet:
         gate_min_roi: float = DEFAULT_MIN_GATE_ROI,
         gate_max_brier: float = DEFAULT_MAX_GATE_BRIER,
         skip_market_gate: bool = False,
+        include_backfill: bool = False,
+        backfill_dir: Path | None = None,
     ):
         self.season = season
         self.target_date = target_date or _today_et()
@@ -522,6 +524,27 @@ class DailySpreadsheet:
         self.gate_min_roi = gate_min_roi
         self.gate_max_brier = gate_max_brier
         self.skip_market_gate = skip_market_gate
+        self.include_backfill = include_backfill
+        self.backfill_dir = (
+            backfill_dir
+            if backfill_dir is not None
+            else REPO_ROOT / "data" / "backfill" / "mlb"
+        )
+
+    def _discover_backfill_seasons(self) -> list[int]:
+        """Sorted list of seasons that have a games.json file on disk.
+        Skips the current season (live backfill is fetched separately
+        and appended to avoid duplicate games)."""
+        if not self.backfill_dir.exists():
+            return []
+        out: list[int] = []
+        for child in self.backfill_dir.iterdir():
+            if child.is_dir() and child.name.isdigit():
+                if (child / "games.json").exists():
+                    season = int(child.name)
+                    if season != self.season:  # current goes through live fetch
+                        out.append(season)
+        return sorted(out)
 
     # --------- data assembly ------------------------------------------------
 
@@ -614,10 +637,28 @@ class DailySpreadsheet:
             odds = self.odds_scraper.fetch()
             print(f"    {odds['source']} -> {len(odds['games'])} priced games")
 
-        print("  Running backtest (default constants)...")
-        backtest = BacktestEngine(backfill).run()
+        if self.include_backfill:
+            backfill_seasons = self._discover_backfill_seasons()
+            print(
+                f"  Running backtest with multi-season backfill "
+                f"(seasons {backfill_seasons} on disk + current)..."
+            )
+            backtest_engine = BacktestEngine.from_multi_season(
+                backfill_dir=self.backfill_dir,
+                seasons=backfill_seasons,
+                current_season_games=backfill,
+            )
+            print(
+                f"    Combined sample: {len(backtest_engine.games):,} games "
+                f"({getattr(backtest_engine, '_seasons_loaded', {})})"
+            )
+        else:
+            print("  Running backtest (current season only)...")
+            backtest_engine = BacktestEngine(backfill)
+
+        backtest = backtest_engine.run()
         cal = backtest["calibration"]
-        print(f"    {backtest['overall']['bets']} graded bets, "
+        print(f"    {backtest['overall']['bets']:,} graded bets, "
               f"hit rate {backtest['overall']['hit_rate']}%, "
               f"units {backtest['overall']['units_pl']:+.2f}")
         print(f"    calibrated SDs: total {cal['total_sd']}, margin {cal['margin_sd']}, "
@@ -1606,6 +1647,16 @@ def main(argv: list[str] | None = None) -> int:
         help="Disable the market gate entirely (useful for cold-start runs "
              "or A/B comparisons; defeats the BRAND_GUIDE rule).",
     )
+    parser.add_argument(
+        "--include-backfill", action="store_true", default=False,
+        help="Include multi-season historical games from data/backfill/mlb/ "
+             "in the backtest. Larger sample → tighter calibration + more "
+             "statistical power for the gate. Adds ~1-2 minutes to the run.",
+    )
+    parser.add_argument(
+        "--backfill-dir", type=str, default=None,
+        help="Override the backfill directory (default: <repo>/data/backfill/mlb).",
+    )
     args = parser.parse_args(argv)
 
     # Parse --edge-threshold overrides into a dict, falling back to defaults.
@@ -1631,6 +1682,8 @@ def main(argv: list[str] | None = None) -> int:
         gate_min_roi=args.gate_min_roi,
         gate_max_brier=args.gate_max_brier,
         skip_market_gate=args.no_market_gate,
+        include_backfill=args.include_backfill,
+        backfill_dir=Path(args.backfill_dir) if args.backfill_dir else None,
     )
 
     print(f"MLB Daily Spreadsheet — target {spreadsheet.target_date}")
