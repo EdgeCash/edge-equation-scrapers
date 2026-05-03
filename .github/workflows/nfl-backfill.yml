@@ -1,0 +1,122 @@
+name: NFL Backfill (manual)
+
+# Pulls historical NFL game results across multiple seasons into
+# data/backfill/nfl/<season>/games.json. One-time bulk collection
+# ahead of the 2026-27 NFL season for offline model training +
+# backtest validation. Source: ESPN public scoreboard JSON (no auth).
+#
+# Per-season runtime: ~30 seconds. A 5-season run takes ~3 min total.
+# Manual trigger only — no scheduled runs.
+
+on:
+  workflow_dispatch:
+    inputs:
+      seasons:
+        description: "Seasons — '2021,2022,2023' or '2021-2025'. Blank = 5 most recent completed seasons."
+        required: false
+        default: ""
+      include_postseason:
+        description: "Include postseason (wild card → Super Bowl)"
+        type: boolean
+        default: true
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Configure git
+        run: |
+          git config user.name  "edge-equation-bot"
+          git config user.email "bot@edge-equation.local"
+
+      - name: Fetch NFL backfill
+        env:
+          INPUT_SEASONS: ${{ github.event.inputs.seasons }}
+          INPUT_POST: ${{ github.event.inputs.include_postseason }}
+        run: |
+          ARGS=""
+          if [ -n "$INPUT_SEASONS" ]; then
+            ARGS="$ARGS --seasons $INPUT_SEASONS"
+          fi
+          if [ "$INPUT_POST" = "false" ]; then
+            ARGS="$ARGS --no-postseason"
+          fi
+          echo "::group::NFL backfill"
+          python run_nfl_backfill.py $ARGS
+          echo "::endgroup::"
+
+      - name: Verify games.json files were written
+        run: |
+          set -e
+          MISSING=0
+          for season_dir in data/backfill/nfl/*/; do
+            season=$(basename "$season_dir")
+            if [[ ! "$season" =~ ^[0-9]+$ ]]; then
+              continue
+            fi
+            f="$season_dir/games.json"
+            if [ ! -f "$f" ]; then
+              echo "::error::$f missing"
+              MISSING=$((MISSING+1))
+              continue
+            fi
+            SIZE=$(stat -c%s "$f")
+            # NFL is small (~285 games × ~700 bytes = ~200KB). Floor at
+            # 50KB rejects any obviously-truncated season.
+            if [ "$SIZE" -lt 51200 ]; then
+              echo "::error::$f is only $SIZE bytes (expected >>50 KB for a real season)."
+              MISSING=$((MISSING+1))
+            else
+              N_GAMES=$(python -c "import json; print(len(json.load(open('$f'))))")
+              echo "OK: $f — $N_GAMES games, $SIZE bytes."
+            fi
+          done
+          if [ "$MISSING" -gt 0 ]; then
+            echo "::error::$MISSING season(s) failed verification."
+            exit 1
+          fi
+
+      - name: Upload games.json files as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nfl-games
+          path: data/backfill/nfl/*/games.json
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Commit + push
+        run: |
+          set -x
+          git add data/backfill/nfl/*/games.json
+          if git diff --staged --quiet; then
+            echo "NFL games already up to date — nothing to commit."
+            exit 0
+          fi
+          git commit -m "NFL backfill — $(date -u +%Y-%m-%d)"
+          for attempt in 1 2 3 4; do
+            if git push -u origin "${{ github.ref_name }}"; then
+              exit 0
+            fi
+            sleep $((2 ** attempt))
+            git fetch origin "${{ github.ref_name }}" && git rebase "origin/${{ github.ref_name }}" || true
+          done
+          echo "::error::Push failed after retries."
+          exit 1
