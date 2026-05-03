@@ -222,6 +222,16 @@ class MLBStatcastScraper:
         if not text or len(text) < 50:
             return {}
 
+        # Strip UTF-8 BOM if present. Savant's expected_statistics
+        # endpoint serves CSVs with a leading ﻿, which kicks
+        # csv.reader out of "respect quotes" mode for the very first
+        # field — the parser then sees `﻿"last_name` as an
+        # unquoted field beginning with BOM, splits on the comma
+        # INSIDE `"last_name, first_name"`, and every column name from
+        # there on shifts. Stripping it fixes the entire parse.
+        if text and text[0] == "﻿":
+            text = text[1:]
+
         # csv.reader handles quoted fields with embedded commas correctly;
         # we just need to map header columns to indices ourselves.
         rows = list(csv.reader(io.StringIO(text)))
@@ -229,7 +239,7 @@ class MLBStatcastScraper:
             return {}
 
         header = rows[0]
-        # Strip whitespace and BOM that Savant occasionally prepends.
+        # Strip whitespace + any residual BOM bytes from header cells.
         header = [h.strip().lstrip("﻿") for h in header]
 
         # Locate the columns we care about. Tolerate the unquoted-header
