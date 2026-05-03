@@ -29,6 +29,7 @@ from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
 
+from exporters.mlb.splits_loader import SplitsLoader
 from models.mlb.player_props import (
     pitcher_strikeouts,
     batter_hits,
@@ -44,6 +45,10 @@ from models.mlb.player_props import (
 
 FLAT_DECIMAL_ODDS = 1.909  # -110
 
+# At least this many lineup slots must yield a usable splits-based K/PA
+# before we trust the splits projection over the running aggregate.
+MIN_LINEUP_SLOTS_FOR_SPLITS_K = 5
+
 
 def _settle_units(won: bool, odds: float = FLAT_DECIMAL_ODDS) -> float:
     return round(odds - 1, 4) if won else -1.0
@@ -52,10 +57,30 @@ def _settle_units(won: bool, odds: float = FLAT_DECIMAL_ODDS) -> float:
 class PropsBacktestEngine:
     """Multi-season prop backtest. Streams boxscores from each season's
     `boxscores.tar.gz`, walks games chronologically, projects pre-game
-    props using running per-player stats, grades against actuals."""
+    props using running per-player stats, grades against actuals.
 
-    def __init__(self, backfill_dir: Path | str):
+    Handedness-aware: if `splits_loader` is provided AND has prior-season
+    splits + handedness data on disk, batter and pitcher projections use
+    the matchup-specific rate (e.g. Judge vs LHP, Skenes vs LHB) instead
+    of the season aggregate. Strict no-look-ahead — only PRIOR-season
+    splits are consulted, never current-season.
+    """
+
+    def __init__(
+        self,
+        backfill_dir: Path | str,
+        splits_loader: SplitsLoader | None = None,
+    ):
         self.backfill_dir = Path(backfill_dir)
+        self.splits_loader = splits_loader or SplitsLoader(self.backfill_dir)
+        # Track how often we got to use the handedness path so the
+        # caller can sanity-check whether splits actually contributed.
+        self.splits_usage = {
+            "hitter_avg_used": 0,
+            "hitter_slg_used": 0,
+            "sp_k_via_splits_used": 0,
+            "sp_k_fell_back": 0,
+        }
 
     # ---------------- public ---------------------------------------------
 
@@ -109,9 +134,10 @@ class PropsBacktestEngine:
                 # Project pre-game props for both starting pitchers + all
                 # batters in the boxscore lineup. Running stats reflect
                 # PRIOR games only — current game stats haven't been
-                # folded in yet.
+                # folded in yet. `season` is passed so the splits loader
+                # can consult prior-season (no-look-ahead) splits.
                 pre_game = self._project_pre_game(
-                    box, pitcher_running, batter_running, team_k_running,
+                    box, season, pitcher_running, batter_running, team_k_running,
                 )
 
                 # Grade each projection against the actual stat line.
@@ -146,6 +172,7 @@ class PropsBacktestEngine:
             "seasons": sorted(seasons),
             "total_games_graded": total_games,
             "total_games_skipped": total_skipped,
+            "splits_usage": dict(self.splits_usage),
             "overall": self._summarize_per_prop(per_prop),
             "per_season": per_season,
         }
@@ -180,11 +207,22 @@ class PropsBacktestEngine:
     def _project_pre_game(
         self,
         box: dict,
+        season: int,
         pitcher_running: dict[int, dict],
         batter_running: dict[int, dict],
         team_k_running: dict[str, dict],
     ) -> list[dict]:
-        """Build pre-game prop projections from running stats only."""
+        """Build pre-game prop projections.
+
+        For each side we build:
+          - SP K props, using a splits-blended K/9 if prior-season splits
+            cover at least MIN_LINEUP_SLOTS_FOR_SPLITS_K of the opposing
+            lineup; otherwise the running-aggregate path.
+          - Each starter's hits + total bases, using prior-season vL/vR
+            AVG/SLG when the matchup's pitcher handedness is known and
+            the player has enough prior-season PAs vs that hand;
+            otherwise running-aggregate AVG/SLG.
+        """
         out: list[dict] = []
         teams = box.get("teams") or {}
 
@@ -214,11 +252,19 @@ class PropsBacktestEngine:
                 expected_ip = avg_ip_per_start(
                     sp_running.get("ip"), sp_running.get("starts"),
                 )
+                splits_k_per_9 = self._sp_k_per_9_via_splits(
+                    sp_id, season, opp_side,
+                )
+                if splits_k_per_9 is not None:
+                    self.splits_usage["sp_k_via_splits_used"] += 1
+                else:
+                    self.splits_usage["sp_k_fell_back"] += 1
                 proj = pitcher_strikeouts(
                     season_ks=sp_running.get("ks"),
                     season_ip=sp_running.get("ip"),
                     opp_team_k_per_9=opp_k_per_9,
                     expected_ip_today=expected_ip,
+                    override_k_per_9=splits_k_per_9,
                 )
                 for line in PITCHER_K_LINES:
                     out.append({
@@ -233,15 +279,47 @@ class PropsBacktestEngine:
 
             # ----- batting order -----
             opp_baa = self._opp_pitcher_baa(opp_side, pitcher_running)
+            opp_sp_id = self._starting_pitcher_id(opp_side)
+            opp_sp_pitch_hand = (
+                self.splits_loader.pitch_hand(opp_sp_id) if opp_sp_id else None
+            )
             for slot, batter_id in self._iter_batters(side):
                 br = batter_running.get(batter_id) or {}
-                avg = (br.get("hits") / br["ab"]) if br.get("ab", 0) else None
-                slg = (br.get("tb") / br["ab"]) if br.get("ab", 0) else None
+                running_avg = (br.get("hits") / br["ab"]) if br.get("ab", 0) else None
+                running_slg = (br.get("tb") / br["ab"]) if br.get("ab", 0) else None
+                running_ab = br.get("ab")
                 expected_abs = expected_abs_for_lineup_slot(slot)
+
+                # Prefer prior-season handedness split when available.
+                splits_avg = self.splits_loader.hitter_avg_vs(
+                    batter_id, season, opp_sp_pitch_hand,
+                )
+                splits_slg = self.splits_loader.hitter_slg_vs(
+                    batter_id, season, opp_sp_pitch_hand,
+                )
+                splits_pa = self.splits_loader.hitter_pa_vs(
+                    batter_id, season, opp_sp_pitch_hand,
+                )
+
+                if splits_avg is not None:
+                    self.splits_usage["hitter_avg_used"] += 1
+                    avg = splits_avg
+                    avg_ab = splits_pa
+                else:
+                    avg = running_avg
+                    avg_ab = running_ab
+
+                if splits_slg is not None:
+                    self.splits_usage["hitter_slg_used"] += 1
+                    slg = splits_slg
+                    slg_ab = splits_pa
+                else:
+                    slg = running_slg
+                    slg_ab = running_ab
 
                 hits_proj = batter_hits(
                     season_avg=avg,
-                    season_ab=br.get("ab"),
+                    season_ab=avg_ab,
                     expected_abs=expected_abs,
                     opp_pitcher_baa=opp_baa,
                 )
@@ -258,7 +336,7 @@ class PropsBacktestEngine:
 
                 tb_proj = batter_total_bases(
                     season_slg=slg,
-                    season_ab=br.get("ab"),
+                    season_ab=slg_ab,
                     expected_abs=expected_abs,
                     opp_pitcher_baa=opp_baa,
                 )
@@ -273,6 +351,44 @@ class PropsBacktestEngine:
                         "opp_team": opp_code,
                     })
         return out
+
+    # ---------------- splits-aware SP K projection -------------------
+
+    def _sp_k_per_9_via_splits(
+        self, sp_id: int, season: int, opp_team_box: dict,
+    ) -> float | None:
+        """Compute SP's expected K/9 vs the OPPOSING lineup using
+        prior-season vL/vR splits. Returns None if we don't have splits
+        for the SP, or if fewer than MIN_LINEUP_SLOTS_FOR_SPLITS_K of the
+        opposing batters resolve to a usable per-handedness K rate. The
+        backtest then falls back to the running-aggregate K/9 path.
+        """
+        sp_pitch_hand = self.splits_loader.pitch_hand(sp_id)
+        if sp_pitch_hand is None:
+            return None
+
+        usable_slots = 0
+        total_k_per_pa = 0.0
+        for _slot, batter_id in self._iter_batters(opp_team_box):
+            eff_bat_side = self.splits_loader.effective_bat_side(
+                batter_id, sp_pitch_hand,
+            )
+            if eff_bat_side is None:
+                continue
+            k_per_pa = self.splits_loader.pitcher_k_per_pa_vs(
+                sp_id, season, eff_bat_side,
+            )
+            if k_per_pa is None:
+                continue
+            total_k_per_pa += k_per_pa
+            usable_slots += 1
+
+        if usable_slots < MIN_LINEUP_SLOTS_FOR_SPLITS_K:
+            return None
+
+        avg_k_per_pa = total_k_per_pa / usable_slots
+        # ~38 PAs in a 9-IP complete game → K/9 = K/PA × 38.
+        return avg_k_per_pa * 38.0
 
     # ---------------- grading -----------------------------------------
 
