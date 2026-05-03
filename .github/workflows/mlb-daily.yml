@@ -53,7 +53,12 @@ jobs:
         env:
           ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
         run: |
-          ARGS=""
+          # --include-backfill is on by default for the cron because the
+          # multi-season backtest is materially more reliable (4 seasons,
+          # ~115K bets) than current-season-only (~6K bets). The gate
+          # decisions and calibration constants both benefit. Local dev
+          # runs default to single-season for speed; this workflow opts in.
+          ARGS="--include-backfill"
           if [ -n "${{ github.event.inputs.date }}" ]; then
             ARGS="$ARGS --date ${{ github.event.inputs.date }}"
           fi
