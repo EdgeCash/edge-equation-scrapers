@@ -580,10 +580,15 @@ class DailySpreadsheet:
         )
         print(f"    {named}/{len(slate)} games have both probable SPs identified")
 
-        print("  Fetching team bullpen factors...")
+        print("  Fetching team bullpen factors (season + last-3-day workload)...")
         team_codes = sorted({g["away_team"] for g in slate} | {g["home_team"] for g in slate})
         try:
-            bp_map = self.pitcher_scraper.fetch_bullpen_factors(team_codes)
+            bp_map = self.pitcher_scraper.fetch_bullpen_factors(
+                team_codes,
+                target_date=self.target_date,
+                include_workload=True,
+                lookback_days=3,
+            )
         except Exception as e:
             print(f"    Bullpen fetch failed ({type(e).__name__}: {e}); proceeding without BP adjustment")
             bp_map = {}
@@ -594,7 +599,22 @@ class DailySpreadsheet:
             1 for code, info in bp_map.items()
             if info and info.get("era") is not None
         )
+        # Surface the fatigue signal in the workflow log so we can see when
+        # the workload feature is actually pulling factors away from
+        # season-aggregate. Threshold of 1.05 ≈ at least ~3 IP above
+        # normal in the last 3 days.
+        tired = sorted(
+            (code for code, info in bp_map.items()
+             if info and info.get("fatigue_factor", 1.0) >= 1.05),
+            key=lambda c: bp_map[c]["fatigue_factor"], reverse=True,
+        )
         print(f"    {bp_seen}/{len(team_codes)} teams returned bullpen stats")
+        if tired:
+            details = ", ".join(
+                f"{c}({bp_map[c]['bp_ip_recent']}IP→×{bp_map[c]['fatigue_factor']})"
+                for c in tired
+            )
+            print(f"    Tired bullpens: {details}")
 
         print("  Fetching weather for each home venue...")
         try:
