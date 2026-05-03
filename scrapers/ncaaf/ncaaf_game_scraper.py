@@ -2,10 +2,18 @@
 NCAAF Game Results Scraper
 ==========================
 Same ESPN scoreboard JSON shape as the NFL scraper, just a different
-sport URL. Subclasses NFLGameScraper and overrides the endpoint —
-keeps parsing logic in one place.
+sport URL plus two required query params:
 
-Volume note: a typical college Saturday has 50–100 FBS games (vs
+  - groups=80 — restricts to FBS (Division I-A). Without this, ESPN's
+    public scoreboard returns a curated "featured" subset (top-25 +
+    headlining games) that misses the long tail of G5 / mid-major
+    matchups, which is precisely where the softest lines and the real
+    edge potential sit.
+  - limit=300 — the default page size is ~50, which silently truncates
+    on big Saturdays (60-80 FBS games). 300 is comfortably above any
+    realistic week's volume.
+
+Volume note: a typical college Saturday has 50–80 FBS games (vs
 ~14–16 NFL games per week). The fetch_date / fetch_range helpers
 batch fine; fetch_season iterates ~15 weeks of regular season +
 bowl/playoff weeks if requested.
@@ -26,14 +34,25 @@ NCAAF_SCOREBOARD_URL = (
 )
 NCAAF_REGULAR_WEEKS = 16  # 15-16 weeks regular + bowls + playoff
 
+# Always-on params for FBS coverage. Without these the public ESPN
+# endpoint serves a curated subset that drops most G5 / mid-major
+# games — the data we most care about.
+DEFAULT_PARAMS = {"groups": 80, "limit": 300}
+
 
 class NCAAFGameScraper(NFLGameScraper):
     """College football game scraper. Inherits NFL parsing wholesale —
-    only the ESPN endpoint differs."""
+    only the ESPN endpoint and the required FBS-coverage params differ."""
 
     def __init__(self):
         super().__init__()
         self.base_url = NCAAF_SCOREBOARD_URL
+
+    def _fetch_and_parse(self, params: dict) -> list[dict]:
+        """Inject groups=80 + limit=300 on every call so we always pull
+        the full FBS slate, not the curated 'featured' default."""
+        merged = {**DEFAULT_PARAMS, **(params or {})}
+        return super()._fetch_and_parse(merged)
 
     def fetch_season(
         self,
