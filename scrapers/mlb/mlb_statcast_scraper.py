@@ -115,15 +115,25 @@ class MLBStatcastScraper:
                 print(f"  Already complete at {out_path.relative_to(self.backfill_root.parent)}; skipping.")
             return {"skipped": True}
 
+        season_dir.mkdir(parents=True, exist_ok=True)
+
         if verbose:
             print(f"  Fetching batter leaderboard (min={self.batter_min})...", flush=True)
-        batting = self._fetch_csv(season, "batter", self.batter_min)
+        batting = self._fetch_csv(
+            season, "batter", self.batter_min,
+            raw_dump_path=season_dir / "_statcast_batter_raw.csv",
+            verbose=verbose,
+        )
         if batting is None:
             return {"error": "fetch_batter_failed"}
 
         if verbose:
             print(f"  Fetching pitcher leaderboard (min={self.pitcher_min})...", flush=True)
-        pitching = self._fetch_csv(season, "pitcher", self.pitcher_min)
+        pitching = self._fetch_csv(
+            season, "pitcher", self.pitcher_min,
+            raw_dump_path=season_dir / "_statcast_pitcher_raw.csv",
+            verbose=verbose,
+        )
         if pitching is None:
             return {"error": "fetch_pitcher_failed"}
 
@@ -134,7 +144,6 @@ class MLBStatcastScraper:
             "n_pitchers": len(pitching),
         }
         out = {"meta": meta, "batting": batting, "pitching": pitching}
-        season_dir.mkdir(parents=True, exist_ok=True)
         out_path.write_text(json.dumps(out, indent=2, default=str))
         if verbose:
             size_kb = out_path.stat().st_size / 1024
@@ -149,6 +158,8 @@ class MLBStatcastScraper:
 
     def _fetch_csv(
         self, season: int, type_: str, minimum: int,
+        raw_dump_path: Path | None = None,
+        verbose: bool = True,
     ) -> dict[str, dict] | None:
         url = LEADERBOARD_URL.format(type=type_, year=season, minimum=minimum)
         for attempt in range(self.max_retries + 1):
@@ -166,38 +177,163 @@ class MLBStatcastScraper:
                     return None
                 time.sleep(2.0 * (2 ** attempt))
 
-        return self._parse_csv(text)
+        # Dump the raw response BEFORE parsing — if parsing fails or
+        # returns a tiny number of rows, the raw CSV is the first thing
+        # we want to inspect for debugging.
+        if raw_dump_path is not None:
+            try:
+                raw_dump_path.write_text(text)
+            except OSError:
+                pass
+
+        parsed = self._parse_csv(text)
+
+        # Log the response shape so the workflow log captures evidence
+        # whether parsing went sideways. Loud diagnostics on first call
+        # of each season — that's the cheapest forensic data we can grab.
+        if verbose:
+            first_line = text.split("\n", 1)[0][:500] if text else ""
+            print(f"    response: {len(text):,} chars; "
+                  f"first line: {first_line!r}")
+            print(f"    parsed: {len(parsed):,} rows")
+
+        return parsed
 
     @staticmethod
     def _parse_csv(text: str) -> dict[str, dict]:
         """Parse Savant CSV → {player_id: {trimmed fields}}.
 
-        Player names come as 'Last, First' in a single column called
-        `last_name, first_name`. We split on the LAST comma so first
-        names with embedded commas stay intact.
+        Two header forms in the wild:
+          A. Quoted: `"last_name, first_name",player_id,year,pa,...`
+             — DictReader sees one column "last_name, first_name".
+          B. Unquoted: `last_name, first_name,player_id,year,pa,...`
+             — DictReader splits into TWO header columns ("last_name"
+                and " first_name"). When the data row's "Judge, Aaron"
+                is quoted, the data has one fewer column than the
+                header and EVERY field shifts by one column.
+
+        Rather than guess which form we got, we use a positional
+        parser. We map header names to column INDICES, find the
+        player_id column, and read each row by index. To handle the
+        unquoted-header case we ALSO check whether a row has fewer
+        columns than the header — in which case we shift the index
+        lookups by 1 for that row.
         """
+        if not text or len(text) < 50:
+            return {}
+
+        # csv.reader handles quoted fields with embedded commas correctly;
+        # we just need to map header columns to indices ourselves.
+        rows = list(csv.reader(io.StringIO(text)))
+        if not rows:
+            return {}
+
+        header = rows[0]
+        # Strip whitespace and BOM that Savant occasionally prepends.
+        header = [h.strip().lstrip("﻿") for h in header]
+
+        # Locate the columns we care about. Tolerate the unquoted-header
+        # case by treating "last_name" + " first_name" as a single name
+        # column at the same index as "last_name".
+        def find_idx(*names):
+            for n in names:
+                if n in header:
+                    return header.index(n)
+            return None
+
+        idx_player = find_idx("player_id")
+        idx_year = find_idx("year")
+        idx_pa = find_idx("pa")
+        idx_bip = find_idx("bip")
+        idx_ba = find_idx("ba")
+        idx_xba = find_idx("est_ba")
+        idx_slg = find_idx("slg")
+        idx_xslg = find_idx("est_slg")
+        idx_woba = find_idx("woba")
+        idx_xwoba = find_idx("est_woba")
+        idx_name_combined = find_idx("last_name, first_name")
+        idx_last = find_idx("last_name")
+        idx_first = find_idx("first_name")
+
+        if idx_player is None:
+            return {}
+
+        # Detect unquoted-header form: header has the split last_name +
+        # first_name pair AND no combined column. Data rows in that case
+        # have one fewer column than header, so positional reads need to
+        # account for the shift on a per-row basis (any row where the
+        # name field DOES contain a comma will be quoted as one field).
+        unquoted_header = (
+            idx_name_combined is None
+            and idx_last is not None
+            and idx_first is not None
+        )
+        n_header_cols = len(header)
+
         out: dict[str, dict] = {}
-        reader = csv.DictReader(io.StringIO(text))
-        for row in reader:
-            pid = (row.get("player_id") or "").strip()
+        for row in rows[1:]:
+            if not row:
+                continue
+
+            # If header was unquoted, a row whose name contained a comma
+            # came back as ONE quoted field, so the row has one fewer
+            # column than the header. Detect by length; shift indices
+            # right by 1 for those rows when reading anything past the
+            # name column.
+            shift = 0
+            if unquoted_header and len(row) == n_header_cols - 1:
+                shift = 1
+
+            def get(idx, *, after_name=True):
+                """Read a field by header index, applying the shift if
+                this row used the unquoted-name collapsing form. The
+                name column itself is NEVER shifted; columns AFTER the
+                name column shift left by 1 in the data row."""
+                if idx is None:
+                    return None
+                if shift and after_name and idx > (idx_last or 0):
+                    real = idx - shift
+                else:
+                    real = idx
+                if real < 0 or real >= len(row):
+                    return None
+                return row[real]
+
+            pid = (get(idx_player) or "").strip()
             if not pid or not pid.isdigit():
                 continue
-            name_raw = (row.get("last_name, first_name") or "").strip()
-            if "," in name_raw:
-                last, first = name_raw.split(",", 1)
-                name = f"{first.strip()} {last.strip()}"
+
+            # Name reconstruction: prefer the combined column, fall back
+            # to last+first, fall back to whatever the first column held.
+            if idx_name_combined is not None:
+                name_raw = (get(idx_name_combined, after_name=False) or "").strip()
+                if "," in name_raw:
+                    last, first = name_raw.split(",", 1)
+                    name = f"{first.strip()} {last.strip()}"
+                else:
+                    name = name_raw
+            elif unquoted_header:
+                # In the unquoted-header form the data row's first field
+                # holds the entire "Last, First" string (it was quoted).
+                last_first = row[0] if row else ""
+                if "," in last_first:
+                    last, first = last_first.split(",", 1)
+                    name = f"{first.strip()} {last.strip()}"
+                else:
+                    name = last_first
             else:
-                name = name_raw
+                name = ""
+
             out[pid] = {
                 "name": name,
-                "pa": _to_int(row.get("pa")),
-                "bip": _to_int(row.get("bip")),
-                "ba": _to_float(row.get("ba")),
-                "xba": _to_float(row.get("est_ba")),
-                "slg": _to_float(row.get("slg")),
-                "xslg": _to_float(row.get("est_slg")),
-                "woba": _to_float(row.get("woba")),
-                "xwoba": _to_float(row.get("est_woba")),
+                "pa": _to_int(get(idx_pa)),
+                "bip": _to_int(get(idx_bip)),
+                "ba": _to_float(get(idx_ba)),
+                "xba": _to_float(get(idx_xba)),
+                "slg": _to_float(get(idx_slg)),
+                "xslg": _to_float(get(idx_xslg)),
+                "woba": _to_float(get(idx_woba)),
+                "xwoba": _to_float(get(idx_xwoba)),
             }
         return out
 
