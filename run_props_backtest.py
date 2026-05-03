@@ -107,6 +107,14 @@ def main(argv: list[str] | None = None) -> int:
     print(f"  ROI:      {overall['roi_pct']:+.2f}%")
     print(f"  Brier:    {overall['brier']}")
 
+    su = result.get("splits_usage", {})
+    sp_total = su.get("sp_k_via_splits_used", 0) + su.get("sp_k_fell_back", 0)
+    sp_pct = (su.get("sp_k_via_splits_used", 0) / sp_total * 100) if sp_total else 0.0
+    print(f"\n--- Splits usage (handedness-aware projection coverage) ---")
+    print(f"  hitter AVG via splits:  {su.get('hitter_avg_used', 0):,}")
+    print(f"  hitter SLG via splits:  {su.get('hitter_slg_used', 0):,}")
+    print(f"  SP K via splits:        {su.get('sp_k_via_splits_used', 0):,} of {sp_total:,} starts ({sp_pct:.1f}%)")
+
     print(f"\n--- Per-prop-type ---")
     print(
         f"{'prop_type':25s} {'n':>8s} {'hit%':>7s} {'ROI%':>7s} "
