@@ -98,8 +98,8 @@ def main(argv: list[str] | None = None) -> int:
     result = engine.run(seasons)
 
     overall = result["overall"]["overall"]
-    print(f"\n--- Overall ({result['total_games_graded']:,} games graded, "
-          f"{result['total_games_skipped']} skipped) ---")
+    print(f"\n--- Overall (selection-aware: model picks the favored side) ---")
+    print(f"  Games graded: {result['total_games_graded']:,} ({result['total_games_skipped']} skipped)")
     print(f"  bets:     {overall['n']:,}")
     print(f"  wins:     {overall['wins']:,}")
     print(f"  hit rate: {overall['hit_rate']}%")
@@ -108,13 +108,30 @@ def main(argv: list[str] | None = None) -> int:
     print(f"  Brier:    {overall['brier']}")
 
     print(f"\n--- Per-prop-type ---")
-    print(f"{'prop_type':25s} {'n':>8s} {'hit%':>7s} {'units':>10s} {'ROI%':>7s} {'brier':>7s}")
+    print(
+        f"{'prop_type':25s} {'n':>8s} {'hit%':>7s} {'ROI%':>7s} "
+        f"{'brier':>7s} | {'OVER n':>8s} {'OVER hit':>9s} | {'UNDER n':>8s} {'UNDER hit':>10s}"
+    )
     for row in result["overall"]["by_prop_type"]:
         brier = f"{row['brier']:.4f}" if row.get("brier") is not None else "—"
         print(
             f"{row['prop_type']:25s} {row['n']:>8,d} "
-            f"{row['hit_rate']:>6.1f}% {row['units_pl']:>+9.2f} "
-            f"{row['roi_pct']:>+6.2f}% {brier:>7s}"
+            f"{row['hit_rate']:>6.1f}% {row['roi_pct']:>+6.2f}% "
+            f"{brier:>7s} | "
+            f"{row.get('over_n', 0):>8,d} {row.get('over_hit_rate', 0):>8.1f}% | "
+            f"{row.get('under_n', 0):>8,d} {row.get('under_hit_rate', 0):>9.1f}%"
+        )
+
+    print(f"\n--- Confidence buckets (when the model is more confident, does it actually win?) ---")
+    print(f"{'bucket':12s} {'n':>9s} {'hit%':>7s} {'ROI%':>7s} {'brier':>7s}")
+    for bucket_name, stats in result["overall"].get("by_confidence_bucket", {}).items():
+        if stats["n"] == 0:
+            continue
+        brier = f"{stats['brier']:.4f}" if stats.get("brier") is not None else "—"
+        print(
+            f"{bucket_name:12s} {stats['n']:>9,d} "
+            f"{stats['hit_rate']:>6.1f}% {stats['roi_pct']:>+6.2f}% "
+            f"{brier:>7s}"
         )
 
     if len(seasons) > 1:

@@ -278,9 +278,20 @@ class PropsBacktestEngine:
 
     @staticmethod
     def _grade(projections: list[dict], box: dict) -> list[dict]:
-        """Compare each projection to the actual stat line from the
-        boxscore. Returns a list of records with prop_type, line,
-        model_prob, actual, won, units."""
+        """Selection-aware grading. For each projection the model picks
+        whichever side it favors:
+            model_prob_over >= 0.5  →  bet OVER
+            model_prob_over <  0.5  →  bet UNDER (with prob = 1 - p_over)
+
+        The Brier-relevant probability is `pick_prob` (the model's
+        confidence in the SIDE IT PICKED), not the raw model_prob_over.
+        That's what separates "model has skill at picking sides" from
+        "base rates favor a direction."
+
+        No edge threshold here — we grade every pick. The runner can
+        post-hoc filter by pick_prob to bucket high-confidence picks.
+        Lines are .5-only so no push possible.
+        """
         teams = box.get("teams") or {}
         out: list[dict] = []
 
@@ -309,12 +320,22 @@ class PropsBacktestEngine:
             except (TypeError, ValueError):
                 continue
 
-            # Half-point lines; no push possible. OVER wins when actual > line.
-            won = actual > line
+            model_prob_over = proj["model_prob"]
+            if model_prob_over >= 0.5:
+                pick_side = "OVER"
+                pick_prob = model_prob_over
+                won = actual > line
+            else:
+                pick_side = "UNDER"
+                pick_prob = 1.0 - model_prob_over
+                won = actual < line
+
             out.append({
                 "prop_type": prop,
                 "line": line,
-                "model_prob": proj["model_prob"],
+                "pick_side": pick_side,
+                "pick_prob": round(pick_prob, 4),
+                "model_prob_over": round(model_prob_over, 4),
                 "actual": actual,
                 "won": won,
                 "units": _settle_units(won),
@@ -458,47 +479,73 @@ class PropsBacktestEngine:
     @staticmethod
     def _summarize_per_prop(per_prop: dict[str, list[dict]]) -> dict:
         rows = []
-        all_records = []
+        all_records: list[dict] = []
         for prop_type, records in sorted(per_prop.items()):
-            n = len(records)
-            wins = sum(1 for r in records if r["won"])
-            losses = n - wins
-            units = round(sum(r["units"] for r in records), 2)
-            scored = [(r["model_prob"], 1 if r["won"] else 0) for r in records]
-            brier = (
-                round(
-                    sum((p - y) ** 2 for p, y in scored) / n, 4,
-                ) if n else None
-            )
-            rows.append({
-                "prop_type": prop_type,
-                "n": n,
-                "wins": wins,
-                "losses": losses,
-                "hit_rate": round(wins / n * 100, 1) if n else 0.0,
-                "units_pl": units,
-                "roi_pct": round(units / n * 100, 2) if n else 0.0,
-                "brier": brier,
-            })
+            rows.append(_stats_row(prop_type, records))
             all_records.extend(records)
-
-        n_all = len(all_records)
-        wins_all = sum(1 for r in all_records if r["won"])
-        units_all = round(sum(r["units"] for r in all_records), 2)
-        scored_all = [(r["model_prob"], 1 if r["won"] else 0) for r in all_records]
-        brier_all = (
-            round(sum((p - y) ** 2 for p, y in scored_all) / n_all, 4)
-            if n_all else None
-        )
         return {
             "by_prop_type": rows,
-            "overall": {
-                "n": n_all,
-                "wins": wins_all,
-                "losses": n_all - wins_all,
-                "hit_rate": round(wins_all / n_all * 100, 1) if n_all else 0.0,
-                "units_pl": units_all,
-                "roi_pct": round(units_all / n_all * 100, 2) if n_all else 0.0,
-                "brier": brier_all,
+            "overall": _stats_block(all_records),
+            # Confidence-bucket views — "when the model is confident, does
+            # it actually win?" Each bucket grades only the picks where
+            # the model's chosen-side probability cleared the threshold.
+            "by_confidence_bucket": {
+                "all_picks": _stats_block(all_records),
+                "p>=0.55": _stats_block(
+                    [r for r in all_records if r.get("pick_prob", 0) >= 0.55]
+                ),
+                "p>=0.60": _stats_block(
+                    [r for r in all_records if r.get("pick_prob", 0) >= 0.60]
+                ),
+                "p>=0.65": _stats_block(
+                    [r for r in all_records if r.get("pick_prob", 0) >= 0.65]
+                ),
             },
         }
+
+
+def _stats_block(records: list[dict]) -> dict:
+    """Aggregate stats over a list of graded records.
+    Brier uses pick_prob (model's confidence in the side it picked)."""
+    n = len(records)
+    if n == 0:
+        return {
+            "n": 0, "wins": 0, "losses": 0, "hit_rate": 0.0,
+            "units_pl": 0.0, "roi_pct": 0.0, "brier": None,
+        }
+    wins = sum(1 for r in records if r["won"])
+    units = round(sum(r["units"] for r in records), 2)
+    scored = [
+        (r.get("pick_prob", r.get("model_prob_over", 0.5)),
+         1 if r["won"] else 0)
+        for r in records
+    ]
+    brier = round(sum((p - y) ** 2 for p, y in scored) / n, 4)
+    return {
+        "n": n,
+        "wins": wins,
+        "losses": n - wins,
+        "hit_rate": round(wins / n * 100, 1),
+        "units_pl": units,
+        "roi_pct": round(units / n * 100, 2),
+        "brier": brier,
+    }
+
+
+def _stats_row(prop_type: str, records: list[dict]) -> dict:
+    """Per-prop-type aggregate stats including OVER vs UNDER breakdown."""
+    over = [r for r in records if r.get("pick_side") == "OVER"]
+    under = [r for r in records if r.get("pick_side") == "UNDER"]
+    base = _stats_block(records)
+    return {
+        "prop_type": prop_type,
+        **base,
+        "over_n": len(over),
+        "over_hit_rate": _stats_block(over)["hit_rate"],
+        "over_units_pl": _stats_block(over)["units_pl"],
+        "over_brier": _stats_block(over)["brier"],
+        "under_n": len(under),
+        "under_hit_rate": _stats_block(under)["hit_rate"],
+        "under_units_pl": _stats_block(under)["units_pl"],
+        "under_brier": _stats_block(under)["brier"],
+    }
