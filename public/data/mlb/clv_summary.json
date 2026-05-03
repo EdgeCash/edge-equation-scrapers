@@ -1,21 +1,21 @@
 {
   "picks_total": 29,
-  "picks_with_close": 6,
+  "picks_with_close": 10,
   "picks_graded": 29,
   "overall": {
-    "n": 6,
-    "mean_clv_pct": 0.103,
-    "median_clv_pct": -0.253,
-    "positive": 2,
-    "negative": 3,
+    "n": 10,
+    "mean_clv_pct": -0.703,
+    "median_clv_pct": -0.921,
+    "positive": 3,
+    "negative": 6,
     "neutral": 1
   },
   "clv_overall": {
-    "n": 6,
-    "mean_clv_pct": 0.103,
-    "median_clv_pct": -0.253,
-    "positive": 2,
-    "negative": 3,
+    "n": 10,
+    "mean_clv_pct": -0.703,
+    "median_clv_pct": -0.921,
+    "positive": 3,
+    "negative": 6,
     "neutral": 1
   },
   "record_overall": {
@@ -26,8 +26,8 @@
     "hit_rate": 55.6,
     "units_pl": 2.75,
     "roi_pct": 9.48,
-    "mean_clv_pct": 0.103,
-    "n_with_clv": 6
+    "mean_clv_pct": -0.703,
+    "n_with_clv": 10
   },
   "record_30d": {
     "n": 29,
@@ -37,16 +37,16 @@
     "hit_rate": 55.6,
     "units_pl": 2.75,
     "roi_pct": 9.48,
-    "mean_clv_pct": 0.103,
-    "n_with_clv": 6
+    "mean_clv_pct": -0.703,
+    "n_with_clv": 10
   },
   "by_bet_type": {
     "totals": {
-      "n": 2,
-      "mean_clv_pct": -0.253,
-      "median_clv_pct": -0.253,
-      "positive": 0,
-      "negative": 1,
+      "n": 6,
+      "mean_clv_pct": -1.359,
+      "median_clv_pct": -1.141,
+      "positive": 1,
+      "negative": 4,
       "neutral": 1
     },
     "run_line": {
@@ -75,8 +75,8 @@
       "hit_rate": 50.0,
       "units_pl": -0.73,
       "roi_pct": -3.32,
-      "mean_clv_pct": -0.253,
-      "n_with_clv": 2
+      "mean_clv_pct": -1.359,
+      "n_with_clv": 6
     },
     "run_line": {
       "n": 6,
@@ -101,5 +101,5 @@
       "n_with_clv": 1
     }
   },
-  "generated_at": "2026-05-03T17:40:24.790089Z"
+  "generated_at": "2026-05-03T19:57:43.381085Z"
 }
