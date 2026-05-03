@@ -110,10 +110,30 @@ def main(argv: list[str] | None = None) -> int:
     su = result.get("splits_usage", {})
     sp_total = su.get("sp_k_via_splits_used", 0) + su.get("sp_k_fell_back", 0)
     sp_pct = (su.get("sp_k_via_splits_used", 0) / sp_total * 100) if sp_total else 0.0
-    print(f"\n--- Splits usage (handedness-aware projection coverage) ---")
-    print(f"  hitter AVG via splits:  {su.get('hitter_avg_used', 0):,}")
-    print(f"  hitter SLG via splits:  {su.get('hitter_slg_used', 0):,}")
-    print(f"  SP K via splits:        {su.get('sp_k_via_splits_used', 0):,} of {sp_total:,} starts ({sp_pct:.1f}%)")
+    avg_total = (
+        su.get("hitter_avg_via_splits", 0)
+        + su.get("hitter_avg_via_xstats", 0)
+        + su.get("hitter_avg_via_running", 0)
+    ) or 1
+    slg_total = (
+        su.get("hitter_slg_via_splits", 0)
+        + su.get("hitter_slg_via_xstats", 0)
+        + su.get("hitter_slg_via_running", 0)
+    ) or 1
+    print(f"\n--- Feature-source coverage (decision tree per projection) ---")
+    print(f"  hitter AVG: splits={su.get('hitter_avg_via_splits', 0):>7,} "
+          f"({su.get('hitter_avg_via_splits', 0) / avg_total * 100:>5.1f}%) | "
+          f"xstats={su.get('hitter_avg_via_xstats', 0):>7,} "
+          f"({su.get('hitter_avg_via_xstats', 0) / avg_total * 100:>5.1f}%) | "
+          f"running={su.get('hitter_avg_via_running', 0):>7,} "
+          f"({su.get('hitter_avg_via_running', 0) / avg_total * 100:>5.1f}%)")
+    print(f"  hitter SLG: splits={su.get('hitter_slg_via_splits', 0):>7,} "
+          f"({su.get('hitter_slg_via_splits', 0) / slg_total * 100:>5.1f}%) | "
+          f"xstats={su.get('hitter_slg_via_xstats', 0):>7,} "
+          f"({su.get('hitter_slg_via_xstats', 0) / slg_total * 100:>5.1f}%) | "
+          f"running={su.get('hitter_slg_via_running', 0):>7,} "
+          f"({su.get('hitter_slg_via_running', 0) / slg_total * 100:>5.1f}%)")
+    print(f"  SP K via splits: {su.get('sp_k_via_splits_used', 0):,} of {sp_total:,} starts ({sp_pct:.1f}%)")
 
     print(f"\n--- Per-prop-type ---")
     print(

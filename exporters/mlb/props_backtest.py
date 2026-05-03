@@ -73,11 +73,18 @@ class PropsBacktestEngine:
     ):
         self.backfill_dir = Path(backfill_dir)
         self.splits_loader = splits_loader or SplitsLoader(self.backfill_dir)
-        # Track how often we got to use the handedness path so the
-        # caller can sanity-check whether splits actually contributed.
+        # Track which path each projection took so the caller can
+        # sanity-check feature coverage. Decision tree per call:
+        #   1. Handedness split (vL/vR from prior season)
+        #   2. Statcast xBA/xSLG (prior season)
+        #   3. Running current-season aggregate
         self.splits_usage = {
-            "hitter_avg_used": 0,
-            "hitter_slg_used": 0,
+            "hitter_avg_via_splits": 0,
+            "hitter_avg_via_xstats": 0,
+            "hitter_avg_via_running": 0,
+            "hitter_slg_via_splits": 0,
+            "hitter_slg_via_xstats": 0,
+            "hitter_slg_via_running": 0,
             "sp_k_via_splits_used": 0,
             "sp_k_fell_back": 0,
         }
@@ -290,7 +297,10 @@ class PropsBacktestEngine:
                 running_ab = br.get("ab")
                 expected_abs = expected_abs_for_lineup_slot(slot)
 
-                # Prefer prior-season handedness split when available.
+                # Decision tree for AVG / SLG (each independent):
+                #   1. Prior-season handedness split (vL or vR)
+                #   2. Prior-season Statcast xBA / xSLG (aggregate)
+                #   3. Running current-season aggregate
                 splits_avg = self.splits_loader.hitter_avg_vs(
                     batter_id, season, opp_sp_pitch_hand,
                 )
@@ -300,20 +310,35 @@ class PropsBacktestEngine:
                 splits_pa = self.splits_loader.hitter_pa_vs(
                     batter_id, season, opp_sp_pitch_hand,
                 )
+                xba = self.splits_loader.hitter_xba(batter_id, season)
+                xslg = self.splits_loader.hitter_xslg(batter_id, season)
 
                 if splits_avg is not None:
-                    self.splits_usage["hitter_avg_used"] += 1
+                    self.splits_usage["hitter_avg_via_splits"] += 1
                     avg = splits_avg
                     avg_ab = splits_pa
+                elif xba is not None:
+                    self.splits_usage["hitter_avg_via_xstats"] += 1
+                    avg = xba
+                    # xstats samples are large by design (≥100 PA threshold)
+                    # so pass a sentinel that clears the projector's
+                    # MIN_AB_FOR_SIGNAL gate.
+                    avg_ab = 100
                 else:
+                    self.splits_usage["hitter_avg_via_running"] += 1
                     avg = running_avg
                     avg_ab = running_ab
 
                 if splits_slg is not None:
-                    self.splits_usage["hitter_slg_used"] += 1
+                    self.splits_usage["hitter_slg_via_splits"] += 1
                     slg = splits_slg
                     slg_ab = splits_pa
+                elif xslg is not None:
+                    self.splits_usage["hitter_slg_via_xstats"] += 1
+                    slg = xslg
+                    slg_ab = 100
                 else:
+                    self.splits_usage["hitter_slg_via_running"] += 1
                     slg = running_slg
                     slg_ab = running_ab
 

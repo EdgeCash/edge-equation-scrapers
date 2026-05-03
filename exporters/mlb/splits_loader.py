@@ -1,21 +1,32 @@
 """
-MLB Splits + Handedness Loader. EXPERIMENTAL.
-=============================================
-Reads per-season splits.json and the people.json handedness lookup
-into a single object that the props backtest can query for
-handedness-aware projection rates.
+MLB Splits + Handedness + Statcast xStats Loader. EXPERIMENTAL.
+================================================================
+Reads per-season splits.json, the people.json handedness lookup, and
+the Statcast statcast_xstats.json expected-stats leaderboards into a
+single object that the props backtest can query for handedness-aware
+projection rates.
 
 No-look-ahead by construction: this loader only ever returns
-PRIOR-season splits when asked about season N. So projecting a 2024
-game uses only 2023 split data — which is genuinely available in
-real time the morning of every 2024 game.
+PRIOR-season data when asked about season N. So projecting a 2024
+game uses only 2023 splits and 2023 xStats — both genuinely available
+in real time the morning of every 2024 game.
 
 For the earliest backfilled season (where prior is missing), every
 lookup returns None and the caller falls back to the running-aggregate
-rate it would've used pre-splits.
+rate it would've used pre-feature.
 
-Sample threshold: ignore splits below 30 PA / batters-faced. Below
-that the split is too noisy to be worth deviating from the aggregate.
+Sample threshold:
+  - Splits: ignore below 30 PA / batters-faced.
+  - Statcast xStats: ignore below 100 PA (to keep noise out of expected
+    rates). xStats fall back to actual AVG/SLG from the same season
+    above this threshold isn't met, since AVG/SLG aren't expected
+    estimates and don't suffer the same small-sample noise.
+
+Decision tree the projector uses for hitter AVG (and analogously SLG):
+  1. Prior-season vL/vR AVG (handedness-specific) — most matchup-aware
+  2. Prior-season xBA (aggregate, expected) — best aggregate estimator
+  3. Running current-season AVG (running aggregate) — what we had pre-features
+  4. League average (last-resort fallback inside the projector itself)
 
 Usage:
     loader = SplitsLoader(backfill_dir)
@@ -23,11 +34,13 @@ Usage:
     bat_side = loader.effective_bat_side(player_id, opp_pitch_hand)
     avg = loader.hitter_avg_vs(player_id, season, opp_pitch_hand)
     slg = loader.hitter_slg_vs(player_id, season, opp_pitch_hand)
+    xba = loader.hitter_xba(player_id, season)
+    xslg = loader.hitter_xslg(player_id, season)
     baa = loader.pitcher_baa_vs(player_id, season, opp_bat_side)
     k_per_pa = loader.pitcher_k_per_pa_vs(player_id, season, opp_bat_side)
 
 All numeric methods return float | None — None if the prior season
-has no usable sample for that player on that side.
+has no usable sample for that player.
 """
 
 from __future__ import annotations
@@ -39,12 +52,17 @@ from pathlib import Path
 MIN_HANDEDNESS_PA = 30
 MIN_HANDEDNESS_BF = 30
 
+# Statcast xStats need a larger sample to be stable — exit-velocity
+# distributions are heavy-tailed.
+MIN_XSTATS_PA = 100
+
 
 class SplitsLoader:
     def __init__(self, backfill_dir: Path | str):
         self.backfill_dir = Path(backfill_dir)
         # Lazy-load: caches built on first access per season.
         self._splits_by_season: dict[int, dict | None] = {}
+        self._xstats_by_season: dict[int, dict | None] = {}
         self._people: dict | None = None
 
     # ---------------- people / handedness -----------------------------
@@ -115,6 +133,58 @@ class SplitsLoader:
         if not player:
             return None
         return player.get(side_key)
+
+    # ---------------- per-season Statcast xStats ----------------------
+
+    def _load_season_xstats(self, season: int) -> dict | None:
+        if season not in self._xstats_by_season:
+            path = self.backfill_dir / str(season) / "statcast_xstats.json"
+            if path.exists():
+                try:
+                    self._xstats_by_season[season] = json.loads(path.read_text())
+                except (OSError, json.JSONDecodeError):
+                    self._xstats_by_season[season] = None
+            else:
+                self._xstats_by_season[season] = None
+        return self._xstats_by_season[season]
+
+    def _prior_xstats_player(
+        self, player_id: int, season: int, group: str,
+    ) -> dict | None:
+        """Prior-season Statcast xStats row for the player, or None."""
+        prior = self._load_season_xstats(season - 1)
+        if prior is None:
+            return None
+        return prior.get(group, {}).get(str(player_id))
+
+    def hitter_xba(self, player_id: int, season: int) -> float | None:
+        """Prior-season Statcast expected BA. None if sample below threshold
+        or unavailable. Cleaner than running AVG: filters out luck-driven
+        BABIP variance."""
+        row = self._prior_xstats_player(player_id, season, "batting")
+        if not row:
+            return None
+        if self._to_int(row.get("pa")) < MIN_XSTATS_PA:
+            return None
+        return row.get("xba")
+
+    def hitter_xslg(self, player_id: int, season: int) -> float | None:
+        """Prior-season Statcast expected SLG."""
+        row = self._prior_xstats_player(player_id, season, "batting")
+        if not row:
+            return None
+        if self._to_int(row.get("pa")) < MIN_XSTATS_PA:
+            return None
+        return row.get("xslg")
+
+    def pitcher_xba(self, player_id: int, season: int) -> float | None:
+        """Prior-season Statcast expected BA against this pitcher."""
+        row = self._prior_xstats_player(player_id, season, "pitching")
+        if not row:
+            return None
+        if self._to_int(row.get("pa")) < MIN_XSTATS_PA:
+            return None
+        return row.get("xba")
 
     @staticmethod
     def _to_int(v) -> int:
