@@ -1,0 +1,141 @@
+name: MLB Splits Backfill (manual)
+
+# Per-player vs-LHP / vs-RHP season splits — Tier 1 prop-projector
+# feature work. Manual trigger only. Output lands in
+# data/backfill/mlb/<season>/splits.json — sandboxed under
+# data/backfill/, never touches public/ or the daily card.
+#
+# Each season runs as its own matrix job (each has its own 6h cap and
+# its own commit), but max-parallel:1 keeps them sequential to avoid
+# git push races. Per-season runtime: ~30 minutes at the 0.5s default
+# request interval. A 5-season run takes ~2.5 hours wall-clock.
+#
+# Prerequisite: each requested season needs `boxscores.tar.gz`
+# already harvested by the MLB Backfill workflow. The splits
+# scraper extracts the player list from that tarball — no separate
+# roster API call.
+
+on:
+  workflow_dispatch:
+    inputs:
+      seasons:
+        description: "Seasons — '2022,2023,2024' or '2022-2024'. Blank = every season with boxscores on disk."
+        required: false
+        default: ""
+      request_interval:
+        description: "Seconds between API calls (default 0.5)."
+        required: false
+        default: "0.5"
+
+jobs:
+  resolve-seasons:
+    # Turns the freeform `seasons` input into a JSON array the matrix
+    # job can fan out over. If the user left it blank we fall back to
+    # discovering every season with a boxscore tarball on disk.
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      seasons: ${{ steps.resolve.outputs.seasons }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve season list
+        id: resolve
+        env:
+          INPUT_SEASONS: ${{ github.event.inputs.seasons }}
+        run: |
+          SEASONS_JSON=$(python - <<'PY'
+          import json, os, pathlib
+          spec = os.environ.get("INPUT_SEASONS", "").strip()
+          if spec:
+              if "-" in spec and "," not in spec:
+                  start, end = spec.split("-", 1)
+                  seasons = list(range(int(start), int(end) + 1))
+              else:
+                  seasons = [int(s.strip()) for s in spec.split(",") if s.strip()]
+          else:
+              root = pathlib.Path("data/backfill/mlb")
+              seasons = []
+              if root.exists():
+                  for child in sorted(root.iterdir()):
+                      if child.is_dir() and child.name.isdigit():
+                          if (child / "boxscores.tar.gz").exists():
+                              seasons.append(int(child.name))
+          print(json.dumps(seasons))
+          PY
+          )
+          echo "Resolved seasons: $SEASONS_JSON"
+          echo "seasons=$SEASONS_JSON" >> "$GITHUB_OUTPUT"
+
+  splits:
+    needs: resolve-seasons
+    if: ${{ needs.resolve-seasons.outputs.seasons != '[]' }}
+    runs-on: ubuntu-latest
+    # 5 hours: well under the 6h GH cap, well over the ~30 min real
+    # runtime so retries / network hiccups have headroom.
+    timeout-minutes: 300
+    permissions:
+      contents: write
+    strategy:
+      # Sequential: each season pushes its own commit. Parallel would
+      # race on git push.
+      max-parallel: 1
+      fail-fast: false
+      matrix:
+        season: ${{ fromJSON(needs.resolve-seasons.outputs.seasons) }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Configure git
+        run: |
+          git config user.name  "edge-equation-bot"
+          git config user.email "bot@edge-equation.local"
+
+      - name: Pull latest before fetch
+        # Earlier matrix jobs may have committed splits for prior
+        # seasons; rebase so our push doesn't reject as non-fast-forward.
+        run: |
+          git fetch origin "${{ github.ref_name }}"
+          git rebase "origin/${{ github.ref_name }}"
+
+      - name: Fetch splits for season ${{ matrix.season }}
+        run: |
+          echo "::group::Splits — ${{ matrix.season }}"
+          python run_mlb_splits_backfill.py \
+            --seasons ${{ matrix.season }} \
+            --request-interval ${{ github.event.inputs.request_interval }}
+          echo "::endgroup::"
+
+      - name: Commit + push
+        run: |
+          git add data/backfill/mlb/${{ matrix.season }}/splits.json data/backfill/mlb/${{ matrix.season }}/splits.partial.json || true
+          if git diff --staged --quiet; then
+            echo "No splits changes to commit for season ${{ matrix.season }}."
+            exit 0
+          fi
+          git commit -m "MLB platoon splits — season ${{ matrix.season }}"
+          # Retry push up to 4 times with exponential backoff in case
+          # of transient network errors.
+          for attempt in 1 2 3 4; do
+            if git push -u origin "${{ github.ref_name }}"; then
+              exit 0
+            fi
+            sleep $((2 ** attempt))
+            git fetch origin "${{ github.ref_name }}" && git rebase "origin/${{ github.ref_name }}" || true
+          done
+          echo "Push failed after retries."
+          exit 1
