@@ -1,19 +1,34 @@
 section,date,away,home,away_sp_name,home_sp_name,f1_total_proj,nrfi_prob,yrfi_prob,nrfi_pick,model_prob,fair_odds_dec,kelly_pct,kelly_advice,f1_away,f1_home,f1_total,nrfi_yrfi
-projection,2026-05-02,BAL,NYY,Kyle Bradish,Ryan Weathers,1.11,0.513,0.487,NRFI,0.513,1.949,0.0,PASS,,,,
-projection,2026-05-02,TOR,MIN,Dylan Cease,Connor Prielipp,1.03,0.568,0.432,NRFI,0.568,1.761,4.64,2u,,,,
-projection,2026-05-02,AZ,CHC,Ryne Nelson,Shota Imanaga,0.96,0.558,0.442,NRFI,0.558,1.792,3.59,2u,,,,
-projection,2026-05-02,CLE,ATH,Slade Cecconi,Jacob Lopez,1.19,0.469,0.531,YRFI,0.531,1.883,0.75,0.5u,,,,
-projection,2026-05-02,CIN,PIT,Rhett Lowder,Carmen Mlodzinski,1.17,0.503,0.497,NRFI,0.503,1.988,0.0,PASS,,,,
-projection,2026-05-02,MIL,WSH,Kyle Harrison,Foster Griffin,1.21,0.501,0.499,NRFI,0.501,1.996,0.0,PASS,,,,
-projection,2026-05-02,HOU,BOS,Spencer Arrighetti,Connelly Early,1.1,0.491,0.509,YRFI,0.509,1.965,0.0,PASS,,,,
-projection,2026-05-02,PHI,MIA,Andrew Painter,Max Meyer,1.15,0.491,0.509,YRFI,0.509,1.965,0.0,PASS,,,,
-projection,2026-05-02,SF,TB,Landen Roupp,Griffin Jax,0.9,0.59,0.41,NRFI,0.59,1.695,5.0,2u,,,,
-projection,2026-05-02,LAD,STL,Roki Sasaki,Michael McGreevy,1.15,0.492,0.508,YRFI,0.508,1.969,0.0,PASS,,,,
-projection,2026-05-02,TEX,DET,Kumar Rocker,Keider Montero,0.95,0.544,0.456,NRFI,0.544,1.838,2.12,1u,,,,
-projection,2026-05-02,ATL,COL,Chris Sale,,1.23,0.483,0.517,YRFI,0.517,1.934,0.0,PASS,,,,
-projection,2026-05-02,CWS,SD,Sean Burke,Michael King,0.92,0.601,0.399,NRFI,0.601,1.664,5.0,2u,,,,
-projection,2026-05-02,NYM,LAA,Nolan McLean,Reid Detmers,1.12,0.484,0.516,YRFI,0.516,1.938,0.0,PASS,,,,
-projection,2026-05-02,KC,SEA,Seth Lugo,Emerson Hancock,1.07,0.494,0.506,YRFI,0.506,1.976,0.0,PASS,,,,
+projection,2026-05-03,TOR,MIN,Trey Yesavage,Joe Ryan,1.02,0.55,0.45,NRFI,0.55,1.818,2.75,1u,,,,
+projection,2026-05-03,HOU,BOS,Cody Bolton,Ranger Suarez,1.13,0.496,0.504,YRFI,0.504,1.984,0.0,PASS,,,,
+projection,2026-05-03,CIN,PIT,Chase Burns,Braxton Ashcraft,1.37,0.47,0.53,YRFI,0.53,1.887,0.65,0.5u,,,,
+projection,2026-05-03,BAL,NYY,Trey Gibson,Max Fried,1.15,0.515,0.485,NRFI,0.515,1.942,0.0,PASS,,,,
+projection,2026-05-03,MIL,WSH,Logan Henderson,PJ Poulin,1.22,0.497,0.503,YRFI,0.503,1.988,0.0,PASS,,,,
+projection,2026-05-03,SF,TB,Tyler Mahle,Steven Matz,0.87,0.604,0.396,NRFI,0.604,1.656,5.0,2u,,,,
+projection,2026-05-03,PHI,MIA,Jesús Luzardo,Chris Paddack,1.07,0.512,0.488,NRFI,0.512,1.953,0.0,PASS,,,,
+projection,2026-05-03,LAD,STL,Justin Wrobleski,Dustin May,1.14,0.514,0.486,NRFI,0.514,1.946,0.0,PASS,,,,
+projection,2026-05-03,AZ,CHC,Merrill Kelly,Matthew Boyd,0.99,0.572,0.428,NRFI,0.572,1.748,5.0,2u,,,,
+projection,2026-05-03,ATL,COL,Spencer Strider,Kyle Freeland,1.34,0.468,0.532,YRFI,0.532,1.88,0.86,0.5u,,,,
+projection,2026-05-03,CLE,ATH,Parker Messick,Aaron Civale,1.25,0.458,0.542,YRFI,0.542,1.845,1.91,1u,,,,
+projection,2026-05-03,NYM,LAA,Clay Holmes,Jack Kochanowicz,1.08,0.493,0.507,YRFI,0.507,1.972,0.0,PASS,,,,
+projection,2026-05-03,KC,SEA,Kris Bubic,Luis Castillo,1.15,0.472,0.528,YRFI,0.528,1.894,0.44,PASS,,,,
+projection,2026-05-03,CWS,SD,Anthony Kay,Griffin Canning,0.86,0.612,0.388,NRFI,0.612,1.634,5.0,2u,,,,
+projection,2026-05-03,TEX,DET,Jack Leiter,Tyler Holton,1.06,0.519,0.481,NRFI,0.519,1.927,0.0,PASS,,,,
+backfill,2026-05-02,BAL,NYY,,,,,,,,,,,0,0,0,NRFI
+backfill,2026-05-02,TOR,MIN,,,,,,,,,,,0,1,1,YRFI
+backfill,2026-05-02,AZ,CHC,,,,,,,,,,,0,0,0,NRFI
+backfill,2026-05-02,CLE,ATH,,,,,,,,,,,0,2,2,YRFI
+backfill,2026-05-02,CIN,PIT,,,,,,,,,,,2,5,7,YRFI
+backfill,2026-05-02,MIL,WSH,,,,,,,,,,,3,0,3,YRFI
+backfill,2026-05-02,HOU,BOS,,,,,,,,,,,1,0,1,YRFI
+backfill,2026-05-02,PHI,MIA,,,,,,,,,,,0,0,0,NRFI
+backfill,2026-05-02,SF,TB,,,,,,,,,,,0,0,0,NRFI
+backfill,2026-05-02,LAD,STL,,,,,,,,,,,0,0,0,NRFI
+backfill,2026-05-02,TEX,DET,,,,,,,,,,,0,3,3,YRFI
+backfill,2026-05-02,ATL,COL,,,,,,,,,,,2,0,2,YRFI
+backfill,2026-05-02,CWS,SD,,,,,,,,,,,0,0,0,NRFI
+backfill,2026-05-02,NYM,LAA,,,,,,,,,,,0,1,1,YRFI
+backfill,2026-05-02,KC,SEA,,,,,,,,,,,0,1,1,YRFI
 backfill,2026-05-01,AZ,CHC,,,,,,,,,,,0,3,3,YRFI
 backfill,2026-05-01,TEX,DET,,,,,,,,,,,1,0,1,YRFI
 backfill,2026-05-01,CIN,PIT,,,,,,,,,,,0,1,1,YRFI

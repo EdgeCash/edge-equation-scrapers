@@ -27,8 +27,9 @@
       "closing_book": null,
       "closing_recorded_at": null,
       "clv_pct": null,
-      "result": null,
-      "units": null
+      "result": "LOSS",
+      "units": -1.0,
+      "graded_at": "2026-05-03T16:29:21.390325Z"
     },
     {
       "pick_id": "2026-05-02|MIL@WSH|totals|OVER 7.5",
@@ -57,8 +58,9 @@
       "closing_book": null,
       "closing_recorded_at": null,
       "clv_pct": null,
-      "result": null,
-      "units": null
+      "result": "LOSS",
+      "units": -1.0,
+      "graded_at": "2026-05-03T16:29:21.390332Z"
     },
     {
       "pick_id": "2026-05-02|CLE@ATH|totals|UNDER 10.5",
@@ -87,8 +89,9 @@
       "closing_book": null,
       "closing_recorded_at": null,
       "clv_pct": null,
-      "result": null,
-      "units": null
+      "result": "LOSS",
+      "units": -1.0,
+      "graded_at": "2026-05-03T16:29:21.390335Z"
     },
     {
       "pick_id": "2026-05-02|TEX@DET|totals|UNDER 8.0",
@@ -117,8 +120,9 @@
       "closing_book": "betmgm",
       "closing_recorded_at": "2026-05-02T19:57:32.375558Z",
       "clv_pct": 0.0,
-      "result": null,
-      "units": null
+      "result": "WIN",
+      "units": 1.0,
+      "graded_at": "2026-05-03T16:29:21.390340Z"
     },
     {
       "pick_id": "2026-05-02|PHI@MIA|totals|UNDER 8.5",
@@ -147,8 +151,9 @@
       "closing_book": null,
       "closing_recorded_at": null,
       "clv_pct": null,
-      "result": null,
-      "units": null
+      "result": "WIN",
+      "units": 1.09,
+      "graded_at": "2026-05-03T16:29:21.390343Z"
     },
     {
       "pick_id": "2026-05-02|AZ@CHC|run_line|CHC",
@@ -177,8 +182,9 @@
       "closing_book": "fanduel",
       "closing_recorded_at": "2026-05-02T19:57:32.375571Z",
       "clv_pct": 3.551,
-      "result": null,
-      "units": null
+      "result": "WIN",
+      "units": 1.41,
+      "graded_at": "2026-05-03T16:29:21.390346Z"
     },
     {
       "pick_id": "2026-05-02|HOU@BOS|totals|OVER 9.0",
@@ -207,8 +213,9 @@
       "closing_book": "lowvig",
       "closing_recorded_at": "2026-05-02T19:57:32.375577Z",
       "clv_pct": -0.505,
-      "result": null,
-      "units": null
+      "result": "PUSH",
+      "units": 0.0,
+      "graded_at": "2026-05-03T16:29:21.390348Z"
     },
     {
       "pick_id": "2026-05-02|CIN@PIT|totals|UNDER 8.0",
@@ -237,8 +244,9 @@
       "closing_book": null,
       "closing_recorded_at": null,
       "clv_pct": null,
-      "result": null,
-      "units": null
+      "result": "LOSS",
+      "units": -1.0,
+      "graded_at": "2026-05-03T16:29:21.390354Z"
     },
     {
       "pick_id": "2026-05-02|LAD@STL|moneyline|STL",
@@ -266,8 +274,9 @@
       "closing_book": "lowvig",
       "closing_recorded_at": "2026-05-02T19:57:32.375584Z",
       "clv_pct": -1.639,
-      "result": null,
-      "units": null
+      "result": "WIN",
+      "units": 1.17,
+      "graded_at": "2026-05-03T16:29:21.390357Z"
     },
     {
       "pick_id": "2026-05-02|LAD@STL|totals|OVER 8.5",
@@ -296,8 +305,9 @@
       "closing_book": null,
       "closing_recorded_at": null,
       "clv_pct": null,
-      "result": null,
-      "units": null
+      "result": "LOSS",
+      "units": -1.0,
+      "graded_at": "2026-05-03T16:29:21.390359Z"
     },
     {
       "pick_id": "2026-05-02|CIN@PIT|totals|UNDER 8.5",
@@ -326,8 +336,9 @@
       "closing_book": null,
       "closing_recorded_at": null,
       "clv_pct": null,
-      "result": null,
-      "units": null
+      "result": "LOSS",
+      "units": -1.0,
+      "graded_at": "2026-05-03T16:29:21.390361Z"
     },
     {
       "pick_id": "2026-05-02|CLE@ATH|totals|UNDER 10.0",
@@ -356,8 +367,9 @@
       "closing_book": null,
       "closing_recorded_at": null,
       "clv_pct": null,
-      "result": null,
-      "units": null
+      "result": "LOSS",
+      "units": -1.0,
+      "graded_at": "2026-05-03T16:29:21.390363Z"
     },
     {
       "pick_id": "2026-05-02|CWS@SD|totals|OVER 7.5",
@@ -386,8 +398,9 @@
       "closing_book": null,
       "closing_recorded_at": null,
       "clv_pct": null,
-      "result": null,
-      "units": null
+      "result": "LOSS",
+      "units": -1.0,
+      "graded_at": "2026-05-03T16:29:21.390365Z"
     },
     {
       "pick_id": "2026-05-02|ATL@COL|totals|OVER 9.5",
@@ -416,8 +429,9 @@
       "closing_book": null,
       "closing_recorded_at": null,
       "clv_pct": null,
-      "result": null,
-      "units": null
+      "result": "WIN",
+      "units": 0.81,
+      "graded_at": "2026-05-03T16:29:21.390372Z"
     },
     {
       "pick_id": "2026-05-02|MIL@WSH|run_line|MIL",
@@ -446,8 +460,9 @@
       "closing_book": "fanduel",
       "closing_recorded_at": "2026-05-02T19:57:32.375592Z",
       "clv_pct": 0.55,
-      "result": null,
-      "units": null
+      "result": "WIN",
+      "units": 1.35,
+      "graded_at": "2026-05-03T16:29:21.390375Z"
     },
     {
       "pick_id": "2026-05-02|SF@TB|run_line|SF",
@@ -476,8 +491,319 @@
       "closing_book": "fanduel",
       "closing_recorded_at": "2026-05-02T19:57:32.375595Z",
       "clv_pct": -1.337,
-      "result": null,
-      "units": null
+      "result": "LOSS",
+      "units": -1.0,
+      "graded_at": "2026-05-03T16:29:21.390378Z"
+    },
+    {
+      "pick_id": "2026-05-03|AZ@CHC|totals|UNDER 11.5",
+      "date": "2026-05-03",
+      "matchup": "AZ@CHC",
+      "game_pk": 824687,
+      "game_time": "2026-05-03T18:20:00Z",
+      "bet_type": "totals",
+      "pick": "UNDER 11.5",
+      "spec": {
+        "type": "totals",
+        "side": "UNDER",
+        "line": 11.5
+      },
+      "model_prob": 0.708,
+      "edge_pct_at_pick": 19.51,
+      "kelly_pct": 5.0,
+      "kelly_advice": "2u",
+      "pick_price_dec": 1.95,
+      "pick_price_american": -105,
+      "book_at_pick": "fanduel",
+      "pick_taken_at": "2026-05-03T16:29:21.388933Z",
+      "odds_source": "the-odds-api",
+      "closing_price_dec": null,
+      "closing_price_american": null,
+      "closing_book": null,
+      "closing_recorded_at": null,
+      "clv_pct": null,
+      "result": "WIN",
+      "units": 0.95,
+      "graded_at": "2026-05-03T16:29:21.390380Z"
+    },
+    {
+      "pick_id": "2026-05-03|BAL@NYY|run_line|BAL",
+      "date": "2026-05-03",
+      "matchup": "BAL@NYY",
+      "game_pk": 823555,
+      "game_time": "2026-05-03T17:35:00Z",
+      "bet_type": "run_line",
+      "pick": "BAL",
+      "spec": {
+        "type": "run_line",
+        "team": "BAL",
+        "point": -1.5
+      },
+      "model_prob": 0.55,
+      "edge_pct_at_pick": 11.52,
+      "kelly_pct": 5.0,
+      "kelly_advice": "2u",
+      "pick_price_dec": 2.3,
+      "pick_price_american": 130,
+      "book_at_pick": "bovada",
+      "pick_taken_at": "2026-05-03T16:29:21.388933Z",
+      "odds_source": "the-odds-api",
+      "closing_price_dec": null,
+      "closing_price_american": null,
+      "closing_book": null,
+      "closing_recorded_at": null,
+      "clv_pct": null,
+      "result": "LOSS",
+      "units": -1.0,
+      "graded_at": "2026-05-03T16:29:21.390382Z"
+    },
+    {
+      "pick_id": "2026-05-03|LAD@STL|totals|UNDER 9.5",
+      "date": "2026-05-03",
+      "matchup": "LAD@STL",
+      "game_pk": 823065,
+      "game_time": "2026-05-03T18:15:00Z",
+      "bet_type": "totals",
+      "pick": "UNDER 9.5",
+      "spec": {
+        "type": "totals",
+        "side": "UNDER",
+        "line": 9.5
+      },
+      "model_prob": 0.605,
+      "edge_pct_at_pick": 9.0,
+      "kelly_pct": 3.32,
+      "kelly_advice": "2u",
+      "pick_price_dec": 1.94,
+      "pick_price_american": -106,
+      "book_at_pick": "lowvig",
+      "pick_taken_at": "2026-05-03T16:29:21.388933Z",
+      "odds_source": "the-odds-api",
+      "closing_price_dec": null,
+      "closing_price_american": null,
+      "closing_book": null,
+      "closing_recorded_at": null,
+      "clv_pct": null,
+      "result": "WIN",
+      "units": 0.94,
+      "graded_at": "2026-05-03T16:29:21.390384Z"
+    },
+    {
+      "pick_id": "2026-05-03|PHI@MIA|totals|UNDER 8.5",
+      "date": "2026-05-03",
+      "matchup": "PHI@MIA",
+      "game_pk": 823875,
+      "game_time": "2026-05-03T17:40:00Z",
+      "bet_type": "totals",
+      "pick": "UNDER 8.5",
+      "spec": {
+        "type": "totals",
+        "side": "UNDER",
+        "line": 8.5
+      },
+      "model_prob": 0.605,
+      "edge_pct_at_pick": 7.06,
+      "kelly_pct": 5.0,
+      "kelly_advice": "2u",
+      "pick_price_dec": 1.87,
+      "pick_price_american": -115,
+      "book_at_pick": "betus",
+      "pick_taken_at": "2026-05-03T16:29:21.388933Z",
+      "odds_source": "the-odds-api",
+      "closing_price_dec": null,
+      "closing_price_american": null,
+      "closing_book": null,
+      "closing_recorded_at": null,
+      "clv_pct": null,
+      "result": "WIN",
+      "units": 0.87,
+      "graded_at": "2026-05-03T16:29:21.390387Z"
+    },
+    {
+      "pick_id": "2026-05-03|CLE@ATH|totals|UNDER 9.0",
+      "date": "2026-05-03",
+      "matchup": "CLE@ATH",
+      "game_pk": 825013,
+      "game_time": "2026-05-03T20:05:00Z",
+      "bet_type": "totals",
+      "pick": "UNDER 9.0",
+      "spec": {
+        "type": "totals",
+        "side": "UNDER",
+        "line": 9.0
+      },
+      "model_prob": 0.582,
+      "edge_pct_at_pick": 6.94,
+      "kelly_pct": 5.0,
+      "kelly_advice": "2u",
+      "pick_price_dec": 1.95,
+      "pick_price_american": -105,
+      "book_at_pick": "betrivers",
+      "pick_taken_at": "2026-05-03T16:29:21.388933Z",
+      "odds_source": "the-odds-api",
+      "closing_price_dec": null,
+      "closing_price_american": null,
+      "closing_book": null,
+      "closing_recorded_at": null,
+      "clv_pct": null,
+      "result": "LOSS",
+      "units": -1.0,
+      "graded_at": "2026-05-03T16:29:21.390388Z"
+    },
+    {
+      "pick_id": "2026-05-03|ATL@COL|totals|OVER 10.0",
+      "date": "2026-05-03",
+      "matchup": "ATL@COL",
+      "game_pk": 824364,
+      "game_time": "2026-05-03T19:10:00Z",
+      "bet_type": "totals",
+      "pick": "OVER 10.0",
+      "spec": {
+        "type": "totals",
+        "side": "OVER",
+        "line": 10.0
+      },
+      "model_prob": 0.577,
+      "edge_pct_at_pick": 6.42,
+      "kelly_pct": 5.0,
+      "kelly_advice": "2u",
+      "pick_price_dec": 1.95,
+      "pick_price_american": -105,
+      "book_at_pick": "williamhill_us",
+      "pick_taken_at": "2026-05-03T16:29:21.388933Z",
+      "odds_source": "the-odds-api",
+      "closing_price_dec": null,
+      "closing_price_american": null,
+      "closing_book": null,
+      "closing_recorded_at": null,
+      "clv_pct": null,
+      "result": "PUSH",
+      "units": 0.0,
+      "graded_at": "2026-05-03T16:29:21.390390Z"
+    },
+    {
+      "pick_id": "2026-05-03|CIN@PIT|totals|OVER 7.5",
+      "date": "2026-05-03",
+      "matchup": "CIN@PIT",
+      "game_pk": 823387,
+      "game_time": "2026-05-03T17:35:00Z",
+      "bet_type": "totals",
+      "pick": "OVER 7.5",
+      "spec": {
+        "type": "totals",
+        "side": "OVER",
+        "line": 7.5
+      },
+      "model_prob": 0.558,
+      "edge_pct_at_pick": 5.77,
+      "kelly_pct": 5.0,
+      "kelly_advice": "2u",
+      "pick_price_dec": 2.0,
+      "pick_price_american": 100,
+      "book_at_pick": "williamhill_us",
+      "pick_taken_at": "2026-05-03T16:29:21.388933Z",
+      "odds_source": "the-odds-api",
+      "closing_price_dec": null,
+      "closing_price_american": null,
+      "closing_book": null,
+      "closing_recorded_at": null,
+      "clv_pct": null,
+      "result": "WIN",
+      "units": 1.0,
+      "graded_at": "2026-05-03T16:29:21.390392Z"
+    },
+    {
+      "pick_id": "2026-05-03|TEX@DET|totals|UNDER 8.5",
+      "date": "2026-05-03",
+      "matchup": "TEX@DET",
+      "game_pk": 824285,
+      "game_time": "2026-05-03T23:20:00Z",
+      "bet_type": "totals",
+      "pick": "UNDER 8.5",
+      "spec": {
+        "type": "totals",
+        "side": "UNDER",
+        "line": 8.5
+      },
+      "model_prob": 0.598,
+      "edge_pct_at_pick": 5.75,
+      "kelly_pct": 5.0,
+      "kelly_advice": "2u",
+      "pick_price_dec": 1.85,
+      "pick_price_american": -118,
+      "book_at_pick": "betrivers",
+      "pick_taken_at": "2026-05-03T16:29:21.388933Z",
+      "odds_source": "the-odds-api",
+      "closing_price_dec": null,
+      "closing_price_american": null,
+      "closing_book": null,
+      "closing_recorded_at": null,
+      "clv_pct": null,
+      "result": "WIN",
+      "units": 0.85,
+      "graded_at": "2026-05-03T16:29:21.390395Z"
+    },
+    {
+      "pick_id": "2026-05-03|CWS@SD|run_line|CWS",
+      "date": "2026-05-03",
+      "matchup": "CWS@SD",
+      "game_pk": 823307,
+      "game_time": "2026-05-03T20:10:00Z",
+      "bet_type": "run_line",
+      "pick": "CWS",
+      "spec": {
+        "type": "run_line",
+        "team": "CWS",
+        "point": -1.5
+      },
+      "model_prob": 0.605,
+      "edge_pct_at_pick": 4.32,
+      "kelly_pct": 4.93,
+      "kelly_advice": "2u",
+      "pick_price_dec": 1.78,
+      "pick_price_american": -128,
+      "book_at_pick": "lowvig",
+      "pick_taken_at": "2026-05-03T16:29:21.388933Z",
+      "odds_source": "the-odds-api",
+      "closing_price_dec": null,
+      "closing_price_american": null,
+      "closing_book": null,
+      "closing_recorded_at": null,
+      "clv_pct": null,
+      "result": "WIN",
+      "units": 0.78,
+      "graded_at": "2026-05-03T16:29:21.390397Z"
+    },
+    {
+      "pick_id": "2026-05-03|LAD@STL|run_line|STL",
+      "date": "2026-05-03",
+      "matchup": "LAD@STL",
+      "game_pk": 823065,
+      "game_time": "2026-05-03T18:15:00Z",
+      "bet_type": "run_line",
+      "pick": "STL",
+      "spec": {
+        "type": "run_line",
+        "team": "STL",
+        "point": -1.5
+      },
+      "model_prob": 0.6,
+      "edge_pct_at_pick": 3.5,
+      "kelly_pct": 2.68,
+      "kelly_advice": "1u",
+      "pick_price_dec": 1.77,
+      "pick_price_american": -130,
+      "book_at_pick": "fanatics",
+      "pick_taken_at": "2026-05-03T16:29:21.388933Z",
+      "odds_source": "the-odds-api",
+      "closing_price_dec": null,
+      "closing_price_american": null,
+      "closing_book": null,
+      "closing_recorded_at": null,
+      "clv_pct": null,
+      "result": "WIN",
+      "units": 0.77,
+      "graded_at": "2026-05-03T16:29:21.390399Z"
     }
   ]
 }

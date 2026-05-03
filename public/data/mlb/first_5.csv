@@ -1,19 +1,34 @@
 section,date,away,home,away_sp_name,home_sp_name,away_sp_factor,home_sp_factor,f5_away_proj,f5_home_proj,f5_total_proj,f5_pick,f5_win_prob,model_prob,fair_odds_dec,kelly_pct,kelly_advice,f5_away,f5_home,f5_total,f5_winner
-projection,2026-05-02,BAL,NYY,Kyle Bradish,Ryan Weathers,0.9848214285714284,0.9204799848226143,2.15,2.53,4.67,NYY,0.544,0.544,1.838,2.12,1u,,,,
-projection,2026-05-02,TOR,MIN,Dylan Cease,Connor Prielipp,0.7789422326307572,0.9077481840193705,2.18,1.99,4.17,TOR,0.523,0.523,1.912,0.0,PASS,,,,
-projection,2026-05-02,AZ,CHC,Ryne Nelson,Shota Imanaga,1.109030837004405,0.8652644456992282,2.18,3.1,5.28,CHC,0.606,0.606,1.65,5.0,2u,,,,
-projection,2026-05-02,CLE,ATH,Slade Cecconi,Jacob Lopez,1.1267634854771786,1.1651785714285714,2.58,2.78,5.36,ATH,0.524,0.524,1.908,0.02,PASS,,,,
-projection,2026-05-02,CIN,PIT,Rhett Lowder,Carmen Mlodzinski,0.8737528344671202,0.8320668693009118,1.88,2.08,3.96,PIT,0.523,0.523,1.912,0.0,PASS,,,,
-projection,2026-05-02,MIL,WSH,Kyle Harrison,Foster Griffin,0.9127989657401422,1.0114968696642004,2.8,2.29,5.1,MIL,0.56,0.56,1.786,3.8,2u,,,,
-projection,2026-05-02,HOU,BOS,Spencer Arrighetti,Connelly Early,0.9659663865546217,1.0350826044703594,3.14,2.62,5.76,HOU,0.561,0.561,1.783,3.9,2u,,,,
-projection,2026-05-02,PHI,MIA,Andrew Painter,Max Meyer,0.9312741312741313,0.9169642857142858,1.93,2.29,4.21,MIA,0.542,0.542,1.845,1.91,1u,,,,
-projection,2026-05-02,SF,TB,Landen Roupp,Griffin Jax,0.8550781249999999,1.1029503105590062,2.16,1.79,3.95,SF,0.544,0.544,1.838,2.12,1u,,,,
-projection,2026-05-02,LAD,STL,Roki Sasaki,Michael McGreevy,1.2198339886413279,1.0038095238095237,2.56,2.88,5.44,STL,0.538,0.538,1.859,1.49,0.5u,,,,
-projection,2026-05-02,TEX,DET,Kumar Rocker,Keider Montero,0.95527950310559,0.8923005565862708,1.86,2.04,3.89,DET,0.521,0.521,1.919,0.0,PASS,,,,
-projection,2026-05-02,ATL,COL,Chris Sale,,0.9705882352941175,1.0,3.3,2.93,6.23,ATL,0.544,0.544,1.838,2.12,1u,,,,
-projection,2026-05-02,CWS,SD,Sean Burke,Michael King,0.9377252893189149,0.9741320432555494,2.3,2.01,4.3,CWS,0.534,0.534,1.873,1.07,0.5u,,,,
-projection,2026-05-02,NYM,LAA,Nolan McLean,Reid Detmers,0.8047991071428571,0.9032346803263138,2.1,1.99,4.09,NYM,0.513,0.513,1.949,0.0,PASS,,,,
-projection,2026-05-02,KC,SEA,Seth Lugo,Emerson Hancock,0.8445047981169654,1.0360704911886014,2.0,2.08,4.08,SEA,0.51,0.51,1.961,0.0,PASS,,,,
+projection,2026-05-03,TOR,MIN,Trey Yesavage,Joe Ryan,0.9490533562822719,0.8933189287888008,2.25,2.36,4.61,MIN,0.512,0.512,1.953,0.0,PASS,,,,
+projection,2026-05-03,HOU,BOS,Cody Bolton,Ranger Suarez,1.03063670411985,0.8936793168880455,2.67,2.67,5.34,HOU,0.5,0.5,2.0,0.0,PASS,,,,
+projection,2026-05-03,CIN,PIT,Chase Burns,Braxton Ashcraft,0.9348629032258065,0.9352210701484894,2.19,2.63,4.82,PIT,0.551,0.551,1.815,2.85,1u,,,,
+projection,2026-05-03,BAL,NYY,Trey Gibson,Max Fried,1.0,0.8658926204153777,2.08,2.72,4.8,NYY,0.576,0.576,1.736,5.0,2u,,,,
+projection,2026-05-03,MIL,WSH,Logan Henderson,PJ Poulin,1.0,1.0723842440201887,2.89,2.39,5.28,MIL,0.559,0.559,1.789,3.69,2u,,,,
+projection,2026-05-03,SF,TB,Tyler Mahle,Steven Matz,1.1059686305873986,1.0721271813855102,1.98,2.4,4.38,TB,0.55,0.55,1.818,2.75,1u,,,,
+projection,2026-05-03,PHI,MIA,Jesús Luzardo,Chris Paddack,0.8843413659739044,1.0331425420457676,2.05,2.17,4.22,MIA,0.513,0.513,1.949,0.0,PASS,,,,
+projection,2026-05-03,LAD,STL,Justin Wrobleski,Dustin May,0.9037721774193547,1.0032102550430995,2.41,2.28,4.68,LAD,0.516,0.516,1.938,0.0,PASS,,,,
+projection,2026-05-03,AZ,CHC,Merrill Kelly,Matthew Boyd,1.1781775856335217,0.8777314990512333,2.11,3.2,5.31,CHC,0.627,0.627,1.595,5.0,2u,,,,
+projection,2026-05-03,ATL,COL,Spencer Strider,Kyle Freeland,1.03,1.030675289105295,3.52,3.11,6.63,ATL,0.548,0.548,1.825,2.54,1u,,,,
+projection,2026-05-03,CLE,ATH,Parker Messick,Aaron Civale,0.8180042761655663,0.9616726206344972,2.26,2.06,4.32,CLE,0.524,0.524,1.908,0.02,PASS,,,,
+projection,2026-05-03,NYM,LAA,Clay Holmes,Jack Kochanowicz,0.9825896474118528,1.0255211891208096,2.31,2.36,4.67,LAA,0.506,0.506,1.976,0.0,PASS,,,,
+projection,2026-05-03,KC,SEA,Kris Bubic,Luis Castillo,0.9553509831641177,1.0397936398993364,2.15,2.22,4.37,SEA,0.508,0.508,1.969,0.0,PASS,,,,
+projection,2026-05-03,CWS,SD,Anthony Kay,Griffin Canning,1.1918253968253967,1.0232258064516129,2.25,2.46,4.72,SD,0.524,0.524,1.908,0.02,PASS,,,,
+projection,2026-05-03,TEX,DET,Jack Leiter,Tyler Holton,1.0672352370879605,1.0479083461341525,2.17,2.47,4.64,DET,0.536,0.536,1.866,1.28,0.5u,,,,
+backfill,2026-05-02,BAL,NYY,,,,,,,,,,,,,,1,6,7,NYY
+backfill,2026-05-02,TOR,MIN,,,,,,,,,,,,,,2,4,6,MIN
+backfill,2026-05-02,AZ,CHC,,,,,,,,,,,,,,0,1,1,CHC
+backfill,2026-05-02,CLE,ATH,,,,,,,,,,,,,,5,4,9,CLE
+backfill,2026-05-02,CIN,PIT,,,,,,,,,,,,,,4,15,19,PIT
+backfill,2026-05-02,MIL,WSH,,,,,,,,,,,,,,3,1,4,MIL
+backfill,2026-05-02,HOU,BOS,,,,,,,,,,,,,,6,1,7,HOU
+backfill,2026-05-02,PHI,MIA,,,,,,,,,,,,,,0,3,3,MIA
+backfill,2026-05-02,SF,TB,,,,,,,,,,,,,,0,4,4,TB
+backfill,2026-05-02,LAD,STL,,,,,,,,,,,,,,0,3,3,STL
+backfill,2026-05-02,TEX,DET,,,,,,,,,,,,,,1,5,6,DET
+backfill,2026-05-02,ATL,COL,,,,,,,,,,,,,,8,1,9,ATL
+backfill,2026-05-02,CWS,SD,,,,,,,,,,,,,,0,0,0,PUSH
+backfill,2026-05-02,NYM,LAA,,,,,,,,,,,,,,1,3,4,LAA
+backfill,2026-05-02,KC,SEA,,,,,,,,,,,,,,1,2,3,SEA
 backfill,2026-05-01,AZ,CHC,,,,,,,,,,,,,,1,6,7,CHC
 backfill,2026-05-01,TEX,DET,,,,,,,,,,,,,,4,4,8,PUSH
 backfill,2026-05-01,CIN,PIT,,,,,,,,,,,,,,0,8,8,PIT
