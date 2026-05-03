@@ -17,10 +17,12 @@ Bet types tracked:
 
 from __future__ import annotations
 
+import json
 import math
 import statistics
 from collections import defaultdict
 from datetime import datetime
+from pathlib import Path
 from typing import Iterable
 
 from exporters.mlb.projections import (
@@ -79,6 +81,51 @@ class BacktestEngine:
         self.games = sorted(games, key=lambda g: g.get("date", ""))
         self.min_history = min_history
         self.decimal_odds = decimal_odds
+
+    # ---------------- multi-season loader -------------------------------
+
+    @classmethod
+    def from_multi_season(
+        cls,
+        backfill_dir: "Path | str",
+        seasons: Iterable[int],
+        current_season_games: Iterable[dict] | None = None,
+        **kwargs,
+    ) -> "BacktestEngine":
+        """Load games from `data/backfill/mlb/<season>/games.json` for
+        each requested season and seed a BacktestEngine with the union
+        (plus optionally the current season's live backfill).
+
+        Missing seasons are skipped silently — re-run the backfill
+        workflow if you need a season that isn't on disk yet.
+
+        The model still walks games chronologically and projects each
+        game using only PRIOR data (no look-ahead), so even though we
+        feed in 25K+ games, every projection is honest.
+        """
+        backfill_dir = Path(backfill_dir)
+        all_games: list[dict] = []
+        loaded: dict[int, int] = {}
+
+        for season in seasons:
+            path = backfill_dir / str(season) / "games.json"
+            if not path.exists():
+                continue
+            try:
+                games = json.loads(path.read_text())
+            except (json.JSONDecodeError, OSError):
+                continue
+            all_games.extend(games)
+            loaded[season] = len(games)
+
+        if current_season_games:
+            current_list = list(current_season_games)
+            all_games.extend(current_list)
+            loaded["current"] = len(current_list)
+
+        engine = cls(all_games, **kwargs)
+        engine._seasons_loaded = loaded  # introspection-friendly
+        return engine
 
     # ---------------- main ------------------------------------------------
 
