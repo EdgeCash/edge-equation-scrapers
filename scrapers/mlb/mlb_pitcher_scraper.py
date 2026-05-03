@@ -183,6 +183,54 @@ def bullpen_factor(era: float | None, ip: float | None) -> float:
     return quality_factor(era, ip, ip_prior=IP_PRIOR_BULLPEN)
 
 
+# League-average xwOBA against a typical pitcher. Derived from the
+# Statcast leaderboards; matches the league_rate role that LEAGUE_FIP
+# plays in quality_factor for ERA-scale rates.
+LEAGUE_XWOBA = 0.310
+
+# Weight of the prior-season xwOBA factor when blending into the
+# current-season ERA/FIP-based factor. 0.30 is small-but-real: gives
+# the noise-stripped Statcast signal a stabilizing role without letting
+# last year's data override hot/cold current-season form.
+XWOBA_BLEND_WEIGHT = 0.30
+
+
+def xwoba_factor(xwoba: float | None) -> float:
+    """Direct quality factor from xwOBA-against. Lower xwOBA = better
+    pitcher = factor < 1.0 = scales opp offense down. Clamped to the
+    same [FACTOR_MIN, FACTOR_MAX] band as the ERA/FIP path so a single
+    extreme season can't break the projection.
+
+    No IP-based shrinkage here because the source data already requires
+    >=100 PA to surface (see SplitsLoader.MIN_XSTATS_PA), which is
+    enough exit-velo-driven samples for xwOBA to be stable.
+    """
+    if xwoba is None or xwoba <= 0:
+        return 1.0
+    return max(FACTOR_MIN, min(FACTOR_MAX, xwoba / LEAGUE_XWOBA))
+
+
+def blend_with_xwoba(current_factor: float, prior_xwoba: float | None) -> float:
+    """Blend the current-season ERA/FIP-based factor with a prior-season
+    xwOBA-derived factor. Acts as a stabilizing prior — early in the
+    season when current samples are thin, prior xwOBA pulls the factor
+    toward last year's noise-stripped baseline; later in the season the
+    current factor (already informed by recent-form blending) dominates
+    because it has more samples and more recency.
+
+    When prior xwOBA isn't available, returns the current factor
+    unchanged. Output stays clamped to the SP factor band.
+    """
+    if prior_xwoba is None:
+        return current_factor
+    prior_factor = xwoba_factor(prior_xwoba)
+    blended = (
+        (1.0 - XWOBA_BLEND_WEIGHT) * current_factor
+        + XWOBA_BLEND_WEIGHT * prior_factor
+    )
+    return max(FACTOR_MIN, min(FACTOR_MAX, blended))
+
+
 class MLBPitcherScraper:
     """Probable-pitcher + season-stats fetcher with quality factor logic."""
 
@@ -357,12 +405,20 @@ class MLBPitcherScraper:
 
     # ---------------- combined: per-slate factors ------------------------
 
-    def fetch_factors_for_slate(self, slate: list[dict]) -> dict[int, dict]:
+    def fetch_factors_for_slate(
+        self, slate: list[dict], splits_loader=None,
+    ) -> dict[int, dict]:
         """Return {game_pk: {"away": {...factor...}, "home": {...factor...}}}.
 
         Each side's value is `{id, name, era, ip, whip, factor}`. Missing
         sides (TBD pitcher, network failure) get an entry with factor=1.0
         so callers can apply the multiplication unconditionally.
+
+        When `splits_loader` is supplied, prior-season Statcast xwOBA-
+        against is blended into the SP factor as a stabilizing prior.
+        See blend_with_xwoba() for the math. The xwoba and the standalone
+        xwoba_factor are also surfaced on the returned dict so callers
+        can audit which signal moved the factor.
         """
         if not slate:
             return {}
@@ -389,11 +445,24 @@ class MLBPitcherScraper:
                     game_dict[side] = {
                         "id": None, "name": None, "era": None, "ip": None,
                         "whip": None, "factor": 1.0,
+                        "season_factor": 1.0, "prior_xwoba": None,
+                        "prior_xwoba_factor": 1.0,
                     }
                     continue
                 season_stats = self.fetch_season_stats(pitcher["id"]) or {}
                 recent_stats = self.fetch_recent_form(pitcher["id"])
-                factor = blended_sp_factor(season_stats, recent_stats)
+                season_factor = blended_sp_factor(season_stats, recent_stats)
+
+                prior_xwoba = None
+                prior_xw_factor = 1.0
+                if splits_loader is not None:
+                    prior_xwoba = splits_loader.pitcher_xwoba(
+                        pitcher["id"], self.season,
+                    )
+                    if prior_xwoba is not None:
+                        prior_xw_factor = xwoba_factor(prior_xwoba)
+                combined = blend_with_xwoba(season_factor, prior_xwoba)
+
                 game_dict[side] = {
                     "id": pitcher["id"],
                     "name": pitcher["name"],
@@ -401,11 +470,16 @@ class MLBPitcherScraper:
                     "fip": season_stats.get("fip"),
                     "ip": season_stats.get("ip"),
                     "whip": season_stats.get("whip"),
-                    # Recent-form snapshot — surfaces hot/cold streaks.
                     "recent_fip": (recent_stats or {}).get("fip"),
                     "recent_ip": (recent_stats or {}).get("ip"),
                     "recent_starts": (recent_stats or {}).get("starts"),
-                    "factor": factor,
+                    # Three flavors of the SP factor surfaced separately
+                    # so the workflow log + downstream auditing can see
+                    # which signal moved which.
+                    "season_factor": season_factor,
+                    "prior_xwoba": prior_xwoba,
+                    "prior_xwoba_factor": prior_xw_factor,
+                    "factor": combined,
                 }
             out[game_pk] = game_dict
         return out
