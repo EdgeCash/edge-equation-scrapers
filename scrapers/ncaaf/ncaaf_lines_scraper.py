@@ -98,6 +98,7 @@ class CFBDLinesScraper:
         seasons: Iterable[int],
         include_postseason: bool = True,
         verbose: bool = True,
+        raw_dump_dir: Path | None = None,
     ) -> dict[int, dict]:
         """Fetch lines for each season. Returns a per-season report."""
         report: dict[int, dict] = {}
@@ -108,6 +109,7 @@ class CFBDLinesScraper:
                 season,
                 include_postseason=include_postseason,
                 verbose=verbose,
+                raw_dump_dir=raw_dump_dir,
             )
             report[season] = entry
         return report
@@ -117,8 +119,14 @@ class CFBDLinesScraper:
         season: int,
         include_postseason: bool = True,
         verbose: bool = True,
+        raw_dump_dir: Path | None = None,
     ) -> dict:
-        """Fetch + persist all lines for one season. Idempotent."""
+        """Fetch + persist all lines for one season. Idempotent.
+
+        When `raw_dump_dir` is supplied, the raw JSON response from CFBD
+        is saved alongside the normalized output. Useful for debugging
+        unexpected response shapes without re-running the whole workflow.
+        """
         path = self.output_root / str(season) / "lines.json"
         if path.exists():
             if verbose:
@@ -133,33 +141,54 @@ class CFBDLinesScraper:
             return {"error": msg}
 
         all_records: list[dict] = []
+        errors: list[str] = []
 
         if verbose:
             print(f"  Fetching regular-season lines...")
-        regular = self._fetch_endpoint(season, "regular")
+        regular = self._fetch_endpoint(
+            season, "regular",
+            raw_dump_path=(
+                raw_dump_dir / f"_lines_{season}_regular_raw.json"
+                if raw_dump_dir else None
+            ),
+            verbose=verbose,
+        )
         if regular is None:
-            return {"error": "fetch_regular_failed"}
-        all_records.extend(regular)
-        if verbose:
-            print(f"    {len(regular)} regular-season game-line records")
+            errors.append("fetch_regular_failed")
+        else:
+            all_records.extend(regular)
+            if verbose:
+                print(f"    {len(regular)} regular-season game-line records")
 
         if include_postseason:
             if verbose:
                 print(f"  Fetching postseason lines...")
-            post = self._fetch_endpoint(season, "postseason")
+            post = self._fetch_endpoint(
+                season, "postseason",
+                raw_dump_path=(
+                    raw_dump_dir / f"_lines_{season}_postseason_raw.json"
+                    if raw_dump_dir else None
+                ),
+                verbose=verbose,
+            )
             if post is None:
                 if verbose:
                     print(f"    postseason fetch failed; proceeding with regular only")
+                errors.append("fetch_postseason_failed")
             else:
                 all_records.extend(post)
                 if verbose:
                     print(f"    {len(post)} postseason game-line records")
 
+        # If both regular AND postseason failed, return error WITHOUT
+        # writing an empty file — caller should be able to distinguish
+        # "no data found" from "API call failed."
+        if not all_records and errors:
+            return {"error": "; ".join(errors)}
+
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(all_records, indent=2, default=str))
 
-        # Quick stats: how many games actually have lines, and how many
-        # books on average. Useful for sanity-checking coverage.
         n_with_lines = sum(1 for r in all_records if r.get("lines"))
         avg_books = (
             sum(len(r.get("lines") or []) for r in all_records) / n_with_lines
@@ -179,26 +208,73 @@ class CFBDLinesScraper:
             "n_with_lines": n_with_lines,
             "avg_books_per_game": round(avg_books, 1),
             "size_kb": round(size_kb, 1),
+            "errors": errors,
         }
 
     # ---------------- HTTP fetch -----------------------------------------
 
-    def _fetch_endpoint(self, season: int, season_type: str) -> list[dict] | None:
+    def _fetch_endpoint(
+        self, season: int, season_type: str,
+        raw_dump_path: Path | None = None,
+        verbose: bool = False,
+    ) -> list[dict] | None:
         url = f"{CFBD_BASE_URL}/lines"
         params = {"year": season, "seasonType": season_type}
         headers = {"Authorization": f"Bearer {self.api_key}"}
 
+        last_status = None
+        last_body_excerpt = None
         for attempt in range(self.max_retries + 1):
             self._throttle()
             try:
                 resp = requests.get(url, params=params, headers=headers, timeout=60)
+                last_status = resp.status_code
+                last_body_excerpt = resp.text[:500] if resp.text else ""
                 resp.raise_for_status()
                 payload = resp.json()
+                # Always dump raw on success too — cheap forensics for
+                # the first run to confirm response shape.
+                if raw_dump_path is not None:
+                    try:
+                        raw_dump_path.parent.mkdir(parents=True, exist_ok=True)
+                        raw_dump_path.write_text(resp.text)
+                    except OSError:
+                        pass
+                if verbose:
+                    print(
+                        f"    HTTP {last_status} OK; payload type={type(payload).__name__}, "
+                        f"len={len(payload) if hasattr(payload, '__len__') else 'n/a'}"
+                    )
                 break
-            except requests.RequestException:
+            except requests.RequestException as e:
+                if verbose:
+                    print(
+                        f"    attempt {attempt + 1} failed: status={last_status}, "
+                        f"err={type(e).__name__}: {e}; "
+                        f"body={last_body_excerpt!r}"
+                    )
+                # Dump the failed response body too so we can see what
+                # went wrong (e.g. "Invalid API key" vs rate-limit).
+                if raw_dump_path is not None and last_body_excerpt:
+                    try:
+                        raw_dump_path.parent.mkdir(parents=True, exist_ok=True)
+                        raw_dump_path.write_text(
+                            f"# HTTP {last_status} failure\n{last_body_excerpt}"
+                        )
+                    except OSError:
+                        pass
                 if attempt >= self.max_retries:
                     return None
                 time.sleep(2.0 * (2 ** attempt))
+
+        # CFBD's /lines endpoint returns a top-level array. Some other
+        # endpoints wrap in {"data": [...]} — be defensive.
+        if isinstance(payload, dict) and "data" in payload:
+            payload = payload["data"]
+        if not isinstance(payload, list):
+            if verbose:
+                print(f"    unexpected payload type: {type(payload).__name__}")
+            return None
 
         return [self._normalize_record(r, season_type) for r in payload]
 

@@ -79,14 +79,24 @@ jobs:
         run: |
           set -e
           MISSING=0
+          # Build the season list from the games.json files we already
+          # have on disk — that's the authoritative set of expected
+          # seasons. If a season has games.json but no lines.json,
+          # treat that as a hard failure (previously this was a soft
+          # warning that let the upload step explode without context).
           for season_dir in data/backfill/ncaaf/*/; do
             season=$(basename "$season_dir")
             if [[ ! "$season" =~ ^[0-9]+$ ]]; then
               continue
             fi
+            # Only seasons that have games.json should also have lines.
+            if [ ! -f "$season_dir/games.json" ]; then
+              continue
+            fi
             f="$season_dir/lines.json"
             if [ ! -f "$f" ]; then
-              echo "::warning::$f missing"
+              echo "::error::$f missing — fetch likely returned an error. Check the raw-response artifact."
+              MISSING=$((MISSING+1))
               continue
             fi
             SIZE=$(stat -c%s "$f")
@@ -94,7 +104,6 @@ jobs:
               echo "::error::$f is only $SIZE bytes (expected >>50 KB for a real season's lines)."
               MISSING=$((MISSING+1))
             else
-              # Count games + provider coverage for the log
               python -c "
           import json
           rows = json.load(open('$f'))
@@ -110,15 +119,26 @@ jobs:
             fi
           done
           if [ "$MISSING" -gt 0 ]; then
+            echo "::error::$MISSING season(s) failed verification."
             exit 1
           fi
 
       - name: Upload lines.json files as artifact
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: ncaaf-lines
           path: data/backfill/ncaaf/*/lines.json
           if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload raw CFBD response dumps (always)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ncaaf-lines-raw-responses
+          path: data/backfill/ncaaf/_raw/*
+          if-no-files-found: ignore
           retention-days: 14
 
       - name: Commit + push

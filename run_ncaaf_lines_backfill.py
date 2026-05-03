@@ -103,28 +103,44 @@ def main(argv: list[str] | None = None) -> int:
     print(f"  Include postseason: {not args.no_postseason}")
     print(f"  Request interval: {args.request_interval}s")
 
+    output_dir = Path(args.output_dir)
+    # Drop raw responses next to the output dir for forensics. Workflow
+    # uploads them as a separate artifact so failed runs are debuggable
+    # without re-running.
+    raw_dump_dir = output_dir / "_raw"
+
     scraper = CFBDLinesScraper(
-        output_root=Path(args.output_dir),
+        output_root=output_dir,
         api_key=api_key,
         request_interval_s=args.request_interval,
     )
     report = scraper.fetch_seasons(
         seasons,
         include_postseason=not args.no_postseason,
+        raw_dump_dir=raw_dump_dir,
     )
 
     print("\n=== Summary ===")
+    n_failed = 0
     for season, stats in sorted(report.items()):
         if stats.get("skipped"):
             print(f"  {season}: already complete; skipped.")
         elif stats.get("error"):
             print(f"  {season}: ERROR — {stats['error']}")
+            n_failed += 1
         else:
             print(
                 f"  {season}: {stats.get('n_games', 0):>4d} games, "
                 f"{stats.get('n_with_lines', 0):>4d} have lines, "
                 f"avg {stats.get('avg_books_per_game', 0):.1f} books/game"
             )
+
+    # Fail loudly if any season errored. Previously the runner exited 0
+    # on per-season errors, which let the workflow's verify step pass
+    # over a missing-file situation it should have caught.
+    if n_failed:
+        print(f"\n{n_failed}/{len(report)} season(s) failed — see raw dumps for response bodies.")
+        return 1
     return 0
 
 
