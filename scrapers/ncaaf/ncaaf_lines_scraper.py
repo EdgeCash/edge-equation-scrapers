@@ -83,10 +83,12 @@ class CFBDLinesScraper:
         max_retries: int = 2,
     ):
         self.output_root = Path(output_root)
-        # Allow constructor key, fall back to env. Fail fast at first
-        # call rather than constructor so a missing key doesn't surface
-        # only when the workflow is mid-run.
-        self.api_key = api_key or os.environ.get("CFBD_API_KEY")
+        # Allow constructor key, fall back to env. Strip whitespace
+        # defensively — copy-paste into GitHub secrets often leaves a
+        # trailing newline, which python-requests rejects with a hard
+        # InvalidHeader error before even attempting the network call.
+        raw_key = api_key or os.environ.get("CFBD_API_KEY")
+        self.api_key = raw_key.strip() if raw_key else None
         self.request_interval_s = request_interval_s
         self.max_retries = max_retries
         self._last_request_at = 0.0
