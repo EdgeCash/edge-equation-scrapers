@@ -1,5 +1,5 @@
 {
-  "as_of": "2026-05-03T15:15:34.706355Z",
+  "as_of": "2026-05-03T15:21:52.570188Z",
   "seasons": [
     2022,
     2023,
@@ -9,8 +9,12 @@
   "total_games_graded": 10419,
   "total_games_skipped": 0,
   "splits_usage": {
-    "hitter_avg_used": 112138,
-    "hitter_slg_used": 112138,
+    "hitter_avg_via_splits": 112138,
+    "hitter_avg_via_xstats": 0,
+    "hitter_avg_via_running": 75403,
+    "hitter_slg_via_splits": 112138,
+    "hitter_slg_via_xstats": 0,
+    "hitter_slg_via_running": 75403,
     "sp_k_via_splits_used": 12297,
     "sp_k_fell_back": 8541
   },
