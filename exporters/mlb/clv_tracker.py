@@ -34,6 +34,7 @@ from pathlib import Path
 from typing import Optional
 
 PICKS_LOG_NAME = "picks_log.json"
+CLV_SUMMARY_NAME = "clv_summary.json"
 
 
 def parse_spec(bet_type: str, pick: str) -> Optional[dict]:
@@ -130,6 +131,7 @@ class ClvTracker:
     def __init__(self, output_dir: Path):
         self.output_dir = Path(output_dir)
         self.path = self.output_dir / PICKS_LOG_NAME
+        self.summary_path = self.output_dir / CLV_SUMMARY_NAME
 
     # ---------------- I/O ------------------------------------------------
 
@@ -146,6 +148,21 @@ class ClvTracker:
         tmp = self.path.with_suffix(".json.tmp")
         tmp.write_text(json.dumps(data, indent=2, default=str))
         tmp.replace(self.path)
+
+    def save_summary(self) -> dict:
+        """Compute the summary block and persist it as a standalone JSON
+        file alongside picks_log.json so the website (and anything else
+        that doesn't want to redo the aggregation) can consume it
+        directly. Returns the summary dict for in-process callers.
+        Includes a `generated_at` timestamp so consumers can check
+        freshness."""
+        summary = self.summary()
+        summary["generated_at"] = datetime.utcnow().isoformat() + "Z"
+        self.output_dir.mkdir(parents=True, exist_ok=True)
+        tmp = self.summary_path.with_suffix(".json.tmp")
+        tmp.write_text(json.dumps(summary, indent=2, default=str))
+        tmp.replace(self.summary_path)
+        return summary
 
     @staticmethod
     def make_pick_id(row: dict) -> str:

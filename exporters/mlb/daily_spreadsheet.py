@@ -724,7 +724,7 @@ class DailySpreadsheet:
             print(f"  Graded {grade_report['graded']} resolved pick(s); "
                   f"{grade_report['still_pending']} await game completion")
 
-        clv_summary = tracker.summary()
+        clv_summary = tracker.save_summary()
         print(f"  CLV log: +{added} new picks, "
               f"{clv_summary['picks_with_close']}/{clv_summary['picks_total']} "
               f"have closing snapshots, "

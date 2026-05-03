@@ -95,11 +95,22 @@ def main(argv: list[str] | None = None) -> int:
         print("  Nothing to commit.")
         return 0
 
+    # Refresh the standalone summary file so the website / consumers
+    # don't have to re-aggregate from the raw picks_log every time.
+    summary = tracker.save_summary()
+    o = summary.get("clv_overall") or {}
+    print(
+        f"  Summary refreshed: {summary['picks_with_close']}/"
+        f"{summary['picks_total']} picks have a close; "
+        f"mean CLV {o.get('mean_clv_pct')}"
+    )
+
     if args.push:
-        rel = str(tracker.path.relative_to(REPO_ROOT))
+        rel_log = str(tracker.path.relative_to(REPO_ROOT))
+        rel_summary = str(tracker.summary_path.relative_to(REPO_ROOT))
         try:
             subprocess.run(
-                ["git", "-C", str(REPO_ROOT), "add", rel],
+                ["git", "-C", str(REPO_ROOT), "add", rel_log, rel_summary],
                 check=True, capture_output=True, text=True,
             )
             msg = (
