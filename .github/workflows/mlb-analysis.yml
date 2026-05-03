@@ -1,0 +1,101 @@
+name: MLB Analysis (manual)
+
+# Runs the offline backtest analyses against the data already harvested
+# by the MLB Backfill workflow. Two analyses available:
+#
+#   1. Games — multi-season backtest of game-level markets (ML, RL,
+#      Totals, F5, F1, Team Totals). Fast (~3 minutes for 4 seasons).
+#      Output: data/experimental/multi_season_backtests/
+#
+#   2. Props — historical player-prop projections graded against
+#      actual stat lines from the boxscore tarballs. Heavier
+#      (~15 min per season). Output: data/experimental/props_backtests/
+#
+# Both write to data/experimental/ — sandboxed, never touches the
+# website or daily card. Manual trigger only.
+
+on:
+  workflow_dispatch:
+    inputs:
+      analysis:
+        description: "Which analysis to run"
+        type: choice
+        options:
+          - both
+          - games
+          - props
+        default: both
+      seasons:
+        description: "Seasons — '2022,2023,2024' or '2022-2024'. Blank = every season on disk."
+        required: false
+        default: ""
+      include_current:
+        description: "Games only: also pull current-season live data via API"
+        type: boolean
+        default: false
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    # 3 hours is plenty: full 4-season "both" run is ~90 minutes.
+    timeout-minutes: 180
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Configure git
+        run: |
+          git config user.name  "edge-equation-bot"
+          git config user.email "bot@edge-equation.local"
+
+      - name: Run multi-season game backtest
+        if: ${{ github.event.inputs.analysis == 'both' || github.event.inputs.analysis == 'games' }}
+        run: |
+          ARGS=""
+          if [ -n "${{ github.event.inputs.seasons }}" ]; then
+            ARGS="$ARGS --seasons ${{ github.event.inputs.seasons }}"
+          fi
+          if [ "${{ github.event.inputs.include_current }}" = "true" ]; then
+            ARGS="$ARGS --include-current"
+          fi
+          echo "::group::Multi-season game backtest"
+          python run_multi_season_analysis.py $ARGS
+          echo "::endgroup::"
+
+      - name: Run props backtest
+        if: ${{ github.event.inputs.analysis == 'both' || github.event.inputs.analysis == 'props' }}
+        run: |
+          ARGS=""
+          if [ -n "${{ github.event.inputs.seasons }}" ]; then
+            ARGS="$ARGS --seasons ${{ github.event.inputs.seasons }}"
+          fi
+          echo "::group::Props backtest"
+          python run_props_backtest.py $ARGS
+          echo "::endgroup::"
+
+      - name: Commit + push analysis results
+        run: |
+          git add data/experimental/
+          if git diff --staged --quiet; then
+            echo "No analysis changes to commit."
+            exit 0
+          fi
+          DATE_TAG=$(date -u +"%Y-%m-%d")
+          MODE="${{ github.event.inputs.analysis }}"
+          MSG="MLB analysis ($MODE) — $DATE_TAG"
+          git commit -m "$MSG"
+          git push
