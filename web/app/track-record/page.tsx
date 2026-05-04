@@ -1,5 +1,6 @@
 import { headers } from "next/headers";
 import { ChalkboardBackground } from "../../components/ChalkboardBackground";
+import { CalibrationChart } from "../../components/CalibrationChart";
 import {
   getDailyData,
   getPicksLog,
@@ -86,6 +87,22 @@ export default async function TrackRecordPage() {
         last30={published30d}
         recent={recentResolved}
       />
+
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 pt-12 pb-2">
+        <h2 className="text-xl font-semibold text-chalk-50">
+          Calibration check
+        </h2>
+        <p className="mt-2 text-sm text-chalk-300 max-w-3xl">
+          A 70% pick should win 70% of the time. The chart below bins our
+          published picks by predicted probability and shows the actual
+          hit rate. Dots near the diagonal mean the model&apos;s
+          confidence numbers are honest.
+        </p>
+      </section>
+
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 pb-6">
+        <CalibrationChart picks={allPicks} />
+      </section>
 
       <section className="max-w-7xl mx-auto px-4 sm:px-6 pt-12 pb-2">
         <h2 className="text-xl font-semibold text-chalk-50">
