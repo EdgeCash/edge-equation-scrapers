@@ -1,0 +1,65 @@
+name: WNBA Daily Lines Snapshot
+
+# Pulls one LIVE Odds-API snapshot and merges it into the current
+# season's lines.json. 1 credit per call. Cron 23:00 UTC = 7pm ET
+# — close to typical WNBA tipoffs (7-8pm ET window). Re-running
+# during the day is safe.
+
+on:
+  schedule:
+    - cron: "0 23 * * *"
+  workflow_dispatch:
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Configure git
+        run: |
+          git config user.name  "edge-equation-bot"
+          git config user.email "bot@edge-equation.local"
+
+      - name: Snap WNBA lines
+        env:
+          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+        run: |
+          echo "::group::WNBA lines snapshot"
+          python run_wnba_lines_daily.py
+          echo "::endgroup::"
+
+      - name: Commit + push
+        run: |
+          set -x
+          git add data/backfill/wnba/*/lines.json public/data/wnba/quota_log.json 2>/dev/null || true
+          if git diff --staged --quiet; then
+            echo "No WNBA lines changes — nothing to commit."
+            exit 0
+          fi
+          git commit -m "WNBA lines snapshot — $(date -u +%Y-%m-%dT%H:%MZ)"
+          for attempt in 1 2 3 4; do
+            if git push -u origin "${{ github.ref_name }}"; then
+              exit 0
+            fi
+            sleep $((2 ** attempt))
+            git fetch origin "${{ github.ref_name }}" && git rebase "origin/${{ github.ref_name }}" || true
+          done
+          echo "::error::Push failed after retries."
+          exit 1
