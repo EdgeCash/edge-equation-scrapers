@@ -138,6 +138,11 @@ class BacktestEngine:
             "total": [],          # (proj_total, actual_total)
             "team_total": [],     # (proj_team_runs, actual_team_runs)
             "margin": [],         # (proj_margin_home_minus_away, actual_margin)
+            # Parallel list of game_pks in the same order as ml_pairs
+            # below — lets external A/B scripts match backtest predictions
+            # to a separate per-game prediction stream (e.g. ELO-only)
+            # without ambiguity about which game corresponds to which row.
+            "ml_pair_pks": [],
             "f5_total": [],
             "f5_margin": [],
             "ml_pairs": [],       # (proj_margin, won_home_0_or_1)
@@ -174,6 +179,7 @@ class BacktestEngine:
             residuals["ml_pairs"].append(
                 (proj_margin, 1 if actual_margin > 0 else 0)
             )
+            residuals["ml_pair_pks"].append(game.get("game_pk"))
 
         return {
             "as_of": datetime.utcnow().isoformat() + "Z",
