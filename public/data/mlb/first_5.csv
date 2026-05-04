@@ -1,16 +1,16 @@
 section,date,away,home,status,conviction_pct,away_sp_name,home_sp_name,away_sp_factor,home_sp_factor,f5_away_proj,f5_home_proj,f5_total_proj,f5_pick,f5_win_prob,model_prob,fair_odds_dec,kelly_pct,kelly_advice,status_reason,f5_away,f5_home,f5_total,f5_winner
-projection,2026-05-04,NYM,COL,PASS,51.9,Huascar Brazobán,Tomoyuki Sugano,0.944954423885159,1.071448650427913,3.13,2.97,6.1,NYM,0.519,0.519,1.927,0.0,PASS,Market gated off (ROI +0.33%),,,,
-projection,2026-05-04,BOS,DET,PASS,56.4,Payton Tolle,Tarik Skubal,0.9459968602825745,0.7802905145929337,1.79,2.34,4.13,DET,0.564,0.564,1.773,4.22,2u,Market gated off (ROI +0.33%),,,,
-projection,2026-05-04,TOR,TB,PASS,51.0,,Nick Martinez,1.0,0.9367956371276726,2.08,2.16,4.24,TB,0.51,0.51,1.961,0.0,PASS,Market gated off (ROI +0.33%),,,,
+projection,2026-05-04,NYM,COL,PASS,51.8,Huascar Brazobán,Tomoyuki Sugano,0.944954423885159,1.071448650427913,3.09,2.94,6.03,NYM,0.518,0.518,1.931,0.0,PASS,Market gated off (ROI +0.33%),,,,
+projection,2026-05-04,BOS,DET,PASS,50.3,Payton Tolle,Tyler Holton,0.9459968602825745,1.0400931711985588,2.33,2.35,4.68,DET,0.503,0.503,1.988,0.0,PASS,Market gated off (ROI +0.33%),,,,
+projection,2026-05-04,TOR,TB,PASS,53.9,Eric Lauer,Nick Martinez,1.126804356933389,0.9367956371276726,2.08,2.41,4.49,TB,0.539,0.539,1.855,1.59,1u,Market gated off (ROI +0.33%),,,,
 projection,2026-05-04,PHI,MIA,PASS,54.3,Aaron Nola,Janson Junk,1.0484357042129384,0.9543212203653322,2.07,2.43,4.5,MIA,0.543,0.543,1.842,2.01,1u,Market gated off (ROI +0.33%),,,,
-projection,2026-05-04,BAL,NYY,PASS,57.7,Shane Baz,Cam Schlittler,0.9633433179723501,0.8237952101661778,2.08,2.73,4.82,NYY,0.577,0.577,1.733,5.0,2u,Market gated off (ROI +0.33%),,,,
-projection,2026-05-04,CIN,CHC,PASS,56.5,Chase Petty,Edward Cabrera,1.0,0.9746763692876342,2.38,2.94,5.32,CHC,0.565,0.565,1.77,4.32,2u,Market gated off (ROI +0.33%),,,,
-projection,2026-05-04,CLE,KC,PASS,53.3,Tanner Bibee,Michael Wacha,0.9814154485887094,1.0132873676434375,2.54,2.27,4.81,CLE,0.533,0.533,1.876,0.96,0.5u,Market gated off (ROI +0.33%),,,,
-projection,2026-05-04,MIL,STL,PASS,54.0,Chad Patrick,Kyle Leahy,1.0014538185828505,1.1108970814132102,2.82,2.48,5.3,MIL,0.54,0.54,1.852,1.7,1u,Market gated off (ROI +0.33%),,,,
+projection,2026-05-04,BAL,NYY,PASS,57.7,Shane Baz,Cam Schlittler,0.9633433179723501,0.8237952101661778,2.1,2.76,4.86,NYY,0.577,0.577,1.733,5.0,2u,Market gated off (ROI +0.33%),,,,
+projection,2026-05-04,CIN,CHC,PASS,56.6,Chase Petty,Edward Cabrera,1.0,0.9746763692876342,2.41,2.97,5.38,CHC,0.566,0.566,1.767,4.43,2u,Market gated off (ROI +0.33%),,,,
+projection,2026-05-04,CLE,KC,PASS,53.3,Tanner Bibee,Michael Wacha,0.9814154485887094,1.0132873676434375,2.58,2.3,4.87,CLE,0.533,0.533,1.876,0.96,0.5u,Market gated off (ROI +0.33%),,,,
+projection,2026-05-04,MIL,STL,PASS,54.0,Chad Patrick,Kyle Leahy,1.0014538185828505,1.1108970814132102,2.86,2.52,5.38,MIL,0.54,0.54,1.852,1.7,1u,Market gated off (ROI +0.33%),,,,
 projection,2026-05-04,LAD,HOU,PASS,52.5,Yoshinobu Yamamoto,Steven Okert,0.9079658203524266,0.9640694789081885,2.55,2.35,4.9,LAD,0.525,0.525,1.905,0.12,PASS,Market gated off (ROI +0.33%),,,,
-projection,2026-05-04,CWS,LAA,PASS,51.5,Davis Martin,José Soriano,0.9208371029538993,0.9196716949021427,2.07,2.2,4.26,LAA,0.515,0.515,1.942,0.0,PASS,Market gated off (ROI +0.33%),,,,
+projection,2026-05-04,CWS,LAA,PASS,51.5,Davis Martin,José Soriano,0.9208371029538993,0.9196716949021427,2.08,2.2,4.28,LAA,0.515,0.515,1.942,0.0,PASS,Market gated off (ROI +0.33%),,,,
 projection,2026-05-04,ATL,SEA,PASS,50.7,JR Ritchie,Logan Gilbert,1.0819709702062643,0.9247464565004888,2.42,2.36,4.78,ATL,0.507,0.507,1.972,0.0,PASS,Market gated off (ROI +0.33%),,,,
-projection,2026-05-04,SD,SF,PASS,52.8,Randy Vásquez,Trevor McDonald,1.0080421325450883,1.0,2.1,1.86,3.96,SD,0.528,0.528,1.894,0.44,PASS,Market gated off (ROI +0.33%),,,,
+projection,2026-05-04,SD,SF,PASS,52.8,Randy Vásquez,Trevor McDonald,1.0080421325450883,1.0,2.13,1.89,4.02,SD,0.528,0.528,1.894,0.44,PASS,Market gated off (ROI +0.33%),,,,
 backfill,2026-05-03,TOR,MIN,,,,,,,,,,,,,,,,,0,4,4,MIN
 backfill,2026-05-03,HOU,BOS,,,,,,,,,,,,,,,,,0,1,1,BOS
 backfill,2026-05-03,CIN,PIT,,,,,,,,,,,,,,,,,0,0,0,PUSH

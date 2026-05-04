@@ -1,7 +1,7 @@
 section,date,away,home,status,conviction_pct,away_sp_name,home_sp_name,f1_total_proj,nrfi_prob,yrfi_prob,nrfi_pick,model_prob,fair_odds_dec,kelly_pct,kelly_advice,status_reason,f1_away,f1_home,f1_total,nrfi_yrfi
 projection,2026-05-04,NYM,COL,PASS,51.9,Huascar Brazobán,Tomoyuki Sugano,1.21,0.481,0.519,YRFI,0.519,1.927,0.0,PASS,Market gated off (ROI -3.36%),,,,
-projection,2026-05-04,BOS,DET,PASS,55.1,Payton Tolle,Tarik Skubal,1.0,0.551,0.449,NRFI,0.551,1.815,2.85,1u,Market gated off (ROI -3.36%),,,,
-projection,2026-05-04,TOR,TB,PASS,56.7,,Nick Martinez,0.96,0.567,0.433,NRFI,0.567,1.764,4.53,2u,Market gated off (ROI -3.36%),,,,
+projection,2026-05-04,BOS,DET,PASS,55.1,Payton Tolle,Tyler Holton,1.0,0.551,0.449,NRFI,0.551,1.815,2.85,1u,Market gated off (ROI -3.36%),,,,
+projection,2026-05-04,TOR,TB,PASS,56.7,Eric Lauer,Nick Martinez,0.96,0.567,0.433,NRFI,0.567,1.764,4.53,2u,Market gated off (ROI -3.36%),,,,
 projection,2026-05-04,PHI,MIA,PASS,50.6,Aaron Nola,Janson Junk,1.24,0.506,0.494,NRFI,0.506,1.976,0.0,PASS,Market gated off (ROI -3.36%),,,,
 projection,2026-05-04,BAL,NYY,PASS,50.7,Shane Baz,Cam Schlittler,1.13,0.507,0.493,NRFI,0.507,1.972,0.0,PASS,Market gated off (ROI -3.36%),,,,
 projection,2026-05-04,CIN,CHC,PASS,54.4,Chase Petty,Edward Cabrera,1.18,0.544,0.456,NRFI,0.544,1.838,2.12,1u,Market gated off (ROI -3.36%),,,,

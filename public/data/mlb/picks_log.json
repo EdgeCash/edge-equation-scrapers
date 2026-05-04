@@ -1202,6 +1202,37 @@
       "result": "LOSS",
       "units": -1.0,
       "graded_at": "2026-05-04T17:33:13.045206Z"
+    },
+    {
+      "pick_id": "2026-05-04|CIN@CHC|totals|UNDER 11.5",
+      "date": "2026-05-04",
+      "matchup": "CIN@CHC",
+      "game_pk": 824684,
+      "game_time": "2026-05-04T23:10:00Z",
+      "bet_type": "totals",
+      "pick": "UNDER 11.5",
+      "spec": {
+        "type": "totals",
+        "side": "UNDER",
+        "line": 11.5
+      },
+      "model_prob": 0.65,
+      "edge_pct_at_pick": 13.2,
+      "kelly_pct": 3.0,
+      "kelly_advice": "1u",
+      "pick_price_dec": 1.93,
+      "pick_price_american": -108,
+      "book_at_pick": "lowvig",
+      "pick_taken_at": "2026-05-04T20:10:46.532000Z",
+      "odds_source": "the-odds-api",
+      "closing_price_dec": null,
+      "closing_price_american": null,
+      "closing_book": null,
+      "closing_recorded_at": null,
+      "clv_pct": null,
+      "result": "LOSS",
+      "units": -1.0,
+      "graded_at": "2026-05-04T20:10:46.533987Z"
     }
   ]
 }
