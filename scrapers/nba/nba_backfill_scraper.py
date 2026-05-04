@@ -1,20 +1,23 @@
 """
-WNBA Multi-Season Backfill Scraper. EXPERIMENTAL.
-=================================================
-Bulk-collects historical WNBA game results across multiple seasons
-into `data/backfill/wnba/<season>/games.json`.
+NBA Multi-Season Backfill Scraper. EXPERIMENTAL.
+================================================
+Bulk-collects historical NBA game results across multiple seasons
+into `data/backfill/nba/<season>/games.json`. Used to fuel offline
+model training + cross-sport infrastructure reuse.
 
-WNBA season convention: a season is named by the year it occurs in
-(unlike NHL which spans calendar years). Season N runs roughly May
-through October of year N. Per-season date range covers May 1
-through October 31 to include playoffs and Finals.
+NBA season convention: a season is named by the year it started.
+Season 2024 = Oct 2024 - June 2025 (regular + playoffs). Per-season
+date range covers Oct 1 of season N through June 30 of N+1.
 
-Strategy: walk weekly date chunks (one ESPN call per week × ~26
-weeks per season = ~26 calls). Per-season volume ~265 games (240
-reg + ~25 playoffs across 12 teams). Per-season runtime ~2 min.
+Strategy:
+- Walk the season's date range in weekly chunks (one ESPN call per
+  week). Per-season volume ~1,315 games (1,230 reg + 85 playoff)
+  across ~37 weeks.
+- Idempotent: if a season's games.json already exists, skip the
+  full re-fetch on `fetch_season_games()`.
+- For incremental daily updates, see `update_for_date()`.
 
-Idempotent: if a season's games.json already exists, the scraper
-skips it.
+NOT scheduled. Triggered manually via the matching workflow.
 """
 
 from __future__ import annotations
@@ -24,22 +27,24 @@ from datetime import date, timedelta
 from pathlib import Path
 from typing import Iterable
 
-from scrapers.wnba.wnba_game_scraper import WNBAGameScraper
+from scrapers.nba.nba_game_scraper import NBAGameScraper
 
 
 def _season_date_range(season: int) -> tuple[str, str]:
-    """WNBA season N runs roughly May - Oct of year N. We use a wider
-    May 1 - Oct 31 window to safely capture preseason, regular,
-    playoffs, and Finals."""
-    start = date(season, 5, 1)
-    end = date(season, 10, 31)
+    """NBA season N runs Oct 1 of year N through June 30 of year N+1.
+    Covers regular season + playoffs (Finals usually wrap mid-June)."""
+    start = date(season, 10, 1)
+    end = date(season + 1, 6, 30)
     return (start.isoformat(), end.isoformat())
 
 
 def _season_for_date(d: date) -> int:
-    """WNBA seasons run entirely within one calendar year, so the
-    season mapping is just the year itself for any date in that year."""
-    return d.year
+    """Reverse-map: which NBA season does a given date belong to?
+    Oct-Dec → that calendar year. Jan-Sep → previous year (still in
+    season N's playoffs / off-season for season N+1 prep)."""
+    if d.month >= 10:
+        return d.year
+    return d.year - 1
 
 
 def _weekly_chunks(start_date: str, end_date: str) -> list[tuple[str, str]]:
@@ -54,12 +59,14 @@ def _weekly_chunks(start_date: str, end_date: str) -> list[tuple[str, str]]:
     return out
 
 
-class WNBABackfillScraper:
-    """Multi-season WNBA game-results harvester."""
+class NBABackfillScraper:
+    """Multi-season NBA game-results harvester."""
 
     def __init__(self, output_root: Path):
         self.output_root = Path(output_root)
-        self.game_scraper = WNBAGameScraper()
+        self.game_scraper = NBAGameScraper()
+
+    # ---------------- bulk backfill --------------------------------------
 
     def fetch_seasons(
         self,
@@ -69,7 +76,7 @@ class WNBABackfillScraper:
         report: dict[int, dict] = {}
         for season in seasons:
             if verbose:
-                print(f"\n=== WNBA Season {season} ===")
+                print(f"\n=== NBA Season {season} ===")
             games = self.fetch_season_games(season, verbose=verbose)
             report[season] = {
                 "games": len(games),
@@ -133,8 +140,11 @@ class WNBABackfillScraper:
     ) -> dict:
         """Fetch games for a single date and merge them into the
         appropriate season's games.json. Idempotent — already-stored
-        games are de-duplicated by `game_id`. Existing entries are
-        replaced with the fresh fetch.
+        games are de-duplicated by `game_id`. Returns a small report
+        dict with counts.
+
+        If `season` isn't supplied, derive it from `target_date` via
+        `_season_for_date()`.
         """
         d = date.fromisoformat(target_date)
         if season is None:
@@ -160,6 +170,9 @@ class WNBABackfillScraper:
             if not gid:
                 continue
             if gid in existing_ids:
+                # Replace existing entry with the fresh fetch (handles
+                # cases where a game was previously logged as in-progress
+                # and is now FINAL).
                 for i, e in enumerate(existing):
                     if e.get("game_id") == gid:
                         existing[i] = g

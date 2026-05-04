@@ -43,6 +43,15 @@ def _season_date_range(season: int) -> tuple[str, str]:
     return (start.isoformat(), end.isoformat())
 
 
+def _season_for_date(d: date) -> int:
+    """Reverse-map: which NHL season does a given date belong to?
+    Oct-Dec → that calendar year. Jan-Sep → previous year (still in
+    season N's playoffs / off-season for N+1 prep)."""
+    if d.month >= 10:
+        return d.year
+    return d.year - 1
+
+
 def _weekly_chunks(start_date: str, end_date: str) -> list[tuple[str, str]]:
     """Split [start, end] into weekly (Mon-Sun) ranges. Returns a list
     of (start, end) ISO date pairs covering the full window."""
@@ -127,3 +136,68 @@ class NHLBackfillScraper:
             rel = path.relative_to(self.output_root.parent)
             print(f"  Persisted {len(unique)} games to {rel}")
         return unique
+
+    # ---------------- incremental daily update --------------------------
+
+    def update_for_date(
+        self,
+        target_date: str,
+        season: int | None = None,
+        verbose: bool = True,
+    ) -> dict:
+        """Fetch games for a single date and merge them into the
+        appropriate season's games.json. Idempotent — already-stored
+        games are de-duplicated by `game_id`. Existing entries are
+        replaced with the fresh fetch (handles "in-progress → final"
+        transitions). Returns a small report dict.
+        """
+        d = date.fromisoformat(target_date)
+        if season is None:
+            season = _season_for_date(d)
+
+        path = self.output_root / str(season) / "games.json"
+        existing: list[dict] = []
+        if path.exists():
+            try:
+                existing = json.loads(path.read_text())
+            except (OSError, json.JSONDecodeError):
+                existing = []
+
+        existing_ids = {g.get("game_id") for g in existing if g.get("game_id")}
+        if verbose:
+            print(f"  Loading existing season {season} ({len(existing)} games on disk)")
+
+        new_games = self.game_scraper.fetch_date(target_date)
+        added: list[dict] = []
+        replaced = 0
+        for g in new_games:
+            gid = g.get("game_id")
+            if not gid:
+                continue
+            if gid in existing_ids:
+                for i, e in enumerate(existing):
+                    if e.get("game_id") == gid:
+                        existing[i] = g
+                        replaced += 1
+                        break
+            else:
+                existing.append(g)
+                existing_ids.add(gid)
+                added.append(g)
+
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(existing, indent=2, default=str))
+        if verbose:
+            rel = path.relative_to(self.output_root.parent)
+            print(
+                f"  Wrote {rel}: +{len(added)} new, "
+                f"{replaced} updated, {len(existing)} total"
+            )
+        return {
+            "season": season,
+            "target_date": target_date,
+            "added": len(added),
+            "updated": replaced,
+            "fetched": len(new_games),
+            "total_in_season": len(existing),
+        }

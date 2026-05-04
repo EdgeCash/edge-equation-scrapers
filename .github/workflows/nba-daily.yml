@@ -1,0 +1,75 @@
+name: NBA Daily Update
+
+# Fetches yesterday's NBA games and merges them into the appropriate
+# season's games.json. Source: ESPN public scoreboard JSON.
+#
+# 13:00 UTC = 8 AM ET — late enough that west-coast late games have
+# settled. Idempotent.
+
+on:
+  schedule:
+    - cron: "0 13 * * *"
+  workflow_dispatch:
+    inputs:
+      date:
+        description: "YYYY-MM-DD (blank = yesterday in ET)"
+        required: false
+        default: ""
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Configure git
+        run: |
+          git config user.name  "edge-equation-bot"
+          git config user.email "bot@edge-equation.local"
+
+      - name: Run NBA daily update
+        env:
+          INPUT_DATE: ${{ github.event.inputs.date }}
+        run: |
+          ARGS=""
+          if [ -n "$INPUT_DATE" ]; then
+            ARGS="$ARGS --date $INPUT_DATE"
+          fi
+          echo "::group::NBA daily update"
+          python run_nba_daily.py $ARGS
+          echo "::endgroup::"
+
+      - name: Commit + push
+        run: |
+          set -x
+          git add data/backfill/nba/*/games.json 2>/dev/null || true
+          if git diff --staged --quiet; then
+            echo "No NBA game changes — nothing to commit."
+            exit 0
+          fi
+          git commit -m "NBA daily update — $(date -u +%Y-%m-%d)"
+          for attempt in 1 2 3 4; do
+            if git push -u origin "${{ github.ref_name }}"; then
+              exit 0
+            fi
+            sleep $((2 ** attempt))
+            git fetch origin "${{ github.ref_name }}" && git rebase "origin/${{ github.ref_name }}" || true
+          done
+          echo "::error::Push failed after retries."
+          exit 1
