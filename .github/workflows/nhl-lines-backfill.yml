@@ -1,0 +1,89 @@
+name: NHL Lines Backfill (manual)
+
+# Pulls historical NHL closing-line snapshots from The Odds API into
+# data/backfill/nhl/<season>/lines.json. One historical call per
+# unique game-day. Default 3-season pull = ~600 calls = ~6,000
+# credits. Idempotent — re-runs skip game-days already covered.
+
+on:
+  workflow_dispatch:
+    inputs:
+      seasons:
+        description: "Seasons — '2023,2024,2025' or '2023-2025'. Blank = default 2023-2025."
+        required: false
+        default: ""
+      snapshot_hour_utc:
+        description: "UTC hour to snapshot each game-day at (0-23). Default 22 = 6pm ET."
+        required: false
+        default: "22"
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Configure git
+        run: |
+          git config user.name  "edge-equation-bot"
+          git config user.email "bot@edge-equation.local"
+
+      - name: Fetch NHL lines backfill
+        env:
+          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+          INPUT_SEASONS: ${{ github.event.inputs.seasons }}
+          INPUT_HOUR: ${{ github.event.inputs.snapshot_hour_utc }}
+        run: |
+          ARGS=""
+          if [ -n "$INPUT_SEASONS" ]; then
+            ARGS="$ARGS --seasons $INPUT_SEASONS"
+          fi
+          if [ -n "$INPUT_HOUR" ]; then
+            ARGS="$ARGS --snapshot-hour-utc $INPUT_HOUR"
+          fi
+          echo "::group::NHL lines backfill"
+          python run_nhl_lines_backfill.py $ARGS
+          echo "::endgroup::"
+
+      - name: Upload lines.json files as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nhl-lines
+          path: data/backfill/nhl/*/lines.json
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Commit + push
+        run: |
+          set -x
+          git add data/backfill/nhl/*/lines.json public/data/nhl/quota_log.json 2>/dev/null || true
+          if git diff --staged --quiet; then
+            echo "No NHL lines changes — nothing to commit."
+            exit 0
+          fi
+          git commit -m "NHL lines backfill — $(date -u +%Y-%m-%d)"
+          for attempt in 1 2 3 4; do
+            if git push -u origin "${{ github.ref_name }}"; then
+              exit 0
+            fi
+            sleep $((2 ** attempt))
+            git fetch origin "${{ github.ref_name }}" && git rebase "origin/${{ github.ref_name }}" || true
+          done
+          echo "::error::Push failed after retries."
+          exit 1
