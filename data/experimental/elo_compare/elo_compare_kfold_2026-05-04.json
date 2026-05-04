@@ -1,0 +1,101 @@
+{
+  "as_of": "2026-05-04T11:55:05.882907Z",
+  "method": "time_series_kfold",
+  "seasons": [
+    2022,
+    2023,
+    2024,
+    2025
+  ],
+  "n_splits": 5,
+  "warmup_games": 500,
+  "n_total_elo_games": 10405,
+  "n_logistic_pairs": 10409,
+  "n_matched": 10173,
+  "fold_results": [
+    {
+      "fold": 0,
+      "n_train": 1695,
+      "n_test": 1695,
+      "logistic_slope": 0.4622532708593985,
+      "brier_logistic": 0.24722664896387878,
+      "brier_elo": 0.24274204842256464,
+      "brier_ensemble": 0.24387805365711154,
+      "delta_logistic_minus_elo": 0.004484600541314138
+    },
+    {
+      "fold": 1,
+      "n_train": 3390,
+      "n_test": 1695,
+      "logistic_slope": 0.45766535255060153,
+      "brier_logistic": 0.24691267220928126,
+      "brier_elo": 0.24436115859960197,
+      "brier_ensemble": 0.24445176093000034,
+      "delta_logistic_minus_elo": 0.0025515136096792845
+    },
+    {
+      "fold": 2,
+      "n_train": 5085,
+      "n_test": 1695,
+      "logistic_slope": 0.4595582464815092,
+      "brier_logistic": 0.24752682282015614,
+      "brier_elo": 0.24529873105990077,
+      "brier_ensemble": 0.24481712035836406,
+      "delta_logistic_minus_elo": 0.002228091760255374
+    },
+    {
+      "fold": 3,
+      "n_train": 6780,
+      "n_test": 1695,
+      "logistic_slope": 0.4590051530469108,
+      "brier_logistic": 0.2477949827805459,
+      "brier_elo": 0.24078285529504825,
+      "brier_ensemble": 0.24287517638878162,
+      "delta_logistic_minus_elo": 0.007012127485497649
+    },
+    {
+      "fold": 4,
+      "n_train": 8475,
+      "n_test": 1698,
+      "logistic_slope": 0.4535726162530031,
+      "brier_logistic": 0.24733913040434155,
+      "brier_elo": 0.24593283606801705,
+      "brier_ensemble": 0.24495666272521358,
+      "delta_logistic_minus_elo": 0.0014062943363244984
+    }
+  ],
+  "aggregate": {
+    "logistic": {
+      "n": 5,
+      "mean": 0.24736005143564074,
+      "std": 0.0003299090975841034,
+      "ci_half": 0.0002891780740887174,
+      "min": 0.24691267220928126,
+      "max": 0.2477949827805459
+    },
+    "elo": {
+      "n": 5,
+      "mean": 0.24382352588902653,
+      "std": 0.002081450205409492,
+      "ci_half": 0.0018244715472219974,
+      "min": 0.24078285529504825,
+      "max": 0.24593283606801705
+    },
+    "ensemble": {
+      "n": 5,
+      "mean": 0.24419575481189426,
+      "std": 0.0008478615044245673,
+      "ci_half": 0.0007431833760842398,
+      "min": 0.24287517638878162,
+      "max": 0.24495666272521358
+    },
+    "delta_logistic_minus_elo": {
+      "n": 5,
+      "mean": 0.003536525546614189,
+      "std": 0.0022471530617443245,
+      "ci_half": 0.00196971650474758,
+      "min": 0.0014062943363244984,
+      "max": 0.007012127485497649
+    }
+  }
+}
