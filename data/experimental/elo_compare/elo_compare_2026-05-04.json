@@ -1,0 +1,24 @@
+{
+  "as_of": "2026-05-04T04:40:13.603017Z",
+  "seasons": [
+    2022,
+    2023,
+    2024,
+    2025
+  ],
+  "warmup_games": 500,
+  "train_frac": 0.8,
+  "seed": 42,
+  "n_total_elo_games": 10405,
+  "n_logistic_pairs": 10409,
+  "n_matched": 10173,
+  "n_train": 8138,
+  "n_test": 2035,
+  "logistic_slope": 0.446195464229752,
+  "brier_naive": 0.25,
+  "brier_logistic": 0.2464200674052927,
+  "brier_elo": 0.2440993825276179,
+  "brier_ensemble": 0.24406134083260347,
+  "delta_logistic_minus_elo": 0.0023206848776748112,
+  "pct_relative": 0.9417596959982679
+}
