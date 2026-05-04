@@ -1,0 +1,108 @@
+name: WNBA Backfill (manual)
+
+# Pulls historical WNBA game results across multiple seasons into
+# data/backfill/wnba/<season>/games.json. Source: ESPN public
+# scoreboard JSON (no auth). Per-season runtime: ~2 min. 5-season
+# run takes ~10 min total.
+
+on:
+  workflow_dispatch:
+    inputs:
+      seasons:
+        description: "Seasons — '2021,2022,2023,2024,2025' or '2021-2025'. Blank = 5 most recent completed."
+        required: false
+        default: ""
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Configure git
+        run: |
+          git config user.name  "edge-equation-bot"
+          git config user.email "bot@edge-equation.local"
+
+      - name: Fetch WNBA backfill
+        env:
+          INPUT_SEASONS: ${{ github.event.inputs.seasons }}
+        run: |
+          ARGS=""
+          if [ -n "$INPUT_SEASONS" ]; then
+            ARGS="$ARGS --seasons $INPUT_SEASONS"
+          fi
+          echo "::group::WNBA backfill"
+          python run_wnba_backfill.py $ARGS
+          echo "::endgroup::"
+
+      - name: Verify games.json files were written
+        run: |
+          set -e
+          MISSING=0
+          for season_dir in data/backfill/wnba/*/; do
+            season=$(basename "$season_dir")
+            if [[ ! "$season" =~ ^[0-9]+$ ]]; then
+              continue
+            fi
+            f="$season_dir/games.json"
+            if [ ! -f "$f" ]; then
+              echo "::error::$f missing"
+              MISSING=$((MISSING+1))
+              continue
+            fi
+            SIZE=$(stat -c%s "$f")
+            # WNBA: ~265 games × ~700 bytes = ~185KB per full season.
+            # Floor at 50KB rejects truncated harvests.
+            if [ "$SIZE" -lt 51200 ]; then
+              echo "::warning::$f is only $SIZE bytes — possibly in-progress or truncated."
+            fi
+            N_GAMES=$(python -c "import json; print(len(json.load(open('$f'))))")
+            echo "OK: $f — $N_GAMES games, $SIZE bytes."
+          done
+          if [ "$MISSING" -gt 0 ]; then
+            exit 1
+          fi
+
+      - name: Upload games.json files as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: wnba-games
+          path: data/backfill/wnba/*/games.json
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Commit + push
+        run: |
+          set -x
+          git add data/backfill/wnba/*/games.json
+          if git diff --staged --quiet; then
+            echo "WNBA games already up to date — nothing to commit."
+            exit 0
+          fi
+          git commit -m "WNBA backfill — $(date -u +%Y-%m-%d)"
+          for attempt in 1 2 3 4; do
+            if git push -u origin "${{ github.ref_name }}"; then
+              exit 0
+            fi
+            sleep $((2 ** attempt))
+            git fetch origin "${{ github.ref_name }}" && git rebase "origin/${{ github.ref_name }}" || true
+          done
+          echo "::error::Push failed after retries."
+          exit 1

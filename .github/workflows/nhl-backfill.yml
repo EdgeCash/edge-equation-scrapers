@@ -1,0 +1,110 @@
+name: NHL Backfill (manual)
+
+# Pulls historical NHL game results across multiple seasons into
+# data/backfill/nhl/<season>/games.json. Source: ESPN public
+# scoreboard JSON (no auth). Per-season runtime: ~3 min. 5-season
+# run takes ~15 min total.
+
+on:
+  workflow_dispatch:
+    inputs:
+      seasons:
+        description: "Seasons — '2020,2021,2022,2023,2024' or '2020-2024'. Blank = 5 most recent."
+        required: false
+        default: ""
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Configure git
+        run: |
+          git config user.name  "edge-equation-bot"
+          git config user.email "bot@edge-equation.local"
+
+      - name: Fetch NHL backfill
+        env:
+          INPUT_SEASONS: ${{ github.event.inputs.seasons }}
+        run: |
+          ARGS=""
+          if [ -n "$INPUT_SEASONS" ]; then
+            ARGS="$ARGS --seasons $INPUT_SEASONS"
+          fi
+          echo "::group::NHL backfill"
+          python run_nhl_backfill.py $ARGS
+          echo "::endgroup::"
+
+      - name: Verify games.json files were written
+        run: |
+          set -e
+          MISSING=0
+          for season_dir in data/backfill/nhl/*/; do
+            season=$(basename "$season_dir")
+            if [[ ! "$season" =~ ^[0-9]+$ ]]; then
+              continue
+            fi
+            f="$season_dir/games.json"
+            if [ ! -f "$f" ]; then
+              echo "::error::$f missing"
+              MISSING=$((MISSING+1))
+              continue
+            fi
+            SIZE=$(stat -c%s "$f")
+            # NHL: ~1,300 games × ~700 bytes = ~900KB per full season.
+            # Floor at 100KB rejects truncated harvests but accepts
+            # in-progress seasons (e.g. current season has only ~half
+            # the games yet).
+            if [ "$SIZE" -lt 102400 ]; then
+              echo "::warning::$f is only $SIZE bytes — possibly in-progress season."
+            fi
+            N_GAMES=$(python -c "import json; print(len(json.load(open('$f'))))")
+            echo "OK: $f — $N_GAMES games, $SIZE bytes."
+          done
+          if [ "$MISSING" -gt 0 ]; then
+            exit 1
+          fi
+
+      - name: Upload games.json files as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nhl-games
+          path: data/backfill/nhl/*/games.json
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Commit + push
+        run: |
+          set -x
+          git add data/backfill/nhl/*/games.json
+          if git diff --staged --quiet; then
+            echo "NHL games already up to date — nothing to commit."
+            exit 0
+          fi
+          git commit -m "NHL backfill — $(date -u +%Y-%m-%d)"
+          for attempt in 1 2 3 4; do
+            if git push -u origin "${{ github.ref_name }}"; then
+              exit 0
+            fi
+            sleep $((2 ** attempt))
+            git fetch origin "${{ github.ref_name }}" && git rebase "origin/${{ github.ref_name }}" || true
+          done
+          echo "::error::Push failed after retries."
+          exit 1
