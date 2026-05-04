@@ -1,0 +1,175 @@
+market,matchup,side,player,line,expected,model_prob_over
+pitcher_ks,NYM@COL,AWAY,Huascar Brazobán,4.5,2.61,0.1238
+pitcher_ks,NYM@COL,AWAY,Huascar Brazobán,5.5,2.61,0.0497
+pitcher_ks,NYM@COL,AWAY,Huascar Brazobán,6.5,2.61,0.0174
+pitcher_ks,NYM@COL,AWAY,Huascar Brazobán,7.5,2.61,0.0054
+pitcher_ks,NYM@COL,HOME,Tomoyuki Sugano,4.5,2.02,0.054
+pitcher_ks,NYM@COL,HOME,Tomoyuki Sugano,5.5,2.02,0.0171
+pitcher_ks,NYM@COL,HOME,Tomoyuki Sugano,6.5,2.02,0.0047
+pitcher_ks,NYM@COL,HOME,Tomoyuki Sugano,7.5,2.02,0.0012
+pitcher_ks,BOS@DET,AWAY,Payton Tolle,4.5,4.15,0.3999
+pitcher_ks,BOS@DET,AWAY,Payton Tolle,5.5,4.15,0.2383
+pitcher_ks,BOS@DET,AWAY,Payton Tolle,6.5,4.15,0.1266
+pitcher_ks,BOS@DET,AWAY,Payton Tolle,7.5,4.15,0.0604
+pitcher_ks,BOS@DET,HOME,Tarik Skubal,4.5,3.53,0.2806
+pitcher_ks,BOS@DET,HOME,Tarik Skubal,5.5,3.53,0.1467
+pitcher_ks,BOS@DET,HOME,Tarik Skubal,6.5,3.53,0.0678
+pitcher_ks,BOS@DET,HOME,Tarik Skubal,7.5,3.53,0.028
+pitcher_ks,TOR@TB,HOME,Nick Martinez,4.5,2.26,0.0789
+pitcher_ks,TOR@TB,HOME,Nick Martinez,5.5,2.26,0.0277
+pitcher_ks,TOR@TB,HOME,Nick Martinez,6.5,2.26,0.0085
+pitcher_ks,TOR@TB,HOME,Nick Martinez,7.5,2.26,0.0023
+pitcher_ks,PHI@MIA,AWAY,Aaron Nola,4.5,3.19,0.2171
+pitcher_ks,PHI@MIA,AWAY,Aaron Nola,5.5,3.19,0.1039
+pitcher_ks,PHI@MIA,AWAY,Aaron Nola,6.5,3.19,0.0438
+pitcher_ks,PHI@MIA,AWAY,Aaron Nola,7.5,3.19,0.0165
+pitcher_ks,PHI@MIA,HOME,Janson Junk,4.5,2.03,0.055
+pitcher_ks,PHI@MIA,HOME,Janson Junk,5.5,2.03,0.0175
+pitcher_ks,PHI@MIA,HOME,Janson Junk,6.5,2.03,0.0049
+pitcher_ks,PHI@MIA,HOME,Janson Junk,7.5,2.03,0.0012
+pitcher_ks,BAL@NYY,AWAY,Shane Baz,4.5,2.72,0.1406
+pitcher_ks,BAL@NYY,AWAY,Shane Baz,5.5,2.72,0.0586
+pitcher_ks,BAL@NYY,AWAY,Shane Baz,6.5,2.72,0.0214
+pitcher_ks,BAL@NYY,AWAY,Shane Baz,7.5,2.72,0.007
+pitcher_ks,BAL@NYY,HOME,Cam Schlittler,4.5,3.84,0.3403
+pitcher_ks,BAL@NYY,HOME,Cam Schlittler,5.5,3.84,0.1906
+pitcher_ks,BAL@NYY,HOME,Cam Schlittler,6.5,3.84,0.0948
+pitcher_ks,BAL@NYY,HOME,Cam Schlittler,7.5,3.84,0.0423
+pitcher_ks,CIN@CHC,HOME,Edward Cabrera,4.5,2.76,0.1459
+pitcher_ks,CIN@CHC,HOME,Edward Cabrera,5.5,2.76,0.0615
+pitcher_ks,CIN@CHC,HOME,Edward Cabrera,6.5,2.76,0.0228
+pitcher_ks,CIN@CHC,HOME,Edward Cabrera,7.5,2.76,0.0075
+pitcher_ks,CLE@KC,AWAY,Tanner Bibee,4.5,2.55,0.1158
+pitcher_ks,CLE@KC,AWAY,Tanner Bibee,5.5,2.55,0.0456
+pitcher_ks,CLE@KC,AWAY,Tanner Bibee,6.5,2.55,0.0157
+pitcher_ks,CLE@KC,AWAY,Tanner Bibee,7.5,2.55,0.0048
+pitcher_ks,CLE@KC,HOME,Michael Wacha,4.5,3.05,0.1933
+pitcher_ks,CLE@KC,HOME,Michael Wacha,5.5,3.05,0.0891
+pitcher_ks,CLE@KC,HOME,Michael Wacha,6.5,3.05,0.0361
+pitcher_ks,CLE@KC,HOME,Michael Wacha,7.5,3.05,0.013
+pitcher_ks,MIL@STL,AWAY,Chad Patrick,4.5,2.35,0.0901
+pitcher_ks,MIL@STL,AWAY,Chad Patrick,5.5,2.35,0.0329
+pitcher_ks,MIL@STL,AWAY,Chad Patrick,6.5,2.35,0.0105
+pitcher_ks,MIL@STL,AWAY,Chad Patrick,7.5,2.35,0.003
+pitcher_ks,MIL@STL,HOME,Kyle Leahy,4.5,2.07,0.0589
+pitcher_ks,MIL@STL,HOME,Kyle Leahy,5.5,2.07,0.0191
+pitcher_ks,MIL@STL,HOME,Kyle Leahy,6.5,2.07,0.0054
+pitcher_ks,MIL@STL,HOME,Kyle Leahy,7.5,2.07,0.0013
+pitcher_ks,LAD@HOU,AWAY,Yoshinobu Yamamoto,4.5,2.95,0.1772
+pitcher_ks,LAD@HOU,AWAY,Yoshinobu Yamamoto,5.5,2.95,0.0794
+pitcher_ks,LAD@HOU,AWAY,Yoshinobu Yamamoto,6.5,2.95,0.0313
+pitcher_ks,LAD@HOU,AWAY,Yoshinobu Yamamoto,7.5,2.95,0.011
+pitcher_ks,LAD@HOU,HOME,Steven Okert,4.5,2.1,0.0619
+pitcher_ks,LAD@HOU,HOME,Steven Okert,5.5,2.1,0.0204
+pitcher_ks,LAD@HOU,HOME,Steven Okert,6.5,2.1,0.0058
+pitcher_ks,LAD@HOU,HOME,Steven Okert,7.5,2.1,0.0015
+pitcher_ks,CWS@LAA,AWAY,Davis Martin,4.5,3.12,0.2053
+pitcher_ks,CWS@LAA,AWAY,Davis Martin,5.5,3.12,0.0965
+pitcher_ks,CWS@LAA,AWAY,Davis Martin,6.5,3.12,0.0399
+pitcher_ks,CWS@LAA,AWAY,Davis Martin,7.5,3.12,0.0147
+pitcher_ks,CWS@LAA,HOME,José Soriano,4.5,3.85,0.3422
+pitcher_ks,CWS@LAA,HOME,José Soriano,5.5,3.85,0.1921
+pitcher_ks,CWS@LAA,HOME,José Soriano,6.5,3.85,0.0958
+pitcher_ks,CWS@LAA,HOME,José Soriano,7.5,3.85,0.0428
+pitcher_ks,ATL@SEA,AWAY,JR Ritchie,4.5,2.76,0.1469
+pitcher_ks,ATL@SEA,AWAY,JR Ritchie,5.5,2.76,0.0621
+pitcher_ks,ATL@SEA,AWAY,JR Ritchie,6.5,2.76,0.023
+pitcher_ks,ATL@SEA,AWAY,JR Ritchie,7.5,2.76,0.0076
+pitcher_ks,ATL@SEA,HOME,Logan Gilbert,4.5,3.04,0.1907
+pitcher_ks,ATL@SEA,HOME,Logan Gilbert,5.5,3.04,0.0875
+pitcher_ks,ATL@SEA,HOME,Logan Gilbert,6.5,3.04,0.0353
+pitcher_ks,ATL@SEA,HOME,Logan Gilbert,7.5,3.04,0.0127
+pitcher_ks,SD@SF,AWAY,Randy Vásquez,4.5,3.12,0.2053
+pitcher_ks,SD@SF,AWAY,Randy Vásquez,5.5,3.12,0.0965
+pitcher_ks,SD@SF,AWAY,Randy Vásquez,6.5,3.12,0.0399
+pitcher_ks,SD@SF,AWAY,Randy Vásquez,7.5,3.12,0.0147
+batter_hits,NYM@COL,AWAY,slot 1 (id 665742),0.5,1.194,0.758
+batter_hits,NYM@COL,AWAY,slot 1 (id 665742),1.5,1.194,0.3459
+batter_hits,NYM@COL,AWAY,slot 2 (id 666182),0.5,0.924,0.6505
+batter_hits,NYM@COL,AWAY,slot 2 (id 666182),1.5,0.924,0.2303
+batter_hits,NYM@COL,AWAY,slot 3 (id 669004),0.5,1.233,0.7709
+batter_hits,NYM@COL,AWAY,slot 3 (id 669004),1.5,1.233,0.3627
+batter_hits,NYM@COL,AWAY,slot 4 (id 668901),0.5,0.951,0.6624
+batter_hits,NYM@COL,AWAY,slot 4 (id 668901),1.5,0.951,0.2412
+batter_hits,NYM@COL,AWAY,slot 5 (id 683146),0.5,0.803,0.5918
+batter_hits,NYM@COL,AWAY,slot 5 (id 683146),1.5,0.803,0.1818
+batter_hits,NYM@COL,AWAY,slot 6 (id 543760),0.5,0.81,0.5956
+batter_hits,NYM@COL,AWAY,slot 6 (id 543760),1.5,0.81,0.1848
+batter_hits,NYM@COL,AWAY,slot 7 (id 701807),0.5,0.708,0.541
+batter_hits,NYM@COL,AWAY,slot 7 (id 701807),1.5,0.708,0.1464
+batter_hits,NYM@COL,AWAY,slot 8 (id 682626),0.5,0.752,0.5713
+batter_hits,NYM@COL,AWAY,slot 8 (id 682626),1.5,0.752,0.1605
+batter_hits,NYM@COL,AWAY,slot 9 (id 620443),0.5,0.606,0.4858
+batter_hits,NYM@COL,AWAY,slot 9 (id 620443),1.5,0.606,0.1091
+batter_hits,NYM@COL,HOME,slot 1 (id 666160),0.5,1.046,0.7027
+batter_hits,NYM@COL,HOME,slot 1 (id 666160),1.5,1.046,0.2814
+batter_hits,NYM@COL,HOME,slot 2 (id 671289),0.5,0.938,0.6564
+batter_hits,NYM@COL,HOME,slot 2 (id 671289),1.5,0.938,0.2357
+batter_hits,NYM@COL,HOME,slot 3 (id 681198),0.5,0.858,0.6191
+batter_hits,NYM@COL,HOME,slot 3 (id 681198),1.5,0.858,0.2033
+batter_hits,NYM@COL,HOME,slot 4 (id 696100),0.5,0.768,0.5738
+batter_hits,NYM@COL,HOME,slot 4 (id 696100),1.5,0.768,0.1686
+batter_hits,NYM@COL,HOME,slot 5 (id 650489),0.5,0.781,0.5805
+batter_hits,NYM@COL,HOME,slot 5 (id 650489),1.5,0.781,0.1735
+batter_hits,NYM@COL,HOME,slot 6 (id 687597),0.5,0.534,0.4365
+batter_hits,NYM@COL,HOME,slot 6 (id 687597),1.5,0.534,0.089
+batter_hits,NYM@COL,HOME,slot 7 (id 691720),0.5,0.682,0.5263
+batter_hits,NYM@COL,HOME,slot 7 (id 691720),1.5,0.682,0.1372
+batter_hits,NYM@COL,HOME,slot 8 (id 678662),0.5,0.552,0.4513
+batter_hits,NYM@COL,HOME,slot 8 (id 678662),1.5,0.552,0.0921
+batter_hits,NYM@COL,HOME,slot 9 (id 686668),0.5,0.596,0.48
+batter_hits,NYM@COL,HOME,slot 9 (id 686668),1.5,0.596,0.1061
+batter_tb,NYM@COL,AWAY,slot 1 (id 665742),1.5,1.9,0.5668
+batter_tb,NYM@COL,AWAY,slot 1 (id 665742),2.5,1.9,0.2968
+batter_tb,NYM@COL,AWAY,slot 1 (id 665742),3.5,1.9,0.1256
+batter_tb,NYM@COL,AWAY,slot 2 (id 666182),1.5,1.22,0.345
+batter_tb,NYM@COL,AWAY,slot 2 (id 666182),2.5,1.22,0.1251
+batter_tb,NYM@COL,AWAY,slot 2 (id 666182),3.5,1.22,0.0356
+batter_tb,NYM@COL,AWAY,slot 3 (id 669004),1.5,2.24,0.6543
+batter_tb,NYM@COL,AWAY,slot 3 (id 669004),2.5,2.24,0.3871
+batter_tb,NYM@COL,AWAY,slot 3 (id 669004),3.5,2.24,0.1879
+batter_tb,NYM@COL,AWAY,slot 4 (id 668901),1.5,1.67,0.4986
+batter_tb,NYM@COL,AWAY,slot 4 (id 668901),2.5,1.67,0.2359
+batter_tb,NYM@COL,AWAY,slot 4 (id 668901),3.5,1.67,0.0893
+batter_tb,NYM@COL,AWAY,slot 5 (id 683146),1.5,1.16,0.323
+batter_tb,NYM@COL,AWAY,slot 5 (id 683146),2.5,1.16,0.112
+batter_tb,NYM@COL,AWAY,slot 5 (id 683146),3.5,1.16,0.0304
+batter_tb,NYM@COL,AWAY,slot 6 (id 543760),1.5,1.06,0.2868
+batter_tb,NYM@COL,AWAY,slot 6 (id 543760),2.5,1.06,0.0919
+batter_tb,NYM@COL,AWAY,slot 6 (id 543760),3.5,1.06,0.023
+batter_tb,NYM@COL,AWAY,slot 7 (id 701807),1.5,1.06,0.2854
+batter_tb,NYM@COL,AWAY,slot 7 (id 701807),2.5,1.06,0.0912
+batter_tb,NYM@COL,AWAY,slot 7 (id 701807),3.5,1.06,0.0227
+batter_tb,NYM@COL,AWAY,slot 8 (id 682626),1.5,1.29,0.369
+batter_tb,NYM@COL,AWAY,slot 8 (id 682626),2.5,1.29,0.1402
+batter_tb,NYM@COL,AWAY,slot 8 (id 682626),3.5,1.29,0.0419
+batter_tb,NYM@COL,AWAY,slot 9 (id 620443),1.5,0.81,0.1932
+batter_tb,NYM@COL,AWAY,slot 9 (id 620443),2.5,0.81,0.0482
+batter_tb,NYM@COL,AWAY,slot 9 (id 620443),3.5,0.81,0.0093
+batter_tb,NYM@COL,HOME,slot 1 (id 666160),1.5,2.32,0.673
+batter_tb,NYM@COL,HOME,slot 1 (id 666160),2.5,2.32,0.4084
+batter_tb,NYM@COL,HOME,slot 1 (id 666160),3.5,2.32,0.2041
+batter_tb,NYM@COL,HOME,slot 2 (id 671289),1.5,1.16,0.3223
+batter_tb,NYM@COL,HOME,slot 2 (id 671289),2.5,1.16,0.1116
+batter_tb,NYM@COL,HOME,slot 2 (id 671289),3.5,1.16,0.0303
+batter_tb,NYM@COL,HOME,slot 3 (id 681198),1.5,1.36,0.3943
+batter_tb,NYM@COL,HOME,slot 3 (id 681198),2.5,1.36,0.1569
+batter_tb,NYM@COL,HOME,slot 3 (id 681198),3.5,1.36,0.0493
+batter_tb,NYM@COL,HOME,slot 4 (id 696100),1.5,1.67,0.4965
+batter_tb,NYM@COL,HOME,slot 4 (id 696100),2.5,1.67,0.2341
+batter_tb,NYM@COL,HOME,slot 4 (id 696100),3.5,1.67,0.0883
+batter_tb,NYM@COL,HOME,slot 5 (id 650489),1.5,1.07,0.2884
+batter_tb,NYM@COL,HOME,slot 5 (id 650489),2.5,1.07,0.0928
+batter_tb,NYM@COL,HOME,slot 5 (id 650489),3.5,1.07,0.0233
+batter_tb,NYM@COL,HOME,slot 6 (id 687597),1.5,0.83,0.2004
+batter_tb,NYM@COL,HOME,slot 6 (id 687597),2.5,0.83,0.0512
+batter_tb,NYM@COL,HOME,slot 6 (id 687597),3.5,0.83,0.0101
+batter_tb,NYM@COL,HOME,slot 7 (id 691720),1.5,0.89,0.2225
+batter_tb,NYM@COL,HOME,slot 7 (id 691720),2.5,0.89,0.0606
+batter_tb,NYM@COL,HOME,slot 7 (id 691720),3.5,0.89,0.0128
+batter_tb,NYM@COL,HOME,slot 8 (id 678662),1.5,0.8,0.1925
+batter_tb,NYM@COL,HOME,slot 8 (id 678662),2.5,0.8,0.0479
+batter_tb,NYM@COL,HOME,slot 8 (id 678662),3.5,0.8,0.0092
+batter_tb,NYM@COL,HOME,slot 9 (id 686668),1.5,0.79,0.1865
+batter_tb,NYM@COL,HOME,slot 9 (id 686668),2.5,0.79,0.0455
+batter_tb,NYM@COL,HOME,slot 9 (id 686668),3.5,0.79,0.0086

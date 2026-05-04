@@ -1,267 +1,166 @@
 {
-  "fetched_at": "2026-05-03T17:36:11.960331Z",
+  "fetched_at": "2026-05-04T17:29:30.342987Z",
   "source": "the-odds-api",
-  "game_count": 15,
+  "game_count": 12,
   "games": [
     {
-      "game": "TOR @ MIN",
-      "first_pitch": "2026-05-03T16:46:00Z",
+      "game": "NYM @ COL",
+      "first_pitch": "2026-05-04T21:41:00Z",
       "moneyline": {
-        "TOR": {
-          "american": "+150",
-          "decimal": 2.5,
-          "book": "bovada"
+        "NYM": {
+          "american": "-139",
+          "decimal": 1.72,
+          "book": "lowvig"
         },
-        "MIN": {
-          "american": "-167",
-          "decimal": 1.6,
-          "book": "mybookieag"
+        "COL": {
+          "american": "+126",
+          "decimal": 2.26,
+          "book": "betus"
         },
         "vig_free": {
-          "TOR": "39.0%",
-          "MIN": "61.0%"
+          "NYM": "56.8%",
+          "COL": "43.2%"
         }
       },
       "run_line": {
-        "TOR +1.0": {
-          "american": "+100",
-          "decimal": 2.0,
-          "book": "bovada"
+        "NYM -1.5": {
+          "american": "+113",
+          "decimal": 2.13,
+          "book": "lowvig"
         },
-        "TOR +1.5": {
-          "american": "-149",
-          "decimal": 1.67,
+        "COL +1.5": {
+          "american": "-125",
+          "decimal": 1.8,
+          "book": "williamhill_us"
+        }
+      },
+      "totals": [
+        {
+          "line": 10.5,
+          "OVER": {
+            "american": "-120",
+            "decimal": 1.83,
+            "book": "williamhill_us"
+          },
+          "UNDER": {
+            "american": "+107",
+            "decimal": 2.07,
+            "book": "lowvig"
+          },
+          "vig_free": {
+            "OVER": "53.1%",
+            "UNDER": "46.9%"
+          }
+        },
+        {
+          "line": 11.0,
+          "OVER": {
+            "american": "+100",
+            "decimal": 2.0,
+            "book": "betmgm"
+          },
+          "UNDER": {
+            "american": "-115",
+            "decimal": 1.87,
+            "book": "fanatics"
+          },
+          "vig_free": {
+            "OVER": "48.3%",
+            "UNDER": "51.7%"
+          }
+        }
+      ]
+    },
+    {
+      "game": "BOS @ DET",
+      "first_pitch": "2026-05-04T22:11:00Z",
+      "moneyline": {
+        "BOS": {
+          "american": "+171",
+          "decimal": 2.71,
+          "book": "lowvig"
+        },
+        "DET": {
+          "american": "-189",
+          "decimal": 1.53,
+          "book": "lowvig"
+        },
+        "vig_free": {
+          "BOS": "36.1%",
+          "DET": "63.9%"
+        }
+      },
+      "run_line": {
+        "BOS +1.5": {
+          "american": "-130",
+          "decimal": 1.77,
           "book": "fanatics"
         },
-        "MIN -1.5": {
-          "american": "+140",
-          "decimal": 2.4,
-          "book": "betmgm"
-        },
-        "MIN -1.0": {
-          "american": "-123",
-          "decimal": 1.81,
-          "book": "betrivers"
+        "DET -1.5": {
+          "american": "+123",
+          "decimal": 2.23,
+          "book": "mybookieag"
         }
       },
       "totals": [
         {
           "line": 7.0,
           "OVER": {
+            "american": "+100",
+            "decimal": 2.0,
+            "book": "betmgm"
+          },
+          "UNDER": {
             "american": "-110",
             "decimal": 1.91,
             "book": "bovada"
           },
-          "UNDER": {
-            "american": "-108",
-            "decimal": 1.93,
-            "book": "betrivers"
-          },
           "vig_free": {
-            "OVER": "50.3%",
-            "UNDER": "49.7%"
-          }
-        },
-        {
-          "line": 7.5,
-          "OVER": {
-            "american": "+115",
-            "decimal": 2.15,
-            "book": "williamhill_us"
-          },
-          "UNDER": {
-            "american": "-133",
-            "decimal": 1.75,
-            "book": "mybookieag"
-          },
-          "vig_free": {
-            "OVER": "44.9%",
-            "UNDER": "55.1%"
+            "OVER": "48.8%",
+            "UNDER": "51.2%"
           }
         }
       ]
     },
     {
-      "game": "BAL @ NYY",
-      "first_pitch": "2026-05-03T17:36:00Z",
+      "game": "PHI @ MIA",
+      "first_pitch": "2026-05-04T22:41:00Z",
       "moneyline": {
-        "BAL": {
-          "american": "+247",
-          "decimal": 3.47,
+        "PHI": {
+          "american": "-104",
+          "decimal": 1.96,
           "book": "mybookieag"
         },
-        "NYY": {
-          "american": "-263",
-          "decimal": 1.38,
-          "book": "betus"
-        },
-        "vig_free": {
-          "BAL": "28.5%",
-          "NYY": "71.5%"
-        }
-      },
-      "run_line": {
-        "BAL +1.5": {
-          "american": "+127",
-          "decimal": 2.27,
-          "book": "lowvig"
-        },
-        "BAL +2.0": {
-          "american": "-108",
-          "decimal": 1.93,
-          "book": "betrivers"
-        },
-        "BAL +2.5": {
-          "american": "-125",
-          "decimal": 1.8,
-          "book": "mybookieag"
-        },
-        "NYY -2.5": {
-          "american": "+105",
-          "decimal": 2.05,
-          "book": "mybookieag"
-        },
-        "NYY -2.0": {
-          "american": "-115",
-          "decimal": 1.87,
-          "book": "betrivers"
-        },
-        "NYY -1.5": {
-          "american": "-141",
-          "decimal": 1.71,
-          "book": "fanatics"
-        }
-      },
-      "totals": [
-        {
-          "line": 9.0,
-          "OVER": {
-            "american": "+106",
-            "decimal": 2.06,
-            "book": "lowvig"
-          },
-          "UNDER": {
-            "american": "-112",
-            "decimal": 1.89,
-            "book": "fanduel"
-          },
-          "vig_free": {
-            "OVER": "47.8%",
-            "UNDER": "52.2%"
-          }
-        }
-      ]
-    },
-    {
-      "game": "CIN @ PIT",
-      "first_pitch": "2026-05-03T17:36:00Z",
-      "moneyline": {
-        "CIN": {
-          "american": "+107",
-          "decimal": 2.07,
-          "book": "betus"
-        },
-        "PIT": {
-          "american": "-118",
-          "decimal": 1.85,
+        "MIA": {
+          "american": "-104",
+          "decimal": 1.96,
           "book": "betonlineag"
         },
         "vig_free": {
-          "CIN": "47.2%",
-          "PIT": "52.8%"
+          "PHI": "50.0%",
+          "MIA": "50.0%"
         }
       },
       "run_line": {
-        "CIN -1.5": {
-          "american": "+172",
-          "decimal": 2.72,
-          "book": "fanduel"
-        },
-        "CIN -1.0": {
-          "american": "+133",
-          "decimal": 2.33,
-          "book": "betrivers"
-        },
-        "CIN +1.5": {
-          "american": "-208",
-          "decimal": 1.48,
-          "book": "betonlineag"
-        },
-        "PIT -1.5": {
-          "american": "+182",
-          "decimal": 2.82,
-          "book": "lowvig"
-        },
-        "PIT +1.0": {
-          "american": "-164",
-          "decimal": 1.61,
-          "book": "betrivers"
-        },
-        "PIT +1.5": {
-          "american": "-192",
-          "decimal": 1.52,
+        "PHI -1.5": {
+          "american": "+154",
+          "decimal": 2.54,
           "book": "mybookieag"
-        }
-      },
-      "totals": [
-        {
-          "line": 7.5,
-          "OVER": {
-            "american": "-103",
-            "decimal": 1.97,
-            "book": "lowvig"
-          },
-          "UNDER": {
-            "american": "-110",
-            "decimal": 1.91,
-            "book": "fanduel"
-          },
-          "vig_free": {
-            "OVER": "49.2%",
-            "UNDER": "50.8%"
-          }
-        }
-      ]
-    },
-    {
-      "game": "MIL @ WSH",
-      "first_pitch": "2026-05-03T17:36:00Z",
-      "moneyline": {
-        "MIL": {
-          "american": "-141",
-          "decimal": 1.71,
-          "book": "draftkings"
         },
-        "WSH": {
-          "american": "+131",
-          "decimal": 2.31,
-          "book": "betonlineag"
-        },
-        "vig_free": {
-          "MIL": "57.5%",
-          "WSH": "42.5%"
-        }
-      },
-      "run_line": {
-        "MIL -1.5": {
-          "american": "+120",
-          "decimal": 2.2,
+        "PHI +1.5": {
+          "american": "-233",
+          "decimal": 1.43,
           "book": "bovada"
         },
-        "MIL -1.0": {
-          "american": "-114",
-          "decimal": 1.88,
-          "book": "betrivers"
+        "MIA -1.5": {
+          "american": "+190",
+          "decimal": 2.9,
+          "book": "bovada"
         },
-        "WSH +1.0": {
-          "american": "-120",
-          "decimal": 1.83,
-          "book": "betrivers"
-        },
-        "WSH +1.5": {
-          "american": "-130",
-          "decimal": 1.77,
-          "book": "mybookieag"
+        "MIA +1.5": {
+          "american": "-169",
+          "decimal": 1.59,
+          "book": "betonlineag"
         }
       },
       "totals": [
@@ -275,7 +174,7 @@
           "UNDER": {
             "american": "-105",
             "decimal": 1.95,
-            "book": "betus"
+            "book": "fanduel"
           },
           "vig_free": {
             "OVER": "50.3%",
@@ -285,510 +184,109 @@
       ]
     },
     {
-      "game": "HOU @ BOS",
-      "first_pitch": "2026-05-03T17:37:00Z",
+      "game": "TOR @ TB",
+      "first_pitch": "2026-05-04T22:41:00Z",
       "moneyline": {
-        "HOU": {
-          "american": "+156",
-          "decimal": 2.56,
+        "TOR": {
+          "american": "+109",
+          "decimal": 2.09,
           "book": "betonlineag"
         },
-        "BOS": {
-          "american": "-161",
-          "decimal": 1.62,
-          "book": "betrivers"
-        },
-        "vig_free": {
-          "HOU": "38.8%",
-          "BOS": "61.2%"
-        }
-      },
-      "run_line": {
-        "HOU +1.0": {
-          "american": "-108",
-          "decimal": 1.93,
-          "book": "betrivers"
-        },
-        "HOU +1.5": {
-          "american": "-133",
-          "decimal": 1.75,
-          "book": "fanduel"
-        },
-        "BOS -1.5": {
-          "american": "+126",
-          "decimal": 2.26,
-          "book": "mybookieag"
-        },
-        "BOS -1.0": {
-          "american": "-115",
-          "decimal": 1.87,
-          "book": "betrivers"
-        }
-      },
-      "totals": [
-        {
-          "line": 8.5,
-          "OVER": {
-            "american": "-120",
-            "decimal": 1.83,
-            "book": "fanduel"
-          },
-          "UNDER": {
-            "american": "+106",
-            "decimal": 2.06,
-            "book": "lowvig"
-          },
-          "vig_free": {
-            "OVER": "53.0%",
-            "UNDER": "47.0%"
-          }
-        },
-        {
-          "line": 9.0,
-          "OVER": {
-            "american": "+102",
-            "decimal": 2.02,
-            "book": "draftkings"
-          },
-          "UNDER": {
-            "american": "-120",
-            "decimal": 1.83,
-            "book": "fanatics"
-          },
-          "vig_free": {
-            "OVER": "47.5%",
-            "UNDER": "52.5%"
-          }
-        }
-      ]
-    },
-    {
-      "game": "PHI @ MIA",
-      "first_pitch": "2026-05-03T17:41:00Z",
-      "moneyline": {
-        "PHI": {
-          "american": "-132",
-          "decimal": 1.76,
+        "TB": {
+          "american": "-118",
+          "decimal": 1.85,
           "book": "betus"
         },
-        "MIA": {
-          "american": "+123",
-          "decimal": 2.23,
-          "book": "lowvig"
-        },
         "vig_free": {
-          "PHI": "55.9%",
-          "MIA": "44.1%"
+          "TOR": "47.0%",
+          "TB": "53.0%"
         }
       },
       "run_line": {
-        "PHI -1.5": {
-          "american": "+126",
-          "decimal": 2.26,
-          "book": "fanduel"
-        },
-        "MIA +1.5": {
-          "american": "-133",
-          "decimal": 1.75,
-          "book": "lowvig"
-        }
-      },
-      "totals": [
-        {
-          "line": 8.0,
-          "OVER": {
-            "american": "-115",
-            "decimal": 1.87,
-            "book": "lowvig"
-          },
-          "UNDER": {
-            "american": "+100",
-            "decimal": 2.0,
-            "book": "lowvig"
-          },
-          "vig_free": {
-            "OVER": "51.7%",
-            "UNDER": "48.3%"
-          }
-        },
-        {
-          "line": 8.5,
-          "OVER": {
-            "american": "+100",
-            "decimal": 2.0,
-            "book": "bovada"
-          },
-          "UNDER": {
-            "american": "-120",
-            "decimal": 1.83,
-            "book": "bovada"
-          },
-          "vig_free": {
-            "OVER": "47.8%",
-            "UNDER": "52.2%"
-          }
-        }
-      ]
-    },
-    {
-      "game": "SF @ TB",
-      "first_pitch": "2026-05-03T17:41:00Z",
-      "moneyline": {
-        "SF": {
-          "american": "+107",
-          "decimal": 2.07,
-          "book": "draftkings"
-        },
-        "TB": {
-          "american": "-115",
-          "decimal": 1.87,
-          "book": "lowvig"
-        },
-        "vig_free": {
-          "SF": "47.5%",
-          "TB": "52.5%"
-        }
-      },
-      "run_line": {
-        "SF -1.5": {
+        "TOR -1.5": {
           "american": "+170",
           "decimal": 2.7,
           "book": "betrivers"
         },
-        "SF +1.5": {
+        "TOR +1.5": {
           "american": "-196",
           "decimal": 1.51,
-          "book": "lowvig"
+          "book": "betonlineag"
         },
         "TB -1.5": {
-          "american": "+171",
-          "decimal": 2.71,
-          "book": "lowvig"
+          "american": "+176",
+          "decimal": 2.76,
+          "book": "fanduel"
         },
         "TB +1.5": {
           "american": "-200",
           "decimal": 1.5,
-          "book": "mybookieag"
+          "book": "draftkings"
         }
       },
       "totals": [
         {
           "line": 8.0,
           "OVER": {
-            "american": "-104",
-            "decimal": 1.96,
-            "book": "betrivers"
+            "american": "-105",
+            "decimal": 1.95,
+            "book": "fanduel"
           },
           "UNDER": {
             "american": "-108",
             "decimal": 1.93,
-            "book": "mybookieag"
-          },
-          "vig_free": {
-            "OVER": "49.6%",
-            "UNDER": "50.4%"
-          }
-        }
-      ]
-    },
-    {
-      "game": "LAD @ STL",
-      "first_pitch": "2026-05-03T18:16:00Z",
-      "moneyline": {
-        "LAD": {
-          "american": "-127",
-          "decimal": 1.79,
-          "book": "lowvig"
-        },
-        "STL": {
-          "american": "+118",
-          "decimal": 2.18,
-          "book": "fanduel"
-        },
-        "vig_free": {
-          "LAD": "54.9%",
-          "STL": "45.1%"
-        }
-      },
-      "run_line": {
-        "LAD -1.5": {
-          "american": "+125",
-          "decimal": 2.25,
-          "book": "betmgm"
-        },
-        "STL +1.5": {
-          "american": "-135",
-          "decimal": 1.74,
-          "book": "lowvig"
-        }
-      },
-      "totals": [
-        {
-          "line": 9.5,
-          "OVER": {
-            "american": "-109",
-            "decimal": 1.92,
-            "book": "betrivers"
-          },
-          "UNDER": {
-            "american": "+104",
-            "decimal": 2.04,
             "book": "lowvig"
           },
           "vig_free": {
-            "OVER": "51.5%",
-            "UNDER": "48.5%"
+            "OVER": "49.7%",
+            "UNDER": "50.3%"
           }
         }
       ]
     },
     {
-      "game": "AZ @ CHC",
-      "first_pitch": "2026-05-03T18:21:00Z",
+      "game": "BAL @ NYY",
+      "first_pitch": "2026-05-04T23:06:00Z",
       "moneyline": {
-        "AZ": {
-          "american": "+140",
-          "decimal": 2.4,
-          "book": "lowvig"
+        "BAL": {
+          "american": "+185",
+          "decimal": 2.85,
+          "book": "betrivers"
         },
-        "CHC": {
-          "american": "-152",
-          "decimal": 1.66,
-          "book": "betus"
+        "NYY": {
+          "american": "-204",
+          "decimal": 1.49,
+          "book": "fanduel"
         },
         "vig_free": {
-          "AZ": "40.9%",
-          "CHC": "59.1%"
+          "BAL": "34.3%",
+          "NYY": "65.7%"
         }
       },
       "run_line": {
-        "AZ +1.5": {
-          "american": "-130",
-          "decimal": 1.77,
+        "BAL +1.5": {
+          "american": "-105",
+          "decimal": 1.95,
           "book": "mybookieag"
         },
-        "CHC -1.5": {
-          "american": "+120",
-          "decimal": 2.2,
-          "book": "bovada"
-        }
-      },
-      "totals": [
-        {
-          "line": 11.5,
-          "OVER": {
-            "american": "-112",
-            "decimal": 1.89,
-            "book": "betrivers"
-          },
-          "UNDER": {
-            "american": "+105",
-            "decimal": 2.05,
-            "book": "lowvig"
-          },
-          "vig_free": {
-            "OVER": "52.0%",
-            "UNDER": "48.0%"
-          }
-        },
-        {
-          "line": 12.0,
-          "OVER": {
-            "american": "-103",
-            "decimal": 1.97,
-            "book": "mybookieag"
-          },
-          "UNDER": {
-            "american": "-114",
-            "decimal": 1.88,
-            "book": "draftkings"
-          },
-          "vig_free": {
-            "OVER": "48.8%",
-            "UNDER": "51.2%"
-          }
-        }
-      ]
-    },
-    {
-      "game": "ATL @ COL",
-      "first_pitch": "2026-05-03T19:11:00Z",
-      "moneyline": {
-        "ATL": {
-          "american": "-137",
-          "decimal": 1.73,
-          "book": "betonlineag"
-        },
-        "COL": {
-          "american": "+128",
-          "decimal": 2.28,
-          "book": "fanduel"
-        },
-        "vig_free": {
-          "ATL": "56.9%",
-          "COL": "43.1%"
-        }
-      },
-      "run_line": {
-        "ATL -1.5": {
-          "american": "+113",
-          "decimal": 2.13,
-          "book": "lowvig"
-        },
-        "COL +1.5": {
-          "american": "-120",
-          "decimal": 1.83,
+        "NYY -1.5": {
+          "american": "-102",
+          "decimal": 1.98,
           "book": "fanduel"
         }
       },
       "totals": [
         {
-          "line": 9.5,
-          "OVER": {
-            "american": "-118",
-            "decimal": 1.85,
-            "book": "draftkings"
-          },
-          "UNDER": {
-            "american": "-102",
-            "decimal": 1.98,
-            "book": "draftkings"
-          },
-          "vig_free": {
-            "OVER": "51.7%",
-            "UNDER": "48.3%"
-          }
-        },
-        {
-          "line": 10.0,
-          "OVER": {
-            "american": "+103",
-            "decimal": 2.03,
-            "book": "lowvig"
-          },
-          "UNDER": {
-            "american": "-115",
-            "decimal": 1.87,
-            "book": "fanduel"
-          },
-          "vig_free": {
-            "OVER": "47.9%",
-            "UNDER": "52.1%"
-          }
-        }
-      ]
-    },
-    {
-      "game": "CLE @ ATH",
-      "first_pitch": "2026-05-03T20:06:00Z",
-      "moneyline": {
-        "CLE": {
-          "american": "-122",
-          "decimal": 1.82,
-          "book": "betus"
-        },
-        "ATH": {
-          "american": "+114",
-          "decimal": 2.14,
-          "book": "bovada"
-        },
-        "vig_free": {
-          "CLE": "54.0%",
-          "ATH": "46.0%"
-        }
-      },
-      "run_line": {
-        "CLE -1.5": {
-          "american": "+135",
-          "decimal": 2.35,
-          "book": "betmgm"
-        },
-        "ATH +1.5": {
-          "american": "-141",
-          "decimal": 1.71,
-          "book": "bovada"
-        }
-      },
-      "totals": [
-        {
-          "line": 9.0,
-          "OVER": {
-            "american": "-114",
-            "decimal": 1.88,
-            "book": "betrivers"
-          },
-          "UNDER": {
-            "american": "-101",
-            "decimal": 1.99,
-            "book": "mybookieag"
-          },
-          "vig_free": {
-            "OVER": "51.4%",
-            "UNDER": "48.6%"
-          }
-        },
-        {
-          "line": 9.5,
-          "OVER": {
-            "american": "+100",
-            "decimal": 2.0,
-            "book": "fanatics"
-          },
-          "UNDER": {
-            "american": "-114",
-            "decimal": 1.88,
-            "book": "lowvig"
-          },
-          "vig_free": {
-            "OVER": "48.5%",
-            "UNDER": "51.5%"
-          }
-        }
-      ]
-    },
-    {
-      "game": "NYM @ LAA",
-      "first_pitch": "2026-05-03T20:08:00Z",
-      "moneyline": {
-        "NYM": {
-          "american": "-123",
-          "decimal": 1.81,
-          "book": "lowvig"
-        },
-        "LAA": {
-          "american": "+115",
-          "decimal": 2.15,
-          "book": "betus"
-        },
-        "vig_free": {
-          "NYM": "54.3%",
-          "LAA": "45.7%"
-        }
-      },
-      "run_line": {
-        "NYM -1.5": {
-          "american": "+128",
-          "decimal": 2.28,
-          "book": "fanduel"
-        },
-        "LAA +1.5": {
-          "american": "-141",
-          "decimal": 1.71,
-          "book": "lowvig"
-        }
-      },
-      "totals": [
-        {
-          "line": 9.0,
+          "line": 8.5,
           "OVER": {
             "american": "-104",
             "decimal": 1.96,
-            "book": "fanduel"
+            "book": "lowvig"
           },
           "UNDER": {
             "american": "-110",
             "decimal": 1.91,
-            "book": "lowvig"
+            "book": "fanatics"
           },
           "vig_free": {
             "OVER": "49.4%",
@@ -798,182 +296,223 @@
       ]
     },
     {
-      "game": "CWS @ SD",
-      "first_pitch": "2026-05-03T20:11:00Z",
+      "game": "CIN @ CHC",
+      "first_pitch": "2026-05-04T23:11:00Z",
       "moneyline": {
-        "CWS": {
-          "american": "+151",
-          "decimal": 2.51,
+        "CIN": {
+          "american": "+180",
+          "decimal": 2.8,
           "book": "betonlineag"
         },
-        "SD": {
-          "american": "-164",
-          "decimal": 1.61,
-          "book": "fanduel"
+        "CHC": {
+          "american": "-200",
+          "decimal": 1.5,
+          "book": "betonlineag"
         },
         "vig_free": {
-          "CWS": "39.1%",
-          "SD": "60.9%"
+          "CIN": "34.9%",
+          "CHC": "65.1%"
         }
       },
       "run_line": {
-        "CWS +1.5": {
-          "american": "-139",
-          "decimal": 1.72,
+        "CIN +1.5": {
+          "american": "-104",
+          "decimal": 1.96,
           "book": "lowvig"
         },
-        "SD -1.5": {
-          "american": "+126",
-          "decimal": 2.26,
-          "book": "fanduel"
+        "CHC -1.5": {
+          "american": "-110",
+          "decimal": 1.91,
+          "book": "lowvig"
         }
       },
       "totals": [
         {
-          "line": 8.0,
+          "line": 11.0,
           "OVER": {
-            "american": "-118",
-            "decimal": 1.85,
-            "book": "lowvig"
+            "american": "-120",
+            "decimal": 1.83,
+            "book": "betrivers"
           },
           "UNDER": {
-            "american": "+102",
-            "decimal": 2.02,
-            "book": "lowvig"
+            "american": "-104",
+            "decimal": 1.96,
+            "book": "betrivers"
           },
           "vig_free": {
-            "OVER": "52.2%",
-            "UNDER": "47.8%"
+            "OVER": "51.7%",
+            "UNDER": "48.3%"
           }
         },
         {
-          "line": 8.5,
+          "line": 11.5,
           "OVER": {
             "american": "+100",
             "decimal": 2.0,
-            "book": "fanatics"
+            "book": "betmgm"
           },
           "UNDER": {
-            "american": "-111",
-            "decimal": 1.9,
-            "book": "mybookieag"
+            "american": "-109",
+            "decimal": 1.92,
+            "book": "lowvig"
           },
           "vig_free": {
-            "OVER": "48.7%",
-            "UNDER": "51.3%"
+            "OVER": "49.0%",
+            "UNDER": "51.0%"
           }
         }
       ]
     },
     {
-      "game": "KC @ SEA",
-      "first_pitch": "2026-05-03T20:11:00Z",
+      "game": "CLE @ KC",
+      "first_pitch": "2026-05-04T23:41:00Z",
       "moneyline": {
-        "KC": {
+        "CLE": {
           "american": "+104",
           "decimal": 2.04,
           "book": "fanduel"
         },
-        "SEA": {
-          "american": "-114",
-          "decimal": 1.88,
-          "book": "betus"
+        "KC": {
+          "american": "-112",
+          "decimal": 1.89,
+          "book": "betonlineag"
         },
         "vig_free": {
-          "KC": "48.0%",
-          "SEA": "52.0%"
+          "CLE": "48.1%",
+          "KC": "51.9%"
         }
       },
       "run_line": {
-        "KC -1.5": {
-          "american": "+172",
-          "decimal": 2.72,
-          "book": "fanduel"
+        "CLE -1.5": {
+          "american": "+169",
+          "decimal": 2.69,
+          "book": "mybookieag"
         },
-        "KC +1.5": {
-          "american": "-196",
-          "decimal": 1.51,
-          "book": "betonlineag"
-        },
-        "SEA -1.5": {
-          "american": "+171",
-          "decimal": 2.71,
-          "book": "lowvig"
-        },
-        "SEA +1.5": {
+        "CLE +1.5": {
           "american": "-192",
           "decimal": 1.52,
+          "book": "fanduel"
+        },
+        "KC -1.5": {
+          "american": "+173",
+          "decimal": 2.73,
+          "book": "lowvig"
+        },
+        "KC +1.5": {
+          "american": "-185",
+          "decimal": 1.54,
           "book": "draftkings"
         }
       },
       "totals": [
         {
-          "line": 8.0,
+          "line": 9.0,
           "OVER": {
-            "american": "-102",
-            "decimal": 1.98,
+            "american": "-109",
+            "decimal": 1.92,
             "book": "lowvig"
           },
           "UNDER": {
-            "american": "-110",
-            "decimal": 1.91,
-            "book": "fanduel"
+            "american": "-103",
+            "decimal": 1.97,
+            "book": "betrivers"
           },
           "vig_free": {
-            "OVER": "49.1%",
-            "UNDER": "50.9%"
+            "OVER": "50.6%",
+            "UNDER": "49.4%"
           }
         }
       ]
     },
     {
-      "game": "TEX @ DET",
-      "first_pitch": "2026-05-03T23:21:00Z",
+      "game": "MIL @ STL",
+      "first_pitch": "2026-05-04T23:46:00Z",
       "moneyline": {
-        "TEX": {
-          "american": "+113",
-          "decimal": 2.13,
+        "MIL": {
+          "american": "-110",
+          "decimal": 1.91,
+          "book": "betonlineag"
+        },
+        "STL": {
+          "american": "+101",
+          "decimal": 2.01,
           "book": "betus"
         },
-        "DET": {
-          "american": "-120",
-          "decimal": 1.83,
-          "book": "fanduel"
-        },
         "vig_free": {
-          "TEX": "46.2%",
-          "DET": "53.8%"
+          "MIL": "51.3%",
+          "STL": "48.7%"
         }
       },
       "run_line": {
-        "TEX -1.5": {
-          "american": "+168",
-          "decimal": 2.68,
+        "MIL -1.5": {
+          "american": "+152",
+          "decimal": 2.52,
+          "book": "mybookieag"
+        },
+        "STL +1.5": {
+          "american": "-169",
+          "decimal": 1.59,
           "book": "fanduel"
-        },
-        "TEX +1.5": {
-          "american": "-189",
-          "decimal": 1.53,
-          "book": "fanatics"
-        },
-        "DET -1.5": {
-          "american": "+175",
-          "decimal": 2.75,
-          "book": "williamhill_us"
-        },
-        "DET +1.5": {
-          "american": "-192",
-          "decimal": 1.52,
-          "book": "draftkings"
         }
       },
       "totals": [
         {
-          "line": 8.0,
+          "line": 8.5,
           "OVER": {
             "american": "-114",
             "decimal": 1.88,
-            "book": "mybookieag"
+            "book": "betrivers"
+          },
+          "UNDER": {
+            "american": "+100",
+            "decimal": 2.0,
+            "book": "lowvig"
+          },
+          "vig_free": {
+            "OVER": "51.5%",
+            "UNDER": "48.5%"
+          }
+        }
+      ]
+    },
+    {
+      "game": "LAD @ HOU",
+      "first_pitch": "2026-05-05T00:11:00Z",
+      "moneyline": {
+        "LAD": {
+          "american": "-185",
+          "decimal": 1.54,
+          "book": "lowvig"
+        },
+        "HOU": {
+          "american": "+170",
+          "decimal": 2.7,
+          "book": "betmgm"
+        },
+        "vig_free": {
+          "LAD": "63.7%",
+          "HOU": "36.3%"
+        }
+      },
+      "run_line": {
+        "LAD -1.5": {
+          "american": "-120",
+          "decimal": 1.83,
+          "book": "fanduel"
+        },
+        "HOU +1.5": {
+          "american": "+108",
+          "decimal": 2.08,
+          "book": "lowvig"
+        }
+      },
+      "totals": [
+        {
+          "line": 9.0,
+          "OVER": {
+            "american": "-106",
+            "decimal": 1.94,
+            "book": "fanduel"
           },
           "UNDER": {
             "american": "+100",
@@ -981,25 +520,178 @@
             "book": "bovada"
           },
           "vig_free": {
-            "OVER": "51.5%",
-            "UNDER": "48.5%"
+            "OVER": "50.8%",
+            "UNDER": "49.2%"
+          }
+        }
+      ]
+    },
+    {
+      "game": "CWS @ LAA",
+      "first_pitch": "2026-05-05T01:39:00Z",
+      "moneyline": {
+        "CWS": {
+          "american": "+135",
+          "decimal": 2.35,
+          "book": "betrivers"
+        },
+        "LAA": {
+          "american": "-145",
+          "decimal": 1.69,
+          "book": "betus"
+        },
+        "vig_free": {
+          "CWS": "41.8%",
+          "LAA": "58.2%"
+        }
+      },
+      "run_line": {
+        "CWS +1.5": {
+          "american": "-156",
+          "decimal": 1.64,
+          "book": "lowvig"
+        },
+        "LAA -1.5": {
+          "american": "+151",
+          "decimal": 2.51,
+          "book": "mybookieag"
+        }
+      },
+      "totals": [
+        {
+          "line": 7.5,
+          "OVER": {
+            "american": "-114",
+            "decimal": 1.88,
+            "book": "betrivers"
+          },
+          "UNDER": {
+            "american": "+103",
+            "decimal": 2.03,
+            "book": "lowvig"
+          },
+          "vig_free": {
+            "OVER": "51.9%",
+            "UNDER": "48.1%"
+          }
+        }
+      ]
+    },
+    {
+      "game": "ATL @ SEA",
+      "first_pitch": "2026-05-05T01:41:00Z",
+      "moneyline": {
+        "ATL": {
+          "american": "+128",
+          "decimal": 2.28,
+          "book": "betrivers"
+        },
+        "SEA": {
+          "american": "-139",
+          "decimal": 1.72,
+          "book": "lowvig"
+        },
+        "vig_free": {
+          "ATL": "43.0%",
+          "SEA": "57.0%"
+        }
+      },
+      "run_line": {
+        "ATL +1.5": {
+          "american": "-164",
+          "decimal": 1.61,
+          "book": "lowvig"
+        },
+        "SEA -1.5": {
+          "american": "+147",
+          "decimal": 2.47,
+          "book": "mybookieag"
+        }
+      },
+      "totals": [
+        {
+          "line": 7.5,
+          "OVER": {
+            "american": "-115",
+            "decimal": 1.87,
+            "book": "lowvig"
+          },
+          "UNDER": {
+            "american": "+100",
+            "decimal": 2.0,
+            "book": "lowvig"
+          },
+          "vig_free": {
+            "OVER": "51.7%",
+            "UNDER": "48.3%"
           }
         },
         {
-          "line": 8.5,
+          "line": 8.0,
           "OVER": {
-            "american": "+100",
-            "decimal": 2.0,
-            "book": "fanduel"
+            "american": "-103",
+            "decimal": 1.97,
+            "book": "betrivers"
           },
           "UNDER": {
-            "american": "-118",
-            "decimal": 1.85,
+            "american": "-122",
+            "decimal": 1.82,
             "book": "betrivers"
           },
           "vig_free": {
-            "OVER": "48.1%",
-            "UNDER": "51.9%"
+            "OVER": "48.0%",
+            "UNDER": "52.0%"
+          }
+        }
+      ]
+    },
+    {
+      "game": "SD @ SF",
+      "first_pitch": "2026-05-05T01:46:00Z",
+      "moneyline": {
+        "SD": {
+          "american": "-132",
+          "decimal": 1.76,
+          "book": "lowvig"
+        },
+        "SF": {
+          "american": "+120",
+          "decimal": 2.2,
+          "book": "lowvig"
+        },
+        "vig_free": {
+          "SD": "55.6%",
+          "SF": "44.4%"
+        }
+      },
+      "run_line": {
+        "SD -1.5": {
+          "american": "+126",
+          "decimal": 2.26,
+          "book": "fanduel"
+        },
+        "SF +1.5": {
+          "american": "-139",
+          "decimal": 1.72,
+          "book": "lowvig"
+        }
+      },
+      "totals": [
+        {
+          "line": 8.0,
+          "OVER": {
+            "american": "-108",
+            "decimal": 1.93,
+            "book": "lowvig"
+          },
+          "UNDER": {
+            "american": "-105",
+            "decimal": 1.95,
+            "book": "bovada"
+          },
+          "vig_free": {
+            "OVER": "50.3%",
+            "UNDER": "49.7%"
           }
         }
       ]

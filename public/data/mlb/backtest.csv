@@ -1,15 +1,16 @@
 section,scope,bet_type,bets,wins,losses,pushes,hit_rate,units_pl,roi_pct,brier,date,daily_units,cumulative_units
-projection,OVERALL,all,120731,64729,53208,2794,54.9,5630.66,4.66,0.2478,,,
-projection,BY TYPE,first_5,10971,4866,4383,1722,52.6,40.19,0.37,0.2494,,,
-projection,BY TYPE,first_inning,10976,5558,5418,0,50.6,-365.78,-3.33,0.2511,,,
-projection,BY TYPE,moneyline,10976,5906,5070,0,53.8,298.55,2.72,0.2476,,,
-projection,BY TYPE,run_line,10976,6668,4308,0,60.8,1753.21,15.97,0.2382,,,
-projection,BY TYPE,team_totals,43904,24171,19733,0,55.1,2238.44,5.1,0.2506,,,
-projection,BY TYPE,totals,32928,17560,14296,1072,55.1,1666.04,5.06,0.2457,,,
-projection,CLV,all,6,2,3,1,33.3,0.103,-0.253,,,,
-projection,CLV BY TYPE,totals,2,0,1,1,0.0,-0.253,-0.253,,,,
+projection,OVERALL,all,120896,64816,53283,2797,54.9,5634.74,4.66,0.2478,,,
+projection,BY TYPE,first_5,10986,4871,4391,1724,52.6,36.74,0.33,0.2494,,,
+projection,BY TYPE,first_inning,10991,5564,5427,0,50.6,-369.32,-3.36,0.2511,,,
+projection,BY TYPE,moneyline,10991,5914,5077,0,53.8,298.83,2.72,0.2476,,,
+projection,BY TYPE,run_line,10991,6677,4314,0,60.7,1755.39,15.97,0.2382,,,
+projection,BY TYPE,team_totals,43964,24201,19763,0,55.0,2235.71,5.09,0.2507,,,
+projection,BY TYPE,totals,32973,17589,14311,1073,55.1,1677.4,5.09,0.2457,,,
+projection,CLV,all,10,3,6,1,30.0,-0.703,-0.921,,,,
+projection,CLV BY TYPE,totals,6,1,4,1,16.7,-1.359,-1.141,,,,
 projection,CLV BY TYPE,run_line,3,2,1,0,66.7,0.921,0.55,,,,
 projection,CLV BY TYPE,moneyline,1,0,1,0,0.0,-1.639,-1.639,,,,
+backfill,,,,,,,,,,,2026-05-03,4.08,5634.74
 backfill,,,,,,,,,,,2026-05-02,24.08,5630.66
 backfill,,,,,,,,,,,2026-05-01,-8.28,5606.58
 backfill,,,,,,,,,,,2026-04-30,6.08,5614.86

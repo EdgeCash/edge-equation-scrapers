@@ -1,127 +1,85 @@
 game,market,side,american,decimal,book,vig_free_pct
-TOR @ MIN,moneyline,TOR,+150,2.5,bovada,39.0%
-TOR @ MIN,moneyline,MIN,-167,1.6,mybookieag,61.0%
-TOR @ MIN,run_line,TOR +1.0,+100,2.0,bovada,
-TOR @ MIN,run_line,TOR +1.5,-149,1.67,fanatics,
-TOR @ MIN,run_line,MIN -1.5,+140,2.4,betmgm,
-TOR @ MIN,run_line,MIN -1.0,-123,1.81,betrivers,
-TOR @ MIN,totals,OVER 7.0,-110,1.91,bovada,50.3%
-TOR @ MIN,totals,UNDER 7.0,-108,1.93,betrivers,49.7%
-TOR @ MIN,totals,OVER 7.5,+115,2.15,williamhill_us,44.9%
-TOR @ MIN,totals,UNDER 7.5,-133,1.75,mybookieag,55.1%
-BAL @ NYY,moneyline,BAL,+247,3.47,mybookieag,28.5%
-BAL @ NYY,moneyline,NYY,-263,1.38,betus,71.5%
-BAL @ NYY,run_line,BAL +1.5,+127,2.27,lowvig,
-BAL @ NYY,run_line,BAL +2.0,-108,1.93,betrivers,
-BAL @ NYY,run_line,BAL +2.5,-125,1.8,mybookieag,
-BAL @ NYY,run_line,NYY -2.5,+105,2.05,mybookieag,
-BAL @ NYY,run_line,NYY -2.0,-115,1.87,betrivers,
-BAL @ NYY,run_line,NYY -1.5,-141,1.71,fanatics,
-BAL @ NYY,totals,OVER 9.0,+106,2.06,lowvig,47.8%
-BAL @ NYY,totals,UNDER 9.0,-112,1.89,fanduel,52.2%
-CIN @ PIT,moneyline,CIN,+107,2.07,betus,47.2%
-CIN @ PIT,moneyline,PIT,-118,1.85,betonlineag,52.8%
-CIN @ PIT,run_line,CIN -1.5,+172,2.72,fanduel,
-CIN @ PIT,run_line,CIN -1.0,+133,2.33,betrivers,
-CIN @ PIT,run_line,CIN +1.5,-208,1.48,betonlineag,
-CIN @ PIT,run_line,PIT -1.5,+182,2.82,lowvig,
-CIN @ PIT,run_line,PIT +1.0,-164,1.61,betrivers,
-CIN @ PIT,run_line,PIT +1.5,-192,1.52,mybookieag,
-CIN @ PIT,totals,OVER 7.5,-103,1.97,lowvig,49.2%
-CIN @ PIT,totals,UNDER 7.5,-110,1.91,fanduel,50.8%
-MIL @ WSH,moneyline,MIL,-141,1.71,draftkings,57.5%
-MIL @ WSH,moneyline,WSH,+131,2.31,betonlineag,42.5%
-MIL @ WSH,run_line,MIL -1.5,+120,2.2,bovada,
-MIL @ WSH,run_line,MIL -1.0,-114,1.88,betrivers,
-MIL @ WSH,run_line,WSH +1.0,-120,1.83,betrivers,
-MIL @ WSH,run_line,WSH +1.5,-130,1.77,mybookieag,
-MIL @ WSH,totals,OVER 8.5,-108,1.93,lowvig,50.3%
-MIL @ WSH,totals,UNDER 8.5,-105,1.95,betus,49.7%
-HOU @ BOS,moneyline,HOU,+156,2.56,betonlineag,38.8%
-HOU @ BOS,moneyline,BOS,-161,1.62,betrivers,61.2%
-HOU @ BOS,run_line,HOU +1.0,-108,1.93,betrivers,
-HOU @ BOS,run_line,HOU +1.5,-133,1.75,fanduel,
-HOU @ BOS,run_line,BOS -1.5,+126,2.26,mybookieag,
-HOU @ BOS,run_line,BOS -1.0,-115,1.87,betrivers,
-HOU @ BOS,totals,OVER 8.5,-120,1.83,fanduel,53.0%
-HOU @ BOS,totals,UNDER 8.5,+106,2.06,lowvig,47.0%
-HOU @ BOS,totals,OVER 9.0,+102,2.02,draftkings,47.5%
-HOU @ BOS,totals,UNDER 9.0,-120,1.83,fanatics,52.5%
-PHI @ MIA,moneyline,PHI,-132,1.76,betus,55.9%
-PHI @ MIA,moneyline,MIA,+123,2.23,lowvig,44.1%
-PHI @ MIA,run_line,PHI -1.5,+126,2.26,fanduel,
-PHI @ MIA,run_line,MIA +1.5,-133,1.75,lowvig,
-PHI @ MIA,totals,OVER 8.0,-115,1.87,lowvig,51.7%
-PHI @ MIA,totals,UNDER 8.0,+100,2.0,lowvig,48.3%
-PHI @ MIA,totals,OVER 8.5,+100,2.0,bovada,47.8%
-PHI @ MIA,totals,UNDER 8.5,-120,1.83,bovada,52.2%
-SF @ TB,moneyline,SF,+107,2.07,draftkings,47.5%
-SF @ TB,moneyline,TB,-115,1.87,lowvig,52.5%
-SF @ TB,run_line,SF -1.5,+170,2.7,betrivers,
-SF @ TB,run_line,SF +1.5,-196,1.51,lowvig,
-SF @ TB,run_line,TB -1.5,+171,2.71,lowvig,
-SF @ TB,run_line,TB +1.5,-200,1.5,mybookieag,
-SF @ TB,totals,OVER 8.0,-104,1.96,betrivers,49.6%
-SF @ TB,totals,UNDER 8.0,-108,1.93,mybookieag,50.4%
-LAD @ STL,moneyline,LAD,-127,1.79,lowvig,54.9%
-LAD @ STL,moneyline,STL,+118,2.18,fanduel,45.1%
-LAD @ STL,run_line,LAD -1.5,+125,2.25,betmgm,
-LAD @ STL,run_line,STL +1.5,-135,1.74,lowvig,
-LAD @ STL,totals,OVER 9.5,-109,1.92,betrivers,51.5%
-LAD @ STL,totals,UNDER 9.5,+104,2.04,lowvig,48.5%
-AZ @ CHC,moneyline,AZ,+140,2.4,lowvig,40.9%
-AZ @ CHC,moneyline,CHC,-152,1.66,betus,59.1%
-AZ @ CHC,run_line,AZ +1.5,-130,1.77,mybookieag,
-AZ @ CHC,run_line,CHC -1.5,+120,2.2,bovada,
-AZ @ CHC,totals,OVER 11.5,-112,1.89,betrivers,52.0%
-AZ @ CHC,totals,UNDER 11.5,+105,2.05,lowvig,48.0%
-AZ @ CHC,totals,OVER 12.0,-103,1.97,mybookieag,48.8%
-AZ @ CHC,totals,UNDER 12.0,-114,1.88,draftkings,51.2%
-ATL @ COL,moneyline,ATL,-137,1.73,betonlineag,56.9%
-ATL @ COL,moneyline,COL,+128,2.28,fanduel,43.1%
-ATL @ COL,run_line,ATL -1.5,+113,2.13,lowvig,
-ATL @ COL,run_line,COL +1.5,-120,1.83,fanduel,
-ATL @ COL,totals,OVER 9.5,-118,1.85,draftkings,51.7%
-ATL @ COL,totals,UNDER 9.5,-102,1.98,draftkings,48.3%
-ATL @ COL,totals,OVER 10.0,+103,2.03,lowvig,47.9%
-ATL @ COL,totals,UNDER 10.0,-115,1.87,fanduel,52.1%
-CLE @ ATH,moneyline,CLE,-122,1.82,betus,54.0%
-CLE @ ATH,moneyline,ATH,+114,2.14,bovada,46.0%
-CLE @ ATH,run_line,CLE -1.5,+135,2.35,betmgm,
-CLE @ ATH,run_line,ATH +1.5,-141,1.71,bovada,
-CLE @ ATH,totals,OVER 9.0,-114,1.88,betrivers,51.4%
-CLE @ ATH,totals,UNDER 9.0,-101,1.99,mybookieag,48.6%
-CLE @ ATH,totals,OVER 9.5,+100,2.0,fanatics,48.5%
-CLE @ ATH,totals,UNDER 9.5,-114,1.88,lowvig,51.5%
-NYM @ LAA,moneyline,NYM,-123,1.81,lowvig,54.3%
-NYM @ LAA,moneyline,LAA,+115,2.15,betus,45.7%
-NYM @ LAA,run_line,NYM -1.5,+128,2.28,fanduel,
-NYM @ LAA,run_line,LAA +1.5,-141,1.71,lowvig,
-NYM @ LAA,totals,OVER 9.0,-104,1.96,fanduel,49.4%
-NYM @ LAA,totals,UNDER 9.0,-110,1.91,lowvig,50.6%
-CWS @ SD,moneyline,CWS,+151,2.51,betonlineag,39.1%
-CWS @ SD,moneyline,SD,-164,1.61,fanduel,60.9%
-CWS @ SD,run_line,CWS +1.5,-139,1.72,lowvig,
-CWS @ SD,run_line,SD -1.5,+126,2.26,fanduel,
-CWS @ SD,totals,OVER 8.0,-118,1.85,lowvig,52.2%
-CWS @ SD,totals,UNDER 8.0,+102,2.02,lowvig,47.8%
-CWS @ SD,totals,OVER 8.5,+100,2.0,fanatics,48.7%
-CWS @ SD,totals,UNDER 8.5,-111,1.9,mybookieag,51.3%
-KC @ SEA,moneyline,KC,+104,2.04,fanduel,48.0%
-KC @ SEA,moneyline,SEA,-114,1.88,betus,52.0%
-KC @ SEA,run_line,KC -1.5,+172,2.72,fanduel,
-KC @ SEA,run_line,KC +1.5,-196,1.51,betonlineag,
-KC @ SEA,run_line,SEA -1.5,+171,2.71,lowvig,
-KC @ SEA,run_line,SEA +1.5,-192,1.52,draftkings,
-KC @ SEA,totals,OVER 8.0,-102,1.98,lowvig,49.1%
-KC @ SEA,totals,UNDER 8.0,-110,1.91,fanduel,50.9%
-TEX @ DET,moneyline,TEX,+113,2.13,betus,46.2%
-TEX @ DET,moneyline,DET,-120,1.83,fanduel,53.8%
-TEX @ DET,run_line,TEX -1.5,+168,2.68,fanduel,
-TEX @ DET,run_line,TEX +1.5,-189,1.53,fanatics,
-TEX @ DET,run_line,DET -1.5,+175,2.75,williamhill_us,
-TEX @ DET,run_line,DET +1.5,-192,1.52,draftkings,
-TEX @ DET,totals,OVER 8.0,-114,1.88,mybookieag,51.5%
-TEX @ DET,totals,UNDER 8.0,+100,2.0,bovada,48.5%
-TEX @ DET,totals,OVER 8.5,+100,2.0,fanduel,48.1%
-TEX @ DET,totals,UNDER 8.5,-118,1.85,betrivers,51.9%
+NYM @ COL,moneyline,NYM,-139,1.72,lowvig,56.8%
+NYM @ COL,moneyline,COL,+126,2.26,betus,43.2%
+NYM @ COL,run_line,NYM -1.5,+113,2.13,lowvig,
+NYM @ COL,run_line,COL +1.5,-125,1.8,williamhill_us,
+NYM @ COL,totals,OVER 10.5,-120,1.83,williamhill_us,53.1%
+NYM @ COL,totals,UNDER 10.5,+107,2.07,lowvig,46.9%
+NYM @ COL,totals,OVER 11.0,+100,2.0,betmgm,48.3%
+NYM @ COL,totals,UNDER 11.0,-115,1.87,fanatics,51.7%
+BOS @ DET,moneyline,BOS,+171,2.71,lowvig,36.1%
+BOS @ DET,moneyline,DET,-189,1.53,lowvig,63.9%
+BOS @ DET,run_line,BOS +1.5,-130,1.77,fanatics,
+BOS @ DET,run_line,DET -1.5,+123,2.23,mybookieag,
+BOS @ DET,totals,OVER 7.0,+100,2.0,betmgm,48.8%
+BOS @ DET,totals,UNDER 7.0,-110,1.91,bovada,51.2%
+PHI @ MIA,moneyline,PHI,-104,1.96,mybookieag,50.0%
+PHI @ MIA,moneyline,MIA,-104,1.96,betonlineag,50.0%
+PHI @ MIA,run_line,PHI -1.5,+154,2.54,mybookieag,
+PHI @ MIA,run_line,PHI +1.5,-233,1.43,bovada,
+PHI @ MIA,run_line,MIA -1.5,+190,2.9,bovada,
+PHI @ MIA,run_line,MIA +1.5,-169,1.59,betonlineag,
+PHI @ MIA,totals,OVER 8.5,-108,1.93,lowvig,50.3%
+PHI @ MIA,totals,UNDER 8.5,-105,1.95,fanduel,49.7%
+TOR @ TB,moneyline,TOR,+109,2.09,betonlineag,47.0%
+TOR @ TB,moneyline,TB,-118,1.85,betus,53.0%
+TOR @ TB,run_line,TOR -1.5,+170,2.7,betrivers,
+TOR @ TB,run_line,TOR +1.5,-196,1.51,betonlineag,
+TOR @ TB,run_line,TB -1.5,+176,2.76,fanduel,
+TOR @ TB,run_line,TB +1.5,-200,1.5,draftkings,
+TOR @ TB,totals,OVER 8.0,-105,1.95,fanduel,49.7%
+TOR @ TB,totals,UNDER 8.0,-108,1.93,lowvig,50.3%
+BAL @ NYY,moneyline,BAL,+185,2.85,betrivers,34.3%
+BAL @ NYY,moneyline,NYY,-204,1.49,fanduel,65.7%
+BAL @ NYY,run_line,BAL +1.5,-105,1.95,mybookieag,
+BAL @ NYY,run_line,NYY -1.5,-102,1.98,fanduel,
+BAL @ NYY,totals,OVER 8.5,-104,1.96,lowvig,49.4%
+BAL @ NYY,totals,UNDER 8.5,-110,1.91,fanatics,50.6%
+CIN @ CHC,moneyline,CIN,+180,2.8,betonlineag,34.9%
+CIN @ CHC,moneyline,CHC,-200,1.5,betonlineag,65.1%
+CIN @ CHC,run_line,CIN +1.5,-104,1.96,lowvig,
+CIN @ CHC,run_line,CHC -1.5,-110,1.91,lowvig,
+CIN @ CHC,totals,OVER 11.0,-120,1.83,betrivers,51.7%
+CIN @ CHC,totals,UNDER 11.0,-104,1.96,betrivers,48.3%
+CIN @ CHC,totals,OVER 11.5,+100,2.0,betmgm,49.0%
+CIN @ CHC,totals,UNDER 11.5,-109,1.92,lowvig,51.0%
+CLE @ KC,moneyline,CLE,+104,2.04,fanduel,48.1%
+CLE @ KC,moneyline,KC,-112,1.89,betonlineag,51.9%
+CLE @ KC,run_line,CLE -1.5,+169,2.69,mybookieag,
+CLE @ KC,run_line,CLE +1.5,-192,1.52,fanduel,
+CLE @ KC,run_line,KC -1.5,+173,2.73,lowvig,
+CLE @ KC,run_line,KC +1.5,-185,1.54,draftkings,
+CLE @ KC,totals,OVER 9.0,-109,1.92,lowvig,50.6%
+CLE @ KC,totals,UNDER 9.0,-103,1.97,betrivers,49.4%
+MIL @ STL,moneyline,MIL,-110,1.91,betonlineag,51.3%
+MIL @ STL,moneyline,STL,+101,2.01,betus,48.7%
+MIL @ STL,run_line,MIL -1.5,+152,2.52,mybookieag,
+MIL @ STL,run_line,STL +1.5,-169,1.59,fanduel,
+MIL @ STL,totals,OVER 8.5,-114,1.88,betrivers,51.5%
+MIL @ STL,totals,UNDER 8.5,+100,2.0,lowvig,48.5%
+LAD @ HOU,moneyline,LAD,-185,1.54,lowvig,63.7%
+LAD @ HOU,moneyline,HOU,+170,2.7,betmgm,36.3%
+LAD @ HOU,run_line,LAD -1.5,-120,1.83,fanduel,
+LAD @ HOU,run_line,HOU +1.5,+108,2.08,lowvig,
+LAD @ HOU,totals,OVER 9.0,-106,1.94,fanduel,50.8%
+LAD @ HOU,totals,UNDER 9.0,+100,2.0,bovada,49.2%
+CWS @ LAA,moneyline,CWS,+135,2.35,betrivers,41.8%
+CWS @ LAA,moneyline,LAA,-145,1.69,betus,58.2%
+CWS @ LAA,run_line,CWS +1.5,-156,1.64,lowvig,
+CWS @ LAA,run_line,LAA -1.5,+151,2.51,mybookieag,
+CWS @ LAA,totals,OVER 7.5,-114,1.88,betrivers,51.9%
+CWS @ LAA,totals,UNDER 7.5,+103,2.03,lowvig,48.1%
+ATL @ SEA,moneyline,ATL,+128,2.28,betrivers,43.0%
+ATL @ SEA,moneyline,SEA,-139,1.72,lowvig,57.0%
+ATL @ SEA,run_line,ATL +1.5,-164,1.61,lowvig,
+ATL @ SEA,run_line,SEA -1.5,+147,2.47,mybookieag,
+ATL @ SEA,totals,OVER 7.5,-115,1.87,lowvig,51.7%
+ATL @ SEA,totals,UNDER 7.5,+100,2.0,lowvig,48.3%
+ATL @ SEA,totals,OVER 8.0,-103,1.97,betrivers,48.0%
+ATL @ SEA,totals,UNDER 8.0,-122,1.82,betrivers,52.0%
+SD @ SF,moneyline,SD,-132,1.76,lowvig,55.6%
+SD @ SF,moneyline,SF,+120,2.2,lowvig,44.4%
+SD @ SF,run_line,SD -1.5,+126,2.26,fanduel,
+SD @ SF,run_line,SF +1.5,-139,1.72,lowvig,
+SD @ SF,totals,OVER 8.0,-108,1.93,lowvig,50.3%
+SD @ SF,totals,UNDER 8.0,-105,1.95,bovada,49.7%

@@ -1,7 +1,7 @@
 {
-  "picks_total": 29,
+  "picks_total": 39,
   "picks_with_close": 10,
-  "picks_graded": 29,
+  "picks_graded": 34,
   "overall": {
     "n": 10,
     "mean_clv_pct": -0.703,
@@ -19,24 +19,24 @@
     "neutral": 1
   },
   "record_overall": {
-    "n": 29,
-    "wins": 15,
-    "losses": 12,
+    "n": 34,
+    "wins": 17,
+    "losses": 15,
     "pushes": 2,
-    "hit_rate": 55.6,
-    "units_pl": 2.75,
-    "roi_pct": 9.48,
+    "hit_rate": 53.1,
+    "units_pl": 1.67,
+    "roi_pct": 4.91,
     "mean_clv_pct": -0.703,
     "n_with_clv": 10
   },
   "record_30d": {
-    "n": 29,
-    "wins": 15,
-    "losses": 12,
+    "n": 34,
+    "wins": 17,
+    "losses": 15,
     "pushes": 2,
-    "hit_rate": 55.6,
-    "units_pl": 2.75,
-    "roi_pct": 9.48,
+    "hit_rate": 53.1,
+    "units_pl": 1.67,
+    "roi_pct": 4.91,
     "mean_clv_pct": -0.703,
     "n_with_clv": 10
   },
@@ -68,24 +68,24 @@
   },
   "record_by_bet_type": {
     "totals": {
-      "n": 22,
-      "wins": 10,
-      "losses": 10,
+      "n": 26,
+      "wins": 11,
+      "losses": 13,
       "pushes": 2,
-      "hit_rate": 50.0,
-      "units_pl": -0.73,
-      "roi_pct": -3.32,
+      "hit_rate": 45.8,
+      "units_pl": -2.77,
+      "roi_pct": -10.65,
       "mean_clv_pct": -1.359,
       "n_with_clv": 6
     },
     "run_line": {
-      "n": 6,
-      "wins": 4,
+      "n": 7,
+      "wins": 5,
       "losses": 2,
       "pushes": 0,
-      "hit_rate": 66.7,
-      "units_pl": 2.31,
-      "roi_pct": 38.5,
+      "hit_rate": 71.4,
+      "units_pl": 3.27,
+      "roi_pct": 46.71,
       "mean_clv_pct": 0.921,
       "n_with_clv": 3
     },
@@ -101,5 +101,5 @@
       "n_with_clv": 1
     }
   },
-  "generated_at": "2026-05-03T19:57:43.381085Z"
+  "generated_at": "2026-05-04T17:33:13.046885Z"
 }
