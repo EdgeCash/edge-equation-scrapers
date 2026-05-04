@@ -50,6 +50,7 @@ if str(REPO_ROOT) not in sys.path:
 import exporters.mlb.backtest as bt_module
 from exporters.mlb.backtest import BacktestEngine, _fit_logistic_slope
 from exporters.mlb.isotonic import IsotonicRegressor
+from exporters.mlb.cv import time_series_split, stats
 
 
 BACKFILL_DIR = REPO_ROOT / "data" / "backfill" / "mlb"
@@ -134,11 +135,11 @@ def brier(predictions: list[float], outcomes: list[int]) -> float:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        description="A/B isotonic vs logistic ML calibration",
+        description="A/B isotonic vs logistic ML calibration via time-series k-fold CV",
     )
     parser.add_argument("--seasons", type=str, default="")
-    parser.add_argument("--train-frac", type=float, default=0.8)
-    parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--n-splits", type=int, default=5,
+                        help="Number of time-series CV folds (default 5).")
     parser.add_argument("--output-dir", type=str, default=str(OUTPUT_DIR))
     args = parser.parse_args(argv)
 
@@ -147,10 +148,10 @@ def main(argv: list[str] | None = None) -> int:
         print("No seasons with games.json found.")
         return 1
 
-    print(f"\n=== Isotonic vs Logistic Calibration A/B ===")
+    print(f"\n=== Isotonic vs Logistic Calibration A/B (time-series k-fold) ===")
     print(f"  Seasons:    {seasons}")
-    print(f"  Train frac: {args.train_frac}")
-    print(f"  Seed:       {args.seed}\n")
+    print(f"  Folds:      {args.n_splits}")
+    print(f"  Method:     TimeSeriesSplit — train data is strictly before test\n")
 
     print("Running multi-season backtest to collect residuals...")
     pairs = capture_pairs_from_backtest(seasons)
@@ -160,81 +161,94 @@ def main(argv: list[str] | None = None) -> int:
         print(f"Too few pairs ({len(pairs)}) to do a meaningful split.")
         return 1
 
-    train, test = split_pairs(pairs, args.train_frac, args.seed)
-    print(f"  Train: {len(train):,} pairs")
-    print(f"  Test:  {len(test):,} pairs\n")
+    # Pairs come out of the backtest in chronological order (it walks
+    # games sorted by date), so time_series_split's index ranges respect
+    # no-look-ahead automatically.
+    fold_results: list[dict] = []
+    print(f"{'fold':>4s}  {'n_train':>7s}  {'n_test':>7s}  "
+          f"{'naive':>7s}  {'logistic':>9s}  {'isotonic':>9s}  "
+          f"{'delta':>8s}")
+    print("  " + "-" * 60)
+    for fold_i, (train_idx, test_idx) in enumerate(time_series_split(len(pairs), args.n_splits)):
+        train = [pairs[i] for i in train_idx]
+        test = [pairs[i] for i in test_idx]
 
-    # Fit both methods on TRAIN.
-    print("Fitting logistic slope on TRAIN...")
-    slope = _fit_logistic_slope(train)
-    print(f"  win_prob_slope = {slope:.4f}")
+        slope = _fit_logistic_slope(train)
+        train_margins = [m for m, _ in train]
+        train_outcomes = [y for _, y in train]
+        fit = IsotonicRegressor.fit(train_margins, train_outcomes, increasing=True)
 
-    print("Fitting isotonic on TRAIN...")
-    train_margins = [m for m, _ in train]
-    train_outcomes = [y for _, y in train]
-    fit = IsotonicRegressor.fit(train_margins, train_outcomes, increasing=True)
-    print(f"  isotonic blocks = {len(fit.blocks)}")
+        test_margins = [m for m, _ in test]
+        test_outcomes = [y for _, y in test]
 
-    # Apply each method to TEST margins.
-    test_margins = [m for m, _ in test]
-    test_outcomes = [y for _, y in test]
+        logistic_probs = [logistic_predict(m, slope) for m in test_margins]
+        isotonic_probs = [isotonic_predict(m, fit) for m in test_margins]
+        naive_probs = [0.5] * len(test_outcomes)
 
-    logistic_probs = [logistic_predict(m, slope) for m in test_margins]
-    isotonic_probs = [isotonic_predict(m, fit) for m in test_margins]
-    naive_probs = [0.5] * len(test)  # constant 0.5 baseline
+        b_naive = brier(naive_probs, test_outcomes)
+        b_logistic = brier(logistic_probs, test_outcomes)
+        b_isotonic = brier(isotonic_probs, test_outcomes)
+        delta = b_logistic - b_isotonic
 
-    brier_logistic = brier(logistic_probs, test_outcomes)
-    brier_isotonic = brier(isotonic_probs, test_outcomes)
-    brier_naive = brier(naive_probs, test_outcomes)
+        print(f"  {fold_i:>4d}  {len(train):>7,d}  {len(test):>7,d}  "
+              f"{b_naive:>7.4f}  {b_logistic:>9.4f}  {b_isotonic:>9.4f}  "
+              f"{delta:>+8.4f}")
 
-    print("\n--- Brier scores on TEST (lower = better) ---")
-    print(f"  naive (constant 0.5): {brier_naive:.4f}")
-    print(f"  logistic slope:       {brier_logistic:.4f}")
-    print(f"  isotonic:             {brier_isotonic:.4f}")
+        fold_results.append({
+            "fold": fold_i,
+            "n_train": len(train),
+            "n_test": len(test),
+            "logistic_slope": slope,
+            "isotonic_n_blocks": len(fit.blocks),
+            "brier_naive": b_naive,
+            "brier_logistic": b_logistic,
+            "brier_isotonic": b_isotonic,
+            "delta_logistic_minus_isotonic": delta,
+        })
 
-    delta = brier_logistic - brier_isotonic
-    pct = (delta / brier_logistic * 100) if brier_logistic > 0 else 0.0
-    print(f"\n  delta (log - iso):    {delta:+.4f}  ({pct:+.2f}% relative)")
-    if delta > 0:
-        print("  → Isotonic WINS on this test split.")
-    elif delta < 0:
-        print("  → Logistic WINS on this test split.")
+    # Aggregate — mean ± std + 95% normal-approx CI half-width.
+    naive_stats = stats([f["brier_naive"] for f in fold_results])
+    logistic_stats = stats([f["brier_logistic"] for f in fold_results])
+    isotonic_stats = stats([f["brier_isotonic"] for f in fold_results])
+    delta_stats = stats([f["delta_logistic_minus_isotonic"] for f in fold_results])
+
+    print("\n--- Aggregate across folds (mean ± std) ---")
+    print(f"  naive:    {naive_stats['mean']:.4f} ± {naive_stats['std']:.4f}")
+    print(f"  logistic: {logistic_stats['mean']:.4f} ± {logistic_stats['std']:.4f}")
+    print(f"  isotonic: {isotonic_stats['mean']:.4f} ± {isotonic_stats['std']:.4f}")
+    print()
+    print(f"  delta (log - iso): {delta_stats['mean']:+.4f} ± {delta_stats['std']:.4f}")
+    print(f"  95% CI (normal approx): [{delta_stats['mean'] - delta_stats['ci_half']:+.4f}, "
+          f"{delta_stats['mean'] + delta_stats['ci_half']:+.4f}]")
+    print()
+
+    # Honest verdict: only declare a winner if the CI doesn't cross zero.
+    ci_lo = delta_stats['mean'] - delta_stats['ci_half']
+    ci_hi = delta_stats['mean'] + delta_stats['ci_half']
+    if ci_lo > 0:
+        print("  → Isotonic BEATS logistic — CI excludes zero.")
+    elif ci_hi < 0:
+        print("  → Logistic BEATS isotonic — CI excludes zero.")
     else:
-        print("  → Tie.")
+        print("  → Inconclusive — CI crosses zero. The apparent delta is")
+        print("    within the across-fold variance and could be noise.")
 
-    # Diagnostic: look at calibration quality at different margin slices.
-    print("\n--- Reliability table on TEST (binned by predicted prob) ---")
-    print(f"  {'bin':>10s}  {'n':>5s}  {'avg_pred_log':>13s}  {'avg_pred_iso':>13s}  {'actual':>8s}")
-    bins = [(0.0, 0.2), (0.2, 0.4), (0.4, 0.6), (0.6, 0.8), (0.8, 1.0)]
-    for lo, hi in bins:
-        # Use logistic predictions to bin (so both methods see the same buckets)
-        idxs = [i for i, p in enumerate(logistic_probs) if lo <= p < hi]
-        if not idxs:
-            continue
-        n = len(idxs)
-        avg_log = sum(logistic_probs[i] for i in idxs) / n
-        avg_iso = sum(isotonic_probs[i] for i in idxs) / n
-        actual = sum(test_outcomes[i] for i in idxs) / n
-        print(f"  [{lo:.1f}-{hi:.1f}]  {n:>5d}  {avg_log:>13.4f}  {avg_iso:>13.4f}  {actual:>8.4f}")
-
-    # Persist the result for the experimental record.
     out_dir = Path(args.output_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
-    out_path = out_dir / f"isotonic_compare_{datetime.utcnow().strftime('%Y-%m-%d')}.json"
+    out_path = out_dir / f"isotonic_compare_kfold_{datetime.utcnow().strftime('%Y-%m-%d')}.json"
     out_path.write_text(json.dumps({
         "as_of": datetime.utcnow().isoformat() + "Z",
+        "method": "time_series_kfold",
         "seasons": seasons,
-        "train_frac": args.train_frac,
-        "seed": args.seed,
-        "n_train": len(train),
-        "n_test": len(test),
-        "logistic_slope": slope,
-        "isotonic_n_blocks": len(fit.blocks),
-        "brier_naive": brier_naive,
-        "brier_logistic": brier_logistic,
-        "brier_isotonic": brier_isotonic,
-        "delta_logistic_minus_isotonic": delta,
-        "pct_relative_improvement": pct,
+        "n_splits": args.n_splits,
+        "n_pairs_total": len(pairs),
+        "fold_results": fold_results,
+        "aggregate": {
+            "naive": naive_stats,
+            "logistic": logistic_stats,
+            "isotonic": isotonic_stats,
+            "delta_logistic_minus_isotonic": delta_stats,
+        },
     }, indent=2, default=str))
     print(f"\nWrote {out_path.relative_to(REPO_ROOT)}")
 

@@ -49,6 +49,7 @@ if str(REPO_ROOT) not in sys.path:
 
 import exporters.mlb.backtest as bt_module
 from exporters.mlb.backtest import BacktestEngine, _fit_logistic_slope
+from exporters.mlb.cv import time_series_split, stats
 from exporters.mlb.elo import (
     EloCalculator, GameResult, EloRatings, DEFAULT_RATING, LEAGUE_PARAMS,
 )
@@ -185,12 +186,14 @@ def brier(predictions: list[float], outcomes: list[int]) -> float:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="A/B Elo vs current-model ML calibration")
+    parser = argparse.ArgumentParser(
+        description="A/B Elo vs current-model ML calibration via time-series k-fold CV",
+    )
     parser.add_argument("--seasons", type=str, default="")
     parser.add_argument("--warmup-games", type=int, default=500,
                         help="Skip first N games when scoring ELO (cold-start ratings).")
-    parser.add_argument("--train-frac", type=float, default=0.8)
-    parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--n-splits", type=int, default=5,
+                        help="Number of time-series CV folds (default 5).")
     parser.add_argument("--output-dir", type=str, default=str(OUTPUT_DIR))
     args = parser.parse_args(argv)
 
@@ -199,11 +202,11 @@ def main(argv: list[str] | None = None) -> int:
         print("No seasons with games.json found.")
         return 1
 
-    print("\n=== ELO vs Current-Model A/B ===")
+    print("\n=== ELO vs Current-Model A/B (time-series k-fold) ===")
     print(f"  Seasons:        {seasons}")
     print(f"  Warmup games:   {args.warmup_games}")
-    print(f"  Train frac:     {args.train_frac}")
-    print(f"  Seed:           {args.seed}\n")
+    print(f"  Folds:          {args.n_splits}")
+    print(f"  Method:         TimeSeriesSplit — train data is strictly before test\n")
 
     print("Walking games chronologically with ELO replay...")
     elo_by_pk = walk_games_for_elo(seasons)
@@ -251,78 +254,94 @@ def main(argv: list[str] | None = None) -> int:
         print("Too few matched games to compare meaningfully.")
         return 1
 
-    rng = random.Random(args.seed)
-    indices = list(range(n_match))
-    rng.shuffle(indices)
-    cut = int(n_match * args.train_frac)
-    train_idx = set(indices[:cut])
-    test_idx = [i for i in range(n_match) if i not in train_idx]
+    # Sort aligned by date so time_series_split's index ranges respect
+    # no-look-ahead. Both source streams should already be chronological,
+    # but we sort defensively in case backfill order ever changes.
+    aligned.sort(key=lambda r: (r.get("date") or "", r["game_pk"]))
 
-    train_pairs = [(aligned[i]["margin_proj"], aligned[i]["actual_home_won"])
-                    for i in train_idx]
-    slope = _fit_logistic_slope(train_pairs)
-    print(f"Logistic slope (fit on {len(train_pairs):,} train pairs): {slope:.4f}")
+    fold_results: list[dict] = []
+    print(f"{'fold':>4s}  {'n_train':>7s}  {'n_test':>7s}  "
+          f"{'logistic':>9s}  {'elo':>7s}  {'ensemble':>9s}  "
+          f"{'log-elo':>9s}")
+    print("  " + "-" * 65)
+    for fold_i, (train_idx, test_idx) in enumerate(
+        time_series_split(n_match, args.n_splits)
+    ):
+        train_pairs = [(aligned[i]["margin_proj"], aligned[i]["actual_home_won"])
+                        for i in train_idx]
+        slope = _fit_logistic_slope(train_pairs)
 
-    elo_probs = [aligned[i]["elo_prob_home"] for i in test_idx]
-    outcomes = [aligned[i]["actual_home_won"] for i in test_idx]
-    logistic_probs = [
-        logistic_predict(aligned[i]["margin_proj"], slope) for i in test_idx
-    ]
-    naive_probs = [0.5] * len(test_idx)
-    print(f"  evaluating both methods on {len(test_idx):,} TEST games "
-          f"(same games for both methods — true head-to-head)\n")
+        elo_probs = [aligned[i]["elo_prob_home"] for i in test_idx]
+        outcomes = [aligned[i]["actual_home_won"] for i in test_idx]
+        logistic_probs = [
+            logistic_predict(aligned[i]["margin_proj"], slope) for i in test_idx
+        ]
+        ensemble_probs = [(p1 + p2) / 2 for p1, p2 in zip(elo_probs, logistic_probs)]
 
-    brier_naive = brier(naive_probs, outcomes)
-    brier_logistic = brier(logistic_probs, outcomes)
-    brier_elo = brier(elo_probs, outcomes)
+        b_logistic = brier(logistic_probs, outcomes)
+        b_elo = brier(elo_probs, outcomes)
+        b_ensemble = brier(ensemble_probs, outcomes)
+        delta_log_elo = b_logistic - b_elo
 
-    print("--- Brier scores on TEST (lower = better) ---")
-    print(f"  naive (constant 0.5):   {brier_naive:.4f}")
-    print(f"  current model (logistic): {brier_logistic:.4f}")
-    print(f"  ELO-only:               {brier_elo:.4f}")
+        print(f"  {fold_i:>4d}  {len(train_idx):>7,d}  {len(test_idx):>7,d}  "
+              f"{b_logistic:>9.4f}  {b_elo:>7.4f}  {b_ensemble:>9.4f}  "
+              f"{delta_log_elo:>+9.4f}")
 
-    # 50/50 ensemble
-    ensemble = [(p1 + p2) / 2 for p1, p2 in zip(elo_probs, logistic_probs)]
-    brier_ensemble = brier(ensemble, outcomes)
-    print(f"  50/50 ensemble:         {brier_ensemble:.4f}")
+        fold_results.append({
+            "fold": fold_i,
+            "n_train": len(train_idx),
+            "n_test": len(test_idx),
+            "logistic_slope": slope,
+            "brier_logistic": b_logistic,
+            "brier_elo": b_elo,
+            "brier_ensemble": b_ensemble,
+            "delta_logistic_minus_elo": delta_log_elo,
+        })
 
-    delta_vs_logistic = brier_logistic - brier_elo
-    pct = (delta_vs_logistic / brier_logistic * 100) if brier_logistic > 0 else 0.0
-    print(f"\n  delta (logistic - elo): {delta_vs_logistic:+.4f}  ({pct:+.2f}% relative)")
-    if delta_vs_logistic > 0:
-        print("  → ELO BEATS current model on this test split.")
-    elif delta_vs_logistic < 0:
-        print("  → Current model BEATS ELO on this test split.")
+    logistic_stats = stats([f["brier_logistic"] for f in fold_results])
+    elo_stats = stats([f["brier_elo"] for f in fold_results])
+    ensemble_stats = stats([f["brier_ensemble"] for f in fold_results])
+    delta_stats = stats([f["delta_logistic_minus_elo"] for f in fold_results])
+
+    print("\n--- Aggregate across folds (mean ± std) ---")
+    print(f"  current model:  {logistic_stats['mean']:.4f} ± {logistic_stats['std']:.4f}")
+    print(f"  ELO-only:       {elo_stats['mean']:.4f} ± {elo_stats['std']:.4f}")
+    print(f"  50/50 ensemble: {ensemble_stats['mean']:.4f} ± {ensemble_stats['std']:.4f}")
+    print()
+    print(f"  delta (logistic - elo): {delta_stats['mean']:+.4f} ± {delta_stats['std']:.4f}")
+    print(f"  95% CI (normal approx): [{delta_stats['mean'] - delta_stats['ci_half']:+.4f}, "
+          f"{delta_stats['mean'] + delta_stats['ci_half']:+.4f}]")
+    print()
+
+    ci_lo = delta_stats['mean'] - delta_stats['ci_half']
+    ci_hi = delta_stats['mean'] + delta_stats['ci_half']
+    if ci_lo > 0:
+        print("  → ELO BEATS current model — CI excludes zero.")
+    elif ci_hi < 0:
+        print("  → Current model BEATS ELO — CI excludes zero.")
     else:
-        print("  → Tie.")
-
-    delta_ensemble = brier_logistic - brier_ensemble
-    if delta_ensemble > 0:
-        print(f"  ensemble delta vs logistic: {delta_ensemble:+.4f} → ensemble helps.")
-    else:
-        print(f"  ensemble delta vs logistic: {delta_ensemble:+.4f} → ensemble doesn't help.")
+        print("  → Inconclusive — CI crosses zero. Apparent delta is")
+        print("    within the across-fold variance and could be noise.")
 
     out_dir = Path(args.output_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
-    out_path = out_dir / f"elo_compare_{datetime.utcnow().strftime('%Y-%m-%d')}.json"
+    out_path = out_dir / f"elo_compare_kfold_{datetime.utcnow().strftime('%Y-%m-%d')}.json"
     out_path.write_text(json.dumps({
         "as_of": datetime.utcnow().isoformat() + "Z",
+        "method": "time_series_kfold",
         "seasons": seasons,
+        "n_splits": args.n_splits,
         "warmup_games": args.warmup_games,
-        "train_frac": args.train_frac,
-        "seed": args.seed,
         "n_total_elo_games": len(elo_by_pk),
         "n_logistic_pairs": len(logistic_pairs),
         "n_matched": n_match,
-        "n_train": len(train_idx),
-        "n_test": len(test_idx),
-        "logistic_slope": slope,
-        "brier_naive": brier_naive,
-        "brier_logistic": brier_logistic,
-        "brier_elo": brier_elo,
-        "brier_ensemble": brier_ensemble,
-        "delta_logistic_minus_elo": delta_vs_logistic,
-        "pct_relative": pct,
+        "fold_results": fold_results,
+        "aggregate": {
+            "logistic": logistic_stats,
+            "elo": elo_stats,
+            "ensemble": ensemble_stats,
+            "delta_logistic_minus_elo": delta_stats,
+        },
     }, indent=2, default=str))
     print(f"\nWrote {out_path.relative_to(REPO_ROOT)}")
 
