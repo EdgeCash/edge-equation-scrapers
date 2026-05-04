@@ -53,6 +53,7 @@ from exporters.mlb.projections import (
 from exporters.mlb.kelly import kelly_advice, edge_pct, tier_from_pct, DEFAULT_DECIMAL_ODDS
 from exporters.mlb.backtest import BacktestEngine
 from exporters.mlb.clv_tracker import ClvTracker
+from exporters.mlb.splits_loader import SplitsLoader
 
 
 SEASON_DEFAULT = 2026
@@ -192,6 +193,84 @@ def _vig_free(dec_a: float | None, dec_b: float | None) -> tuple[float | None, f
     if total <= 0:
         return (None, None)
     return (p_a_raw / total, p_b_raw / total)
+
+
+def _inject_status_columns(
+    tab: dict,
+    bet_type: str,
+    gate_passed: set[str] | None,
+    gate_notes: dict[str, str] | None,
+    edge_thresholds: dict[str, float] | None,
+    min_edge_fallback: float,
+) -> None:
+    """Add `status`, `conviction_pct`, and `status_reason` columns to
+    every projection row in a per-market tab, in place.
+
+    `status` is the single human-readable verdict that combines all
+    three gates the daily build applies:
+      1. Market gate (BRAND_GUIDE: ≥+1% ROI AND Brier <0.246 over
+         200+ bets in the rolling backtest)
+      2. Market price availability (no synthetic -110)
+      3. Per-market edge threshold (e.g. ≥3% for run_line)
+
+    `conviction_pct` surfaces model_prob as a clean number (e.g. 65.4)
+    so spreadsheet readers don't have to multiply 0.654 themselves.
+
+    `status_reason` is empty for PLAY rows; for PASS rows it explains
+    which gate the row failed.
+
+    Updates tab["projection_columns"] in place so the new fields surface
+    in CSV / xlsx output. New columns land near the front of the column
+    order (after date/away/home) so they're visible without horizontal
+    scrolling.
+
+    Idempotent — safe to call twice on the same tab.
+    """
+    gate_notes = gate_notes or {}
+    edge_thresholds = edge_thresholds or {}
+
+    for row in tab.get("projections", []):
+        if gate_passed is not None and bet_type not in gate_passed:
+            note = gate_notes.get(bet_type, "failed market gate")
+            status, reason = "PASS", f"Market gated off ({note})"
+        elif row.get("market_odds_dec") is None:
+            status, reason = "PASS", "No market price available"
+        elif row.get("edge_pct") is None:
+            status, reason = "PASS", "Edge not computed"
+        else:
+            threshold = edge_thresholds.get(bet_type, min_edge_fallback)
+            if row["edge_pct"] >= threshold:
+                status, reason = "PLAY", ""
+            else:
+                status = "PASS"
+                reason = (
+                    f"Edge {row['edge_pct']:+.2f}% below "
+                    f"{threshold:+.2f}% threshold"
+                )
+
+        row["status"] = status
+        row["status_reason"] = reason
+        prob = row.get("model_prob")
+        row["conviction_pct"] = (
+            round(prob * 100, 1) if prob is not None else None
+        )
+
+    cols = list(tab.get("projection_columns", []))
+    NEW = ("status", "conviction_pct", "status_reason")
+    cols = [c for c in cols if c not in NEW]
+    # Insert status + conviction_pct after the first three "where/who"
+    # columns (typically date/away/home, or date/team/opponent for
+    # team_totals) so they're visible without horizontal scrolling.
+    # status_reason goes at the end since it's only useful when you're
+    # already looking for "why."
+    insert_idx = min(3, len(cols))
+    cols = (
+        cols[:insert_idx]
+        + ["status", "conviction_pct"]
+        + cols[insert_idx:]
+        + ["status_reason"]
+    )
+    tab["projection_columns"] = cols
 
 
 def _build_odds_debug(odds: dict) -> dict:
@@ -563,9 +642,19 @@ class DailySpreadsheet:
         slate = fetch_slate(self.target_date)
         print(f"    {len(slate)} scheduled games")
 
-        print("  Fetching probable starting pitchers...")
+        print("  Fetching probable starting pitchers (with prior-season xwOBA blend)...")
+        # The splits_loader exposes prior-season Statcast xwOBA-against
+        # to the pitcher scraper as a stabilizing prior. When the loader
+        # has the data on disk for a given pitcher with >=100 PA last
+        # season, it blends 30% prior-xwOBA factor + 70% current
+        # ERA/FIP-based factor; otherwise the current factor is used
+        # unchanged. See scrapers/mlb/mlb_pitcher_scraper.py:
+        # blend_with_xwoba for the math.
+        splits_loader = SplitsLoader(self.backfill_dir)
         try:
-            sp_map = self.pitcher_scraper.fetch_factors_for_slate(slate)
+            sp_map = self.pitcher_scraper.fetch_factors_for_slate(
+                slate, splits_loader=splits_loader,
+            )
         except Exception as e:
             print(f"    SP fetch failed ({type(e).__name__}: {e}); proceeding without SP adjustment")
             sp_map = {}
@@ -578,12 +667,30 @@ class DailySpreadsheet:
             if (g.get("away_sp") or {}).get("name")
             and (g.get("home_sp") or {}).get("name")
         )
+        # Tally xwOBA coverage so the workflow log shows whether the
+        # Statcast prior actually contributed today.
+        xwoba_hits = sum(
+            1 for sides in sp_map.values()
+            for side in sides.values()
+            if side.get("prior_xwoba") is not None
+        )
+        sp_total = sum(
+            1 for sides in sp_map.values()
+            for side in sides.values()
+            if side.get("id") is not None
+        )
         print(f"    {named}/{len(slate)} games have both probable SPs identified")
+        print(f"    {xwoba_hits}/{sp_total} probable SPs got prior-season xwOBA data")
 
-        print("  Fetching team bullpen factors...")
+        print("  Fetching team bullpen factors (season + last-3-day workload)...")
         team_codes = sorted({g["away_team"] for g in slate} | {g["home_team"] for g in slate})
         try:
-            bp_map = self.pitcher_scraper.fetch_bullpen_factors(team_codes)
+            bp_map = self.pitcher_scraper.fetch_bullpen_factors(
+                team_codes,
+                target_date=self.target_date,
+                include_workload=True,
+                lookback_days=3,
+            )
         except Exception as e:
             print(f"    Bullpen fetch failed ({type(e).__name__}: {e}); proceeding without BP adjustment")
             bp_map = {}
@@ -594,7 +701,22 @@ class DailySpreadsheet:
             1 for code, info in bp_map.items()
             if info and info.get("era") is not None
         )
+        # Surface the fatigue signal in the workflow log so we can see when
+        # the workload feature is actually pulling factors away from
+        # season-aggregate. Threshold of 1.05 ≈ at least ~3 IP above
+        # normal in the last 3 days.
+        tired = sorted(
+            (code for code, info in bp_map.items()
+             if info and info.get("fatigue_factor", 1.0) >= 1.05),
+            key=lambda c: bp_map[c]["fatigue_factor"], reverse=True,
+        )
         print(f"    {bp_seen}/{len(team_codes)} teams returned bullpen stats")
+        if tired:
+            details = ", ".join(
+                f"{c}({bp_map[c]['bp_ip_recent']}IP→×{bp_map[c]['fatigue_factor']})"
+                for c in tired
+            )
+            print(f"    Tired bullpens: {details}")
 
         print("  Fetching weather for each home venue...")
         try:
@@ -689,6 +811,21 @@ class DailySpreadsheet:
         if gate_passed is not None:
             print(f"  Market gate: {sorted(gate_passed) or '(none passed)'} pass; "
                   f"excluded: {gate_notes}")
+
+        # Inject human-readable status / conviction columns into every
+        # per-market tab so CSV + Excel consumers see PLAY/PASS at a
+        # glance instead of having to compute the gate decision in
+        # their head from edge_pct + market_odds + the gate summary.
+        for bet_type in ("moneyline", "run_line", "totals", "first_5",
+                         "first_inning", "team_totals"):
+            _inject_status_columns(
+                tabs[bet_type], bet_type,
+                gate_passed=gate_passed,
+                gate_notes=gate_notes,
+                edge_thresholds=self.edge_thresholds,
+                min_edge_fallback=self.min_edge_pct,
+            )
+
         tabs["todays_card"] = self._build_todays_card(
             tabs,
             min_edge_pct=self.min_edge_pct,
@@ -724,7 +861,7 @@ class DailySpreadsheet:
             print(f"  Graded {grade_report['graded']} resolved pick(s); "
                   f"{grade_report['still_pending']} await game completion")
 
-        clv_summary = tracker.summary()
+        clv_summary = tracker.save_summary()
         print(f"  CLV log: +{added} new picks, "
               f"{clv_summary['picks_with_close']}/{clv_summary['picks_total']} "
               f"have closing snapshots, "

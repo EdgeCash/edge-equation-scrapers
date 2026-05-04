@@ -22,3 +22,11 @@ out/
 
 # Logs
 *.log
+
+# Raw Statcast CSV dumps used for forensics on parser failures —
+# uploaded as a workflow artifact instead of committed to the repo.
+_statcast_*_raw.csv
+
+# Raw CFBD response dumps used for forensics on parser failures —
+# uploaded as a workflow artifact instead of committed to the repo.
+data/backfill/ncaaf/_raw/

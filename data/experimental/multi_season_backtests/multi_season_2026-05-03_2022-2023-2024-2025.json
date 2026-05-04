@@ -1,0 +1,249 @@
+{
+  "generated_at": "2026-05-03T03:00:44.657641Z",
+  "seasons": [
+    2022,
+    2023,
+    2024,
+    2025
+  ],
+  "n_games": 10419,
+  "overall": {
+    "bets": 114494,
+    "wins": 61441,
+    "losses": 50402,
+    "pushes": 2651,
+    "hit_rate": 54.9,
+    "units_pl": 5447.87,
+    "roi_pct": 4.76,
+    "brier": 0.2477
+  },
+  "summary_by_bet_type": [
+    {
+      "bet_type": "first_5",
+      "bets": 10404,
+      "wins": 4640,
+      "losses": 4133,
+      "pushes": 1631,
+      "hit_rate": 52.9,
+      "units_pl": 84.76,
+      "roi_pct": 0.81,
+      "brier": 0.2491
+    },
+    {
+      "bet_type": "first_inning",
+      "bets": 10409,
+      "wins": 5249,
+      "losses": 5160,
+      "pushes": 0,
+      "hit_rate": 50.4,
+      "units_pl": -388.66,
+      "roi_pct": -3.73,
+      "brier": 0.2512
+    },
+    {
+      "bet_type": "moneyline",
+      "bets": 10409,
+      "wins": 5619,
+      "losses": 4790,
+      "pushes": 0,
+      "hit_rate": 54.0,
+      "units_pl": 317.67,
+      "roi_pct": 3.05,
+      "brier": 0.2475
+    },
+    {
+      "bet_type": "run_line",
+      "bets": 10409,
+      "wins": 6317,
+      "losses": 4092,
+      "pushes": 0,
+      "hit_rate": 60.7,
+      "units_pl": 1650.15,
+      "roi_pct": 15.85,
+      "brier": 0.2384
+    },
+    {
+      "bet_type": "team_totals",
+      "bets": 41636,
+      "wins": 22939,
+      "losses": 18697,
+      "pushes": 0,
+      "hit_rate": 55.1,
+      "units_pl": 2154.55,
+      "roi_pct": 5.17,
+      "brier": 0.2504
+    },
+    {
+      "bet_type": "totals",
+      "bets": 31227,
+      "wins": 16677,
+      "losses": 13530,
+      "pushes": 1020,
+      "hit_rate": 55.2,
+      "units_pl": 1629.39,
+      "roi_pct": 5.22,
+      "brier": 0.2455
+    }
+  ],
+  "calibration": {
+    "total_sd": 4.478,
+    "team_total_sd": 3.16,
+    "margin_sd": 4.459,
+    "f5_total_sd": 3.36,
+    "f5_margin_sd": 3.366,
+    "win_prob_slope": 0.4487,
+    "n_residuals": 10409
+  },
+  "daily_pl_sample": [
+    {
+      "date": "2025-09-25",
+      "daily_units": -10.73,
+      "cumulative_units": 5425.19
+    },
+    {
+      "date": "2025-09-26",
+      "daily_units": -1.64,
+      "cumulative_units": 5423.55
+    },
+    {
+      "date": "2025-09-27",
+      "daily_units": 24.08,
+      "cumulative_units": 5447.63
+    },
+    {
+      "date": "2025-09-28",
+      "daily_units": 3.08,
+      "cumulative_units": 5450.71
+    },
+    {
+      "date": "2025-09-30",
+      "daily_units": -12.46,
+      "cumulative_units": 5438.25
+    },
+    {
+      "date": "2025-10-01",
+      "daily_units": 4.72,
+      "cumulative_units": 5442.98
+    },
+    {
+      "date": "2025-10-02",
+      "daily_units": -6.18,
+      "cumulative_units": 5436.8
+    },
+    {
+      "date": "2025-10-04",
+      "daily_units": -3.91,
+      "cumulative_units": 5432.89
+    },
+    {
+      "date": "2025-10-05",
+      "daily_units": 8.54,
+      "cumulative_units": 5441.43
+    },
+    {
+      "date": "2025-10-06",
+      "daily_units": -3.82,
+      "cumulative_units": 5437.61
+    },
+    {
+      "date": "2025-10-07",
+      "daily_units": 6.63,
+      "cumulative_units": 5444.25
+    },
+    {
+      "date": "2025-10-08",
+      "daily_units": -2.91,
+      "cumulative_units": 5441.33
+    },
+    {
+      "date": "2025-10-09",
+      "daily_units": 3.82,
+      "cumulative_units": 5445.15
+    },
+    {
+      "date": "2025-10-10",
+      "daily_units": 6.18,
+      "cumulative_units": 5451.33
+    },
+    {
+      "date": "2025-10-11",
+      "daily_units": 2.36,
+      "cumulative_units": 5453.7
+    },
+    {
+      "date": "2025-10-12",
+      "daily_units": -7.18,
+      "cumulative_units": 5446.51
+    },
+    {
+      "date": "2025-10-13",
+      "daily_units": 1.91,
+      "cumulative_units": 5448.42
+    },
+    {
+      "date": "2025-10-14",
+      "daily_units": 0.45,
+      "cumulative_units": 5448.88
+    },
+    {
+      "date": "2025-10-15",
+      "daily_units": 4.27,
+      "cumulative_units": 5453.15
+    },
+    {
+      "date": "2025-10-16",
+      "daily_units": 3.82,
+      "cumulative_units": 5456.96
+    },
+    {
+      "date": "2025-10-17",
+      "daily_units": -3.82,
+      "cumulative_units": 5453.15
+    },
+    {
+      "date": "2025-10-19",
+      "daily_units": -3.36,
+      "cumulative_units": 5449.78
+    },
+    {
+      "date": "2025-10-20",
+      "daily_units": -5.27,
+      "cumulative_units": 5444.51
+    },
+    {
+      "date": "2025-10-24",
+      "daily_units": 3.36,
+      "cumulative_units": 5447.87
+    },
+    {
+      "date": "2025-10-25",
+      "daily_units": -4.27,
+      "cumulative_units": 5443.6
+    },
+    {
+      "date": "2025-10-27",
+      "daily_units": -0.45,
+      "cumulative_units": 5443.14
+    },
+    {
+      "date": "2025-10-28",
+      "daily_units": 4.27,
+      "cumulative_units": 5447.42
+    },
+    {
+      "date": "2025-10-29",
+      "daily_units": 2.36,
+      "cumulative_units": 5449.78
+    },
+    {
+      "date": "2025-10-31",
+      "daily_units": -5.27,
+      "cumulative_units": 5444.51
+    },
+    {
+      "date": "2025-11-01",
+      "daily_units": 3.36,
+      "cumulative_units": 5447.87
+    }
+  ]
+}

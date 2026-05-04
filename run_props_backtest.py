@@ -107,6 +107,34 @@ def main(argv: list[str] | None = None) -> int:
     print(f"  ROI:      {overall['roi_pct']:+.2f}%")
     print(f"  Brier:    {overall['brier']}")
 
+    su = result.get("splits_usage", {})
+    sp_total = su.get("sp_k_via_splits_used", 0) + su.get("sp_k_fell_back", 0)
+    sp_pct = (su.get("sp_k_via_splits_used", 0) / sp_total * 100) if sp_total else 0.0
+    avg_total = (
+        su.get("hitter_avg_via_splits", 0)
+        + su.get("hitter_avg_via_xstats", 0)
+        + su.get("hitter_avg_via_running", 0)
+    ) or 1
+    slg_total = (
+        su.get("hitter_slg_via_splits", 0)
+        + su.get("hitter_slg_via_xstats", 0)
+        + su.get("hitter_slg_via_running", 0)
+    ) or 1
+    print(f"\n--- Feature-source coverage (decision tree per projection) ---")
+    print(f"  hitter AVG: splits={su.get('hitter_avg_via_splits', 0):>7,} "
+          f"({su.get('hitter_avg_via_splits', 0) / avg_total * 100:>5.1f}%) | "
+          f"xstats={su.get('hitter_avg_via_xstats', 0):>7,} "
+          f"({su.get('hitter_avg_via_xstats', 0) / avg_total * 100:>5.1f}%) | "
+          f"running={su.get('hitter_avg_via_running', 0):>7,} "
+          f"({su.get('hitter_avg_via_running', 0) / avg_total * 100:>5.1f}%)")
+    print(f"  hitter SLG: splits={su.get('hitter_slg_via_splits', 0):>7,} "
+          f"({su.get('hitter_slg_via_splits', 0) / slg_total * 100:>5.1f}%) | "
+          f"xstats={su.get('hitter_slg_via_xstats', 0):>7,} "
+          f"({su.get('hitter_slg_via_xstats', 0) / slg_total * 100:>5.1f}%) | "
+          f"running={su.get('hitter_slg_via_running', 0):>7,} "
+          f"({su.get('hitter_slg_via_running', 0) / slg_total * 100:>5.1f}%)")
+    print(f"  SP K via splits: {su.get('sp_k_via_splits_used', 0):,} of {sp_total:,} starts ({sp_pct:.1f}%)")
+
     print(f"\n--- Per-prop-type ---")
     print(
         f"{'prop_type':25s} {'n':>8s} {'hit%':>7s} {'ROI%':>7s} "

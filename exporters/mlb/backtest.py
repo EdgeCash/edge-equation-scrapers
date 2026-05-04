@@ -37,6 +37,9 @@ TOTAL_LINES = (8.5, 9.0, 9.5)
 TEAM_TOTAL_LINES = (3.5, 4.5)
 
 
+from exporters.mlb.isotonic import IsotonicRegressor
+
+
 def _fit_logistic_slope(pairs: list[tuple[float, int]], iters: int = 2000) -> float:
     """Maximum-likelihood fit of slope in y = 1/(1+exp(-slope*x)) on (x, y) pairs.
 
@@ -135,6 +138,11 @@ class BacktestEngine:
             "total": [],          # (proj_total, actual_total)
             "team_total": [],     # (proj_team_runs, actual_team_runs)
             "margin": [],         # (proj_margin_home_minus_away, actual_margin)
+            # Parallel list of game_pks in the same order as ml_pairs
+            # below — lets external A/B scripts match backtest predictions
+            # to a separate per-game prediction stream (e.g. ELO-only)
+            # without ambiguity about which game corresponds to which row.
+            "ml_pair_pks": [],
             "f5_total": [],
             "f5_margin": [],
             "ml_pairs": [],       # (proj_margin, won_home_0_or_1)
@@ -171,6 +179,7 @@ class BacktestEngine:
             residuals["ml_pairs"].append(
                 (proj_margin, 1 if actual_margin > 0 else 0)
             )
+            residuals["ml_pair_pks"].append(game.get("game_pk"))
 
         return {
             "as_of": datetime.utcnow().isoformat() + "Z",
@@ -186,7 +195,16 @@ class BacktestEngine:
 
     @staticmethod
     def _calibration(residuals: dict) -> dict:
-        """Fit SDs from residuals and the ML logistic slope from outcomes."""
+        """Fit SDs from residuals and the ML logistic slope from outcomes.
+
+        Also fits an isotonic-regression calibration alongside the
+        logistic and emits both. The isotonic fit isn't yet consumed by
+        the projection model — daily build still uses win_prob_slope —
+        but emitting it here means every daily run preserves the
+        isotonic state, building a corpus of evidence we can use to
+        decide whether to flip the projection's calibration source.
+        See run_isotonic_compare.py for the validation methodology.
+        """
         def sd(pairs: list[tuple[float, float]], default: float) -> float:
             if len(pairs) < 30:
                 return default
@@ -198,15 +216,37 @@ class BacktestEngine:
             # Guard against pathological values
             return max(0.5, min(default * 2.0, value)) if value > 0 else default
 
-        return {
+        ml_pairs = residuals["ml_pairs"]
+        out = {
             "total_sd":      round(sd(residuals["total"], TOTAL_SD), 3),
             "team_total_sd": round(sd(residuals["team_total"], TEAM_TOTAL_SD), 3),
             "margin_sd":     round(sd(residuals["margin"], 3.5), 3),
             "f5_total_sd":   round(sd(residuals["f5_total"], 2.2), 3),
             "f5_margin_sd":  round(sd(residuals["f5_margin"], 2.2), 3),
-            "win_prob_slope": round(_fit_logistic_slope(residuals["ml_pairs"]), 4),
+            "win_prob_slope": round(_fit_logistic_slope(ml_pairs), 4),
             "n_residuals":   len(residuals["total"]),
         }
+
+        # Isotonic candidate (ported from edge-equation-v1). Only fit
+        # when we have enough samples to be meaningful — under 100
+        # the PAV blocks are too few to capture anything useful.
+        if len(ml_pairs) >= 100:
+            try:
+                margins = [m for m, _ in ml_pairs]
+                outcomes = [y for _, y in ml_pairs]
+                fit = IsotonicRegressor.fit(margins, outcomes, increasing=True)
+                out["isotonic_fit"] = fit.to_dict()
+                out["isotonic_n_blocks"] = len(fit.blocks)
+            except Exception:
+                # Never let the isotonic side break the production
+                # calibration output. Logistic slope is the live path.
+                out["isotonic_fit"] = None
+                out["isotonic_n_blocks"] = 0
+        else:
+            out["isotonic_fit"] = None
+            out["isotonic_n_blocks"] = 0
+
+        return out
 
     # ---------------- per-bet graders ------------------------------------
 

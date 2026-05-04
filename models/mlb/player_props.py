@@ -61,14 +61,21 @@ def pitcher_strikeouts(
     season_ip: float | None,
     opp_team_k_per_9: float | None = None,
     expected_ip_today: float = DEFAULT_EXPECTED_IP,
+    override_k_per_9: float | None = None,
 ) -> dict:
     """Project a starting pitcher's strikeouts.
 
     Returns a dict with `expected_ks`, plus `over_X_5` for each line in
     PITCHER_K_LINES. Falls back to league-average K/9 when the season
     sample is too thin to trust.
+
+    `override_k_per_9` (optional): a pre-computed K/9 rate that bypasses
+    the season_ks/season_ip path. Used by the splits-aware caller to
+    feed in a handedness-weighted K rate derived from prior-season splits.
     """
-    if season_ks is None or season_ip is None or season_ip < MIN_IP_FOR_SIGNAL:
+    if override_k_per_9 is not None:
+        sp_k_per_9 = override_k_per_9
+    elif season_ks is None or season_ip is None or season_ip < MIN_IP_FOR_SIGNAL:
         sp_k_per_9 = LEAGUE_K_PER_9
     else:
         sp_k_per_9 = (season_ks / season_ip) * 9.0

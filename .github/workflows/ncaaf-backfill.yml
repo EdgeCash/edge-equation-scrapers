@@ -1,0 +1,119 @@
+name: NCAAF Backfill (manual)
+
+# Pulls historical NCAAF FBS game results across multiple seasons into
+# data/backfill/ncaaf/<season>/games.json. One-time bulk collection
+# ahead of the 2026-27 season for offline model training + backtest
+# validation. Source: ESPN public scoreboard JSON (no auth).
+#
+# Per-season runtime: ~1-2 minutes. A 5-season run takes ~10 min total.
+# Manual trigger only — no scheduled runs.
+
+on:
+  workflow_dispatch:
+    inputs:
+      seasons:
+        description: "Seasons — '2021,2022,2023' or '2021-2025'. Blank = 5 most recent completed seasons."
+        required: false
+        default: ""
+      include_postseason:
+        description: "Include postseason (bowls + playoff)"
+        type: boolean
+        default: true
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Configure git
+        run: |
+          git config user.name  "edge-equation-bot"
+          git config user.email "bot@edge-equation.local"
+
+      - name: Fetch NCAAF backfill
+        env:
+          INPUT_SEASONS: ${{ github.event.inputs.seasons }}
+          INPUT_POST: ${{ github.event.inputs.include_postseason }}
+        run: |
+          ARGS=""
+          if [ -n "$INPUT_SEASONS" ]; then
+            ARGS="$ARGS --seasons $INPUT_SEASONS"
+          fi
+          if [ "$INPUT_POST" = "false" ]; then
+            ARGS="$ARGS --no-postseason"
+          fi
+          echo "::group::NCAAF backfill"
+          python run_ncaaf_backfill.py $ARGS
+          echo "::endgroup::"
+
+      - name: Verify games.json files were written
+        run: |
+          set -e
+          MISSING=0
+          for season_dir in data/backfill/ncaaf/*/; do
+            season=$(basename "$season_dir")
+            if [[ ! "$season" =~ ^[0-9]+$ ]]; then
+              continue
+            fi
+            f="$season_dir/games.json"
+            if [ ! -f "$f" ]; then
+              echo "::warning::$f missing"
+              continue
+            fi
+            SIZE=$(stat -c%s "$f")
+            if [ "$SIZE" -lt 10240 ]; then
+              echo "::error::$f is only $SIZE bytes (expected >>10 KB for a real season)."
+              MISSING=$((MISSING+1))
+            else
+              # Count games for the log
+              N_GAMES=$(python -c "import json; print(len(json.load(open('$f'))))")
+              echo "OK: $f — $N_GAMES games, $SIZE bytes."
+            fi
+          done
+          if [ "$MISSING" -gt 0 ]; then
+            exit 1
+          fi
+
+      - name: Upload games.json files as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ncaaf-games
+          path: data/backfill/ncaaf/*/games.json
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Commit + push
+        run: |
+          set -x
+          git add data/backfill/ncaaf/*/games.json
+          if git diff --staged --quiet; then
+            echo "NCAAF games already up to date — nothing to commit."
+            exit 0
+          fi
+          git commit -m "NCAAF backfill — $(date -u +%Y-%m-%d)"
+          for attempt in 1 2 3 4; do
+            if git push -u origin "${{ github.ref_name }}"; then
+              exit 0
+            fi
+            sleep $((2 ** attempt))
+            git fetch origin "${{ github.ref_name }}" && git rebase "origin/${{ github.ref_name }}" || true
+          done
+          echo "::error::Push failed after retries."
+          exit 1

@@ -1,0 +1,970 @@
+{
+  "fetched_at": "2026-05-03T17:36:11.960331Z",
+  "source": "the-odds-api",
+  "games": [
+    {
+      "away_team": "TOR",
+      "home_team": "MIN",
+      "commence_time": "2026-05-03T16:46:00Z",
+      "moneyline": {
+        "home": {
+          "decimal": 1.6,
+          "american": -167,
+          "book": "mybookieag"
+        },
+        "away": {
+          "decimal": 2.5,
+          "american": 150,
+          "book": "bovada"
+        }
+      },
+      "run_line": [
+        {
+          "team": "away",
+          "point": 1.0,
+          "decimal": 2.0,
+          "american": 100,
+          "book": "bovada"
+        },
+        {
+          "team": "away",
+          "point": 1.5,
+          "decimal": 1.67,
+          "american": -149,
+          "book": "fanatics"
+        },
+        {
+          "team": "home",
+          "point": -1.5,
+          "decimal": 2.4,
+          "american": 140,
+          "book": "betmgm"
+        },
+        {
+          "team": "home",
+          "point": -1.0,
+          "decimal": 1.81,
+          "american": -123,
+          "book": "betrivers"
+        }
+      ],
+      "totals": [
+        {
+          "point": 7.0,
+          "over": {
+            "decimal": 1.91,
+            "american": -110,
+            "book": "bovada"
+          },
+          "under": {
+            "decimal": 1.93,
+            "american": -108,
+            "book": "betrivers"
+          }
+        },
+        {
+          "point": 7.5,
+          "over": {
+            "decimal": 2.15,
+            "american": 115,
+            "book": "williamhill_us"
+          },
+          "under": {
+            "decimal": 1.75,
+            "american": -133,
+            "book": "mybookieag"
+          }
+        }
+      ]
+    },
+    {
+      "away_team": "BAL",
+      "home_team": "NYY",
+      "commence_time": "2026-05-03T17:36:00Z",
+      "moneyline": {
+        "away": {
+          "decimal": 3.47,
+          "american": 247,
+          "book": "mybookieag"
+        },
+        "home": {
+          "decimal": 1.38,
+          "american": -263,
+          "book": "betus"
+        }
+      },
+      "run_line": [
+        {
+          "team": "away",
+          "point": 1.5,
+          "decimal": 2.27,
+          "american": 127,
+          "book": "lowvig"
+        },
+        {
+          "team": "away",
+          "point": 2.0,
+          "decimal": 1.93,
+          "american": -108,
+          "book": "betrivers"
+        },
+        {
+          "team": "away",
+          "point": 2.5,
+          "decimal": 1.8,
+          "american": -125,
+          "book": "mybookieag"
+        },
+        {
+          "team": "home",
+          "point": -2.5,
+          "decimal": 2.05,
+          "american": 105,
+          "book": "mybookieag"
+        },
+        {
+          "team": "home",
+          "point": -2.0,
+          "decimal": 1.87,
+          "american": -115,
+          "book": "betrivers"
+        },
+        {
+          "team": "home",
+          "point": -1.5,
+          "decimal": 1.71,
+          "american": -141,
+          "book": "fanatics"
+        }
+      ],
+      "totals": [
+        {
+          "point": 9.0,
+          "over": {
+            "decimal": 2.06,
+            "american": 106,
+            "book": "lowvig"
+          },
+          "under": {
+            "decimal": 1.89,
+            "american": -112,
+            "book": "fanduel"
+          }
+        }
+      ]
+    },
+    {
+      "away_team": "CIN",
+      "home_team": "PIT",
+      "commence_time": "2026-05-03T17:36:00Z",
+      "moneyline": {
+        "away": {
+          "decimal": 2.07,
+          "american": 107,
+          "book": "betus"
+        },
+        "home": {
+          "decimal": 1.85,
+          "american": -118,
+          "book": "betonlineag"
+        }
+      },
+      "run_line": [
+        {
+          "team": "away",
+          "point": -1.5,
+          "decimal": 2.72,
+          "american": 172,
+          "book": "fanduel"
+        },
+        {
+          "team": "away",
+          "point": -1.0,
+          "decimal": 2.33,
+          "american": 133,
+          "book": "betrivers"
+        },
+        {
+          "team": "away",
+          "point": 1.5,
+          "decimal": 1.48,
+          "american": -208,
+          "book": "betonlineag"
+        },
+        {
+          "team": "home",
+          "point": -1.5,
+          "decimal": 2.82,
+          "american": 182,
+          "book": "lowvig"
+        },
+        {
+          "team": "home",
+          "point": 1.0,
+          "decimal": 1.61,
+          "american": -164,
+          "book": "betrivers"
+        },
+        {
+          "team": "home",
+          "point": 1.5,
+          "decimal": 1.52,
+          "american": -192,
+          "book": "mybookieag"
+        }
+      ],
+      "totals": [
+        {
+          "point": 7.5,
+          "over": {
+            "decimal": 1.97,
+            "american": -103,
+            "book": "lowvig"
+          },
+          "under": {
+            "decimal": 1.91,
+            "american": -110,
+            "book": "fanduel"
+          }
+        }
+      ]
+    },
+    {
+      "away_team": "MIL",
+      "home_team": "WSH",
+      "commence_time": "2026-05-03T17:36:00Z",
+      "moneyline": {
+        "away": {
+          "decimal": 1.71,
+          "american": -141,
+          "book": "draftkings"
+        },
+        "home": {
+          "decimal": 2.31,
+          "american": 131,
+          "book": "betonlineag"
+        }
+      },
+      "run_line": [
+        {
+          "team": "away",
+          "point": -1.5,
+          "decimal": 2.2,
+          "american": 120,
+          "book": "bovada"
+        },
+        {
+          "team": "away",
+          "point": -1.0,
+          "decimal": 1.88,
+          "american": -114,
+          "book": "betrivers"
+        },
+        {
+          "team": "home",
+          "point": 1.0,
+          "decimal": 1.83,
+          "american": -120,
+          "book": "betrivers"
+        },
+        {
+          "team": "home",
+          "point": 1.5,
+          "decimal": 1.77,
+          "american": -130,
+          "book": "mybookieag"
+        }
+      ],
+      "totals": [
+        {
+          "point": 8.5,
+          "over": {
+            "decimal": 1.93,
+            "american": -108,
+            "book": "lowvig"
+          },
+          "under": {
+            "decimal": 1.95,
+            "american": -105,
+            "book": "betus"
+          }
+        }
+      ]
+    },
+    {
+      "away_team": "HOU",
+      "home_team": "BOS",
+      "commence_time": "2026-05-03T17:37:00Z",
+      "moneyline": {
+        "home": {
+          "decimal": 1.62,
+          "american": -161,
+          "book": "betrivers"
+        },
+        "away": {
+          "decimal": 2.56,
+          "american": 156,
+          "book": "betonlineag"
+        }
+      },
+      "run_line": [
+        {
+          "team": "away",
+          "point": 1.0,
+          "decimal": 1.93,
+          "american": -108,
+          "book": "betrivers"
+        },
+        {
+          "team": "away",
+          "point": 1.5,
+          "decimal": 1.75,
+          "american": -133,
+          "book": "fanduel"
+        },
+        {
+          "team": "home",
+          "point": -1.5,
+          "decimal": 2.26,
+          "american": 126,
+          "book": "mybookieag"
+        },
+        {
+          "team": "home",
+          "point": -1.0,
+          "decimal": 1.87,
+          "american": -115,
+          "book": "betrivers"
+        }
+      ],
+      "totals": [
+        {
+          "point": 8.5,
+          "over": {
+            "decimal": 1.83,
+            "american": -120,
+            "book": "fanduel"
+          },
+          "under": {
+            "decimal": 2.06,
+            "american": 106,
+            "book": "lowvig"
+          }
+        },
+        {
+          "point": 9.0,
+          "over": {
+            "decimal": 2.02,
+            "american": 102,
+            "book": "draftkings"
+          },
+          "under": {
+            "decimal": 1.83,
+            "american": -120,
+            "book": "fanatics"
+          }
+        }
+      ]
+    },
+    {
+      "away_team": "PHI",
+      "home_team": "MIA",
+      "commence_time": "2026-05-03T17:41:00Z",
+      "moneyline": {
+        "home": {
+          "decimal": 2.23,
+          "american": 123,
+          "book": "lowvig"
+        },
+        "away": {
+          "decimal": 1.76,
+          "american": -132,
+          "book": "betus"
+        }
+      },
+      "run_line": [
+        {
+          "team": "away",
+          "point": -1.5,
+          "decimal": 2.26,
+          "american": 126,
+          "book": "fanduel"
+        },
+        {
+          "team": "home",
+          "point": 1.5,
+          "decimal": 1.75,
+          "american": -133,
+          "book": "lowvig"
+        }
+      ],
+      "totals": [
+        {
+          "point": 8.0,
+          "over": {
+            "decimal": 1.87,
+            "american": -115,
+            "book": "lowvig"
+          },
+          "under": {
+            "decimal": 2.0,
+            "american": 100,
+            "book": "lowvig"
+          }
+        },
+        {
+          "point": 8.5,
+          "over": {
+            "decimal": 2.0,
+            "american": 100,
+            "book": "bovada"
+          },
+          "under": {
+            "decimal": 1.83,
+            "american": -120,
+            "book": "bovada"
+          }
+        }
+      ]
+    },
+    {
+      "away_team": "SF",
+      "home_team": "TB",
+      "commence_time": "2026-05-03T17:41:00Z",
+      "moneyline": {
+        "away": {
+          "decimal": 2.07,
+          "american": 107,
+          "book": "draftkings"
+        },
+        "home": {
+          "decimal": 1.87,
+          "american": -115,
+          "book": "lowvig"
+        }
+      },
+      "run_line": [
+        {
+          "team": "away",
+          "point": -1.5,
+          "decimal": 2.7,
+          "american": 170,
+          "book": "betrivers"
+        },
+        {
+          "team": "away",
+          "point": 1.5,
+          "decimal": 1.51,
+          "american": -196,
+          "book": "lowvig"
+        },
+        {
+          "team": "home",
+          "point": -1.5,
+          "decimal": 2.71,
+          "american": 171,
+          "book": "lowvig"
+        },
+        {
+          "team": "home",
+          "point": 1.5,
+          "decimal": 1.5,
+          "american": -200,
+          "book": "mybookieag"
+        }
+      ],
+      "totals": [
+        {
+          "point": 8.0,
+          "over": {
+            "decimal": 1.96,
+            "american": -104,
+            "book": "betrivers"
+          },
+          "under": {
+            "decimal": 1.93,
+            "american": -108,
+            "book": "mybookieag"
+          }
+        }
+      ]
+    },
+    {
+      "away_team": "LAD",
+      "home_team": "STL",
+      "commence_time": "2026-05-03T18:16:00Z",
+      "moneyline": {
+        "away": {
+          "decimal": 1.79,
+          "american": -127,
+          "book": "lowvig"
+        },
+        "home": {
+          "decimal": 2.18,
+          "american": 118,
+          "book": "fanduel"
+        }
+      },
+      "run_line": [
+        {
+          "team": "away",
+          "point": -1.5,
+          "decimal": 2.25,
+          "american": 125,
+          "book": "betmgm"
+        },
+        {
+          "team": "home",
+          "point": 1.5,
+          "decimal": 1.74,
+          "american": -135,
+          "book": "lowvig"
+        }
+      ],
+      "totals": [
+        {
+          "point": 9.5,
+          "over": {
+            "decimal": 1.92,
+            "american": -109,
+            "book": "betrivers"
+          },
+          "under": {
+            "decimal": 2.04,
+            "american": 104,
+            "book": "lowvig"
+          }
+        }
+      ]
+    },
+    {
+      "away_team": "AZ",
+      "home_team": "CHC",
+      "commence_time": "2026-05-03T18:21:00Z",
+      "moneyline": {
+        "away": {
+          "decimal": 2.4,
+          "american": 140,
+          "book": "lowvig"
+        },
+        "home": {
+          "decimal": 1.66,
+          "american": -152,
+          "book": "betus"
+        }
+      },
+      "run_line": [
+        {
+          "team": "away",
+          "point": 1.5,
+          "decimal": 1.77,
+          "american": -130,
+          "book": "mybookieag"
+        },
+        {
+          "team": "home",
+          "point": -1.5,
+          "decimal": 2.2,
+          "american": 120,
+          "book": "bovada"
+        }
+      ],
+      "totals": [
+        {
+          "point": 11.5,
+          "over": {
+            "decimal": 1.89,
+            "american": -112,
+            "book": "betrivers"
+          },
+          "under": {
+            "decimal": 2.05,
+            "american": 105,
+            "book": "lowvig"
+          }
+        },
+        {
+          "point": 12.0,
+          "over": {
+            "decimal": 1.97,
+            "american": -103,
+            "book": "mybookieag"
+          },
+          "under": {
+            "decimal": 1.88,
+            "american": -114,
+            "book": "draftkings"
+          }
+        }
+      ]
+    },
+    {
+      "away_team": "ATL",
+      "home_team": "COL",
+      "commence_time": "2026-05-03T19:11:00Z",
+      "moneyline": {
+        "away": {
+          "decimal": 1.73,
+          "american": -137,
+          "book": "betonlineag"
+        },
+        "home": {
+          "decimal": 2.28,
+          "american": 128,
+          "book": "fanduel"
+        }
+      },
+      "run_line": [
+        {
+          "team": "away",
+          "point": -1.5,
+          "decimal": 2.13,
+          "american": 113,
+          "book": "lowvig"
+        },
+        {
+          "team": "home",
+          "point": 1.5,
+          "decimal": 1.83,
+          "american": -120,
+          "book": "fanduel"
+        }
+      ],
+      "totals": [
+        {
+          "point": 9.5,
+          "over": {
+            "decimal": 1.85,
+            "american": -118,
+            "book": "draftkings"
+          },
+          "under": {
+            "decimal": 1.98,
+            "american": -102,
+            "book": "draftkings"
+          }
+        },
+        {
+          "point": 10.0,
+          "over": {
+            "decimal": 2.03,
+            "american": 103,
+            "book": "lowvig"
+          },
+          "under": {
+            "decimal": 1.87,
+            "american": -115,
+            "book": "fanduel"
+          }
+        }
+      ]
+    },
+    {
+      "away_team": "CLE",
+      "home_team": "ATH",
+      "commence_time": "2026-05-03T20:06:00Z",
+      "moneyline": {
+        "home": {
+          "decimal": 2.14,
+          "american": 114,
+          "book": "bovada"
+        },
+        "away": {
+          "decimal": 1.82,
+          "american": -122,
+          "book": "betus"
+        }
+      },
+      "run_line": [
+        {
+          "team": "away",
+          "point": -1.5,
+          "decimal": 2.35,
+          "american": 135,
+          "book": "betmgm"
+        },
+        {
+          "team": "home",
+          "point": 1.5,
+          "decimal": 1.71,
+          "american": -141,
+          "book": "bovada"
+        }
+      ],
+      "totals": [
+        {
+          "point": 9.0,
+          "over": {
+            "decimal": 1.88,
+            "american": -114,
+            "book": "betrivers"
+          },
+          "under": {
+            "decimal": 1.99,
+            "american": -101,
+            "book": "mybookieag"
+          }
+        },
+        {
+          "point": 9.5,
+          "over": {
+            "decimal": 2.0,
+            "american": 100,
+            "book": "fanatics"
+          },
+          "under": {
+            "decimal": 1.88,
+            "american": -114,
+            "book": "lowvig"
+          }
+        }
+      ]
+    },
+    {
+      "away_team": "NYM",
+      "home_team": "LAA",
+      "commence_time": "2026-05-03T20:08:00Z",
+      "moneyline": {
+        "home": {
+          "decimal": 2.15,
+          "american": 115,
+          "book": "betus"
+        },
+        "away": {
+          "decimal": 1.81,
+          "american": -123,
+          "book": "lowvig"
+        }
+      },
+      "run_line": [
+        {
+          "team": "away",
+          "point": -1.5,
+          "decimal": 2.28,
+          "american": 128,
+          "book": "fanduel"
+        },
+        {
+          "team": "home",
+          "point": 1.5,
+          "decimal": 1.71,
+          "american": -141,
+          "book": "lowvig"
+        }
+      ],
+      "totals": [
+        {
+          "point": 9.0,
+          "over": {
+            "decimal": 1.96,
+            "american": -104,
+            "book": "fanduel"
+          },
+          "under": {
+            "decimal": 1.91,
+            "american": -110,
+            "book": "lowvig"
+          }
+        }
+      ]
+    },
+    {
+      "away_team": "CWS",
+      "home_team": "SD",
+      "commence_time": "2026-05-03T20:11:00Z",
+      "moneyline": {
+        "away": {
+          "decimal": 2.51,
+          "american": 151,
+          "book": "betonlineag"
+        },
+        "home": {
+          "decimal": 1.61,
+          "american": -164,
+          "book": "fanduel"
+        }
+      },
+      "run_line": [
+        {
+          "team": "away",
+          "point": 1.5,
+          "decimal": 1.72,
+          "american": -139,
+          "book": "lowvig"
+        },
+        {
+          "team": "home",
+          "point": -1.5,
+          "decimal": 2.26,
+          "american": 126,
+          "book": "fanduel"
+        }
+      ],
+      "totals": [
+        {
+          "point": 8.0,
+          "over": {
+            "decimal": 1.85,
+            "american": -118,
+            "book": "lowvig"
+          },
+          "under": {
+            "decimal": 2.02,
+            "american": 102,
+            "book": "lowvig"
+          }
+        },
+        {
+          "point": 8.5,
+          "over": {
+            "decimal": 2.0,
+            "american": 100,
+            "book": "fanatics"
+          },
+          "under": {
+            "decimal": 1.9,
+            "american": -111,
+            "book": "mybookieag"
+          }
+        }
+      ]
+    },
+    {
+      "away_team": "KC",
+      "home_team": "SEA",
+      "commence_time": "2026-05-03T20:11:00Z",
+      "moneyline": {
+        "away": {
+          "decimal": 2.04,
+          "american": 104,
+          "book": "fanduel"
+        },
+        "home": {
+          "decimal": 1.88,
+          "american": -114,
+          "book": "betus"
+        }
+      },
+      "run_line": [
+        {
+          "team": "away",
+          "point": -1.5,
+          "decimal": 2.72,
+          "american": 172,
+          "book": "fanduel"
+        },
+        {
+          "team": "away",
+          "point": 1.5,
+          "decimal": 1.51,
+          "american": -196,
+          "book": "betonlineag"
+        },
+        {
+          "team": "home",
+          "point": -1.5,
+          "decimal": 2.71,
+          "american": 171,
+          "book": "lowvig"
+        },
+        {
+          "team": "home",
+          "point": 1.5,
+          "decimal": 1.52,
+          "american": -192,
+          "book": "draftkings"
+        }
+      ],
+      "totals": [
+        {
+          "point": 8.0,
+          "over": {
+            "decimal": 1.98,
+            "american": -102,
+            "book": "lowvig"
+          },
+          "under": {
+            "decimal": 1.91,
+            "american": -110,
+            "book": "fanduel"
+          }
+        }
+      ]
+    },
+    {
+      "away_team": "TEX",
+      "home_team": "DET",
+      "commence_time": "2026-05-03T23:21:00Z",
+      "moneyline": {
+        "home": {
+          "decimal": 1.83,
+          "american": -120,
+          "book": "fanduel"
+        },
+        "away": {
+          "decimal": 2.13,
+          "american": 113,
+          "book": "betus"
+        }
+      },
+      "run_line": [
+        {
+          "team": "away",
+          "point": -1.5,
+          "decimal": 2.68,
+          "american": 168,
+          "book": "fanduel"
+        },
+        {
+          "team": "away",
+          "point": 1.5,
+          "decimal": 1.53,
+          "american": -189,
+          "book": "fanatics"
+        },
+        {
+          "team": "home",
+          "point": -1.5,
+          "decimal": 2.75,
+          "american": 175,
+          "book": "williamhill_us"
+        },
+        {
+          "team": "home",
+          "point": 1.5,
+          "decimal": 1.52,
+          "american": -192,
+          "book": "draftkings"
+        }
+      ],
+      "totals": [
+        {
+          "point": 8.0,
+          "over": {
+            "decimal": 1.88,
+            "american": -114,
+            "book": "mybookieag"
+          },
+          "under": {
+            "decimal": 2.0,
+            "american": 100,
+            "book": "bovada"
+          }
+        },
+        {
+          "point": 8.5,
+          "over": {
+            "decimal": 2.0,
+            "american": 100,
+            "book": "fanduel"
+          },
+          "under": {
+            "decimal": 1.85,
+            "american": -118,
+            "book": "betrivers"
+          }
+        }
+      ]
+    }
+  ]
+}

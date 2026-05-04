@@ -1,0 +1,161 @@
+name: NCAAF Lines Backfill (manual)
+
+# Pulls historical multi-book closing + opening lines from
+# collegefootballdata.com across multiple seasons. ~10 API calls
+# total for a 5-season pull (one /lines call per season-type pair),
+# nowhere near the 200/min free-tier limit. Output:
+# data/backfill/ncaaf/<season>/lines.json
+#
+# Requires a CFBD_API_KEY repo secret. Get a free key at
+# https://collegefootballdata.com/key.
+
+on:
+  workflow_dispatch:
+    inputs:
+      seasons:
+        description: "Seasons — '2021,2022,2023' or '2021-2025'. Blank = 5 most recent completed seasons."
+        required: false
+        default: ""
+      include_postseason:
+        description: "Include postseason (bowls + playoff)"
+        type: boolean
+        default: true
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Configure git
+        run: |
+          git config user.name  "edge-equation-bot"
+          git config user.email "bot@edge-equation.local"
+
+      - name: Sanity-check CFBD_API_KEY is set
+        env:
+          CFBD_API_KEY: ${{ secrets.CFBD_API_KEY }}
+        run: |
+          if [ -z "$CFBD_API_KEY" ]; then
+            echo "::error::CFBD_API_KEY secret is not set. Get a free key at https://collegefootballdata.com/key and add it under repo Settings → Secrets and variables → Actions."
+            exit 1
+          fi
+          echo "CFBD_API_KEY is present (length: ${#CFBD_API_KEY})"
+
+      - name: Fetch NCAAF lines
+        env:
+          CFBD_API_KEY: ${{ secrets.CFBD_API_KEY }}
+          INPUT_SEASONS: ${{ github.event.inputs.seasons }}
+          INPUT_POST: ${{ github.event.inputs.include_postseason }}
+        run: |
+          ARGS=""
+          if [ -n "$INPUT_SEASONS" ]; then
+            ARGS="$ARGS --seasons $INPUT_SEASONS"
+          fi
+          if [ "$INPUT_POST" = "false" ]; then
+            ARGS="$ARGS --no-postseason"
+          fi
+          echo "::group::NCAAF lines backfill"
+          python run_ncaaf_lines_backfill.py $ARGS
+          echo "::endgroup::"
+
+      - name: Verify lines.json files were written
+        run: |
+          set -e
+          MISSING=0
+          # Build the season list from the games.json files we already
+          # have on disk — that's the authoritative set of expected
+          # seasons. If a season has games.json but no lines.json,
+          # treat that as a hard failure (previously this was a soft
+          # warning that let the upload step explode without context).
+          for season_dir in data/backfill/ncaaf/*/; do
+            season=$(basename "$season_dir")
+            if [[ ! "$season" =~ ^[0-9]+$ ]]; then
+              continue
+            fi
+            # Only seasons that have games.json should also have lines.
+            if [ ! -f "$season_dir/games.json" ]; then
+              continue
+            fi
+            f="$season_dir/lines.json"
+            if [ ! -f "$f" ]; then
+              echo "::error::$f missing — fetch likely returned an error. Check the raw-response artifact."
+              MISSING=$((MISSING+1))
+              continue
+            fi
+            SIZE=$(stat -c%s "$f")
+            if [ "$SIZE" -lt 51200 ]; then
+              echo "::error::$f is only $SIZE bytes (expected >>50 KB for a real season's lines)."
+              MISSING=$((MISSING+1))
+            else
+              python -c "
+          import json
+          rows = json.load(open('$f'))
+          n_games = len(rows)
+          n_with = sum(1 for r in rows if r.get('lines'))
+          providers = set()
+          for r in rows:
+              for ln in r.get('lines') or []:
+                  if ln.get('provider'):
+                      providers.add(ln['provider'])
+          print(f'OK: $f — {n_games} games, {n_with} have lines, providers: {sorted(providers)}, $SIZE bytes')
+          "
+            fi
+          done
+          if [ "$MISSING" -gt 0 ]; then
+            echo "::error::$MISSING season(s) failed verification."
+            exit 1
+          fi
+
+      - name: Upload lines.json files as artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ncaaf-lines
+          path: data/backfill/ncaaf/*/lines.json
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload raw CFBD response dumps (always)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ncaaf-lines-raw-responses
+          path: data/backfill/ncaaf/_raw/*
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Commit + push
+        run: |
+          set -x
+          git add data/backfill/ncaaf/*/lines.json
+          if git diff --staged --quiet; then
+            echo "NCAAF lines already up to date — nothing to commit."
+            exit 0
+          fi
+          git commit -m "NCAAF historical lines backfill — $(date -u +%Y-%m-%d)"
+          for attempt in 1 2 3 4; do
+            if git push -u origin "${{ github.ref_name }}"; then
+              exit 0
+            fi
+            sleep $((2 ** attempt))
+            git fetch origin "${{ github.ref_name }}" && git rebase "origin/${{ github.ref_name }}" || true
+          done
+          echo "::error::Push failed after retries."
+          exit 1

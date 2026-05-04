@@ -1,0 +1,93 @@
+name: MLB Person Handedness Backfill (manual)
+
+# One-shot bulk fetch of pitchHand + batSide for every player in
+# splits.json. Required by the handedness-aware props projector —
+# boxscores expose only player IDs, not handedness.
+#
+# Tiny: ~50 bulk-API calls, <1 minute wall-clock. Idempotent — re-runs
+# only fetch newly-discovered IDs. Output lands in
+# data/backfill/mlb/people.json — sandboxed under data/backfill/.
+
+on:
+  workflow_dispatch:
+    inputs:
+      request_interval:
+        description: "Seconds between API calls (default 0.5)."
+        required: false
+        default: "0.5"
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Configure git
+        run: |
+          git config user.name  "edge-equation-bot"
+          git config user.email "bot@edge-equation.local"
+
+      - name: Fetch person handedness
+        run: |
+          echo "::group::Person handedness backfill"
+          python run_mlb_people_backfill.py \
+            --request-interval ${{ github.event.inputs.request_interval }}
+          echo "::endgroup::"
+
+      - name: Verify people.json was written
+        run: |
+          PEOPLE="data/backfill/mlb/people.json"
+          if [ ! -f "$PEOPLE" ]; then
+            echo "::error::Scraper exited 0 but $PEOPLE does not exist."
+            exit 1
+          fi
+          SIZE=$(stat -c%s "$PEOPLE")
+          if [ "$SIZE" -lt 10240 ]; then
+            echo "::error::$PEOPLE is only $SIZE bytes (expected >100 KB)."
+            exit 1
+          fi
+          echo "OK: $PEOPLE is $SIZE bytes."
+          python -c "import json; m=json.load(open('$PEOPLE')).get('meta',{}); print('meta:', m)"
+
+      - name: Upload people.json as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: people
+          path: data/backfill/mlb/people.json
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Commit + push
+        run: |
+          set -x
+          git add data/backfill/mlb/people.json
+          if git diff --staged --quiet; then
+            echo "people.json already up to date."
+            exit 0
+          fi
+          git commit -m "MLB person handedness — $(date -u +%Y-%m-%d)"
+          for attempt in 1 2 3 4; do
+            if git push -u origin "${{ github.ref_name }}"; then
+              exit 0
+            fi
+            sleep $((2 ** attempt))
+            git fetch origin "${{ github.ref_name }}" && git rebase "origin/${{ github.ref_name }}" || true
+          done
+          echo "::error::Push failed after retries."
+          exit 1

@@ -1,0 +1,103 @@
+{
+  "as_of": "2026-05-04T11:51:35.282068Z",
+  "method": "time_series_kfold",
+  "seasons": [
+    2022,
+    2023,
+    2024,
+    2025
+  ],
+  "n_splits": 5,
+  "n_pairs_total": 10409,
+  "fold_results": [
+    {
+      "fold": 0,
+      "n_train": 1734,
+      "n_test": 1734,
+      "logistic_slope": 0.4079034754562997,
+      "isotonic_n_blocks": 8,
+      "brier_naive": 0.25,
+      "brier_logistic": 0.24679041389430323,
+      "brier_isotonic": 0.24614252929066338,
+      "delta_logistic_minus_isotonic": 0.0006478846036398478
+    },
+    {
+      "fold": 1,
+      "n_train": 3468,
+      "n_test": 1734,
+      "logistic_slope": 0.4388890289278609,
+      "isotonic_n_blocks": 12,
+      "brier_naive": 0.25,
+      "brier_logistic": 0.2464087819554824,
+      "brier_isotonic": 0.24617600408025708,
+      "delta_logistic_minus_isotonic": 0.00023277787522532623
+    },
+    {
+      "fold": 2,
+      "n_train": 5202,
+      "n_test": 1734,
+      "logistic_slope": 0.45299360750254036,
+      "isotonic_n_blocks": 10,
+      "brier_naive": 0.25,
+      "brier_logistic": 0.24790613853459034,
+      "brier_isotonic": 0.24737190298900194,
+      "delta_logistic_minus_isotonic": 0.0005342355455884018
+    },
+    {
+      "fold": 3,
+      "n_train": 6936,
+      "n_test": 1734,
+      "logistic_slope": 0.4507069667115452,
+      "isotonic_n_blocks": 10,
+      "brier_naive": 0.25,
+      "brier_logistic": 0.24769493895172043,
+      "brier_isotonic": 0.24700375966987356,
+      "delta_logistic_minus_isotonic": 0.0006911792818468654
+    },
+    {
+      "fold": 4,
+      "n_train": 8670,
+      "n_test": 1739,
+      "logistic_slope": 0.4481743320405567,
+      "isotonic_n_blocks": 11,
+      "brier_naive": 0.25,
+      "brier_logistic": 0.24746358695859788,
+      "brier_isotonic": 0.24653478344545243,
+      "delta_logistic_minus_isotonic": 0.0009288035131454486
+    }
+  ],
+  "aggregate": {
+    "naive": {
+      "n": 5,
+      "mean": 0.25,
+      "std": 0.0,
+      "ci_half": 0.0,
+      "min": 0.25,
+      "max": 0.25
+    },
+    "logistic": {
+      "n": 5,
+      "mean": 0.24725277205893886,
+      "std": 0.0006310579612114186,
+      "ci_half": 0.0005531466916123737,
+      "min": 0.2464087819554824,
+      "max": 0.24790613853459034
+    },
+    "isotonic": {
+      "n": 5,
+      "mean": 0.2466457958950497,
+      "std": 0.0005342459555944668,
+      "ci_half": 0.00046828722717811623,
+      "min": 0.24614252929066338,
+      "max": 0.24737190298900194
+    },
+    "delta_logistic_minus_isotonic": {
+      "n": 5,
+      "mean": 0.000606976163889178,
+      "std": 0.00025379719513603894,
+      "ci_half": 0.0002224630500826011,
+      "min": 0.00023277787522532623,
+      "max": 0.0009288035131454486
+    }
+  }
+}

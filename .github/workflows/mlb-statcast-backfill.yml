@@ -1,0 +1,126 @@
+name: MLB Statcast Backfill (manual)
+
+# One-shot per-season xBA / xSLG / xwOBA leaderboard fetch from
+# Baseball Savant. Tiny (~1 min, ~50 KB per season). Required by the
+# Tier-2 props feature work — expected stats correlate ~30% better with
+# next-year actuals than this-year actual AVG/SLG.
+#
+# Sandboxed: output lands in data/backfill/mlb/<season>/statcast_xstats
+# .json — never under public/.
+
+on:
+  workflow_dispatch:
+    inputs:
+      seasons:
+        description: "Seasons — '2022,2023,2024' or '2022-2024'. Blank = every season on disk."
+        required: false
+        default: ""
+      request_interval:
+        description: "Seconds between API calls (default 1.0; Savant is cloudflare-fronted)."
+        required: false
+        default: "1.0"
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Configure git
+        run: |
+          git config user.name  "edge-equation-bot"
+          git config user.email "bot@edge-equation.local"
+
+      - name: Fetch Statcast xstats
+        env:
+          INPUT_SEASONS: ${{ github.event.inputs.seasons }}
+          INPUT_INTERVAL: ${{ github.event.inputs.request_interval }}
+        run: |
+          ARGS=""
+          if [ -n "$INPUT_SEASONS" ]; then
+            ARGS="$ARGS --seasons $INPUT_SEASONS"
+          fi
+          if [ -n "$INPUT_INTERVAL" ]; then
+            ARGS="$ARGS --request-interval $INPUT_INTERVAL"
+          fi
+          echo "::group::Statcast backfill"
+          python run_mlb_statcast_backfill.py $ARGS
+          echo "::endgroup::"
+
+      - name: Verify statcast_xstats.json files were written
+        run: |
+          set -e
+          MISSING=0
+          for season_dir in data/backfill/mlb/*/; do
+            season=$(basename "$season_dir")
+            if [[ ! "$season" =~ ^[0-9]+$ ]]; then
+              continue
+            fi
+            f="$season_dir/statcast_xstats.json"
+            if [ ! -f "$f" ]; then
+              echo "::warning::$f missing (season may have been skipped)"
+              continue
+            fi
+            SIZE=$(stat -c%s "$f")
+            if [ "$SIZE" -lt 1024 ]; then
+              echo "::error::$f is only $SIZE bytes (expected >10 KB)."
+              MISSING=$((MISSING+1))
+            else
+              echo "OK: $f is $SIZE bytes."
+            fi
+          done
+          if [ "$MISSING" -gt 0 ]; then
+            exit 1
+          fi
+
+      - name: Upload statcast files as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: statcast-xstats
+          path: data/backfill/mlb/*/statcast_xstats.json
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload raw CSV dumps for diagnostics (always)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: statcast-raw-csv
+          path: data/backfill/mlb/*/_statcast_*_raw.csv
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Commit + push
+        run: |
+          set -x
+          git add data/backfill/mlb/*/statcast_xstats.json
+          if git diff --staged --quiet; then
+            echo "Statcast files already up to date — nothing to commit."
+            exit 0
+          fi
+          git commit -m "MLB Statcast xBA/xSLG/xwOBA — $(date -u +%Y-%m-%d)"
+          for attempt in 1 2 3 4; do
+            if git push -u origin "${{ github.ref_name }}"; then
+              exit 0
+            fi
+            sleep $((2 ** attempt))
+            git fetch origin "${{ github.ref_name }}" && git rebase "origin/${{ github.ref_name }}" || true
+          done
+          echo "::error::Push failed after retries."
+          exit 1

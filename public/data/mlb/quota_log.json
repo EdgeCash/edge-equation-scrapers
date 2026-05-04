@@ -1,0 +1,44 @@
+{
+  "updated_at": "2026-05-03T17:36:11.957841Z",
+  "current": {
+    "used": 697,
+    "remaining": 19303
+  },
+  "recent": [
+    {
+      "timestamp": "2026-05-02T15:53:19.848015Z",
+      "used": 637,
+      "remaining": 19363,
+      "last_cost": "3",
+      "endpoint": "baseball_mlb/odds"
+    },
+    {
+      "timestamp": "2026-05-02T17:09:11.123238Z",
+      "used": 640,
+      "remaining": 19360,
+      "last_cost": "3",
+      "endpoint": "baseball_mlb/odds"
+    },
+    {
+      "timestamp": "2026-05-02T17:32:43.999926Z",
+      "used": 643,
+      "remaining": 19357,
+      "last_cost": "3",
+      "endpoint": "baseball_mlb/odds"
+    },
+    {
+      "timestamp": "2026-05-03T16:25:43.847499Z",
+      "used": 694,
+      "remaining": 19306,
+      "last_cost": "3",
+      "endpoint": "baseball_mlb/odds"
+    },
+    {
+      "timestamp": "2026-05-03T17:36:11.957841Z",
+      "used": 697,
+      "remaining": 19303,
+      "last_cost": "3",
+      "endpoint": "baseball_mlb/odds"
+    }
+  ]
+}
