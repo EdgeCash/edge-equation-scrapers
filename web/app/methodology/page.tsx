@@ -120,6 +120,102 @@ export default function MethodologyPage() {
           </ul>
         </Section>
 
+        <Section title="Deeper documentation">
+          <p>
+            For auditors, customers, and future-us: every production formula
+            has a plain-English explanation in{" "}
+            <a
+              href="https://github.com/EdgeCash/edge-equation-scrapers/tree/main/docs/methodology"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <code>docs/methodology/</code>
+            </a>
+            . Constants verified against the live code, with file paths so you
+            can follow the math straight to the implementation.
+          </p>
+          <ul>
+            <li>
+              <a
+                href="https://github.com/EdgeCash/edge-equation-scrapers/blob/main/docs/methodology/run_projection.md"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <code>run_projection.md</code>
+              </a>{" "}
+              — the 5-stage pipeline that produces every projected run number
+              we publish.
+            </li>
+            <li>
+              <a
+                href="https://github.com/EdgeCash/edge-equation-scrapers/blob/main/docs/methodology/sp_factor.md"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <code>sp_factor.md</code>
+              </a>{" "}
+              — starting-pitcher quality factor: weighted FIP + last-3-starts
+              blend + prior-season xwOBA prior.
+            </li>
+            <li>
+              <a
+                href="https://github.com/EdgeCash/edge-equation-scrapers/blob/main/docs/methodology/bp_factor.md"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <code>bp_factor.md</code>
+              </a>{" "}
+              — bullpen factor: season ERA, Bayesian-shrunk × last-3-day
+              workload fatigue.
+            </li>
+            <li>
+              <a
+                href="https://github.com/EdgeCash/edge-equation-scrapers/blob/main/docs/methodology/gate_logic.md"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <code>gate_logic.md</code>
+              </a>{" "}
+              — market gate, per-pick edge thresholds, portfolio cap. The
+              codification of our discipline.
+            </li>
+            <li>
+              <a
+                href="https://github.com/EdgeCash/edge-equation-scrapers/blob/main/docs/methodology/calibration.md"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <code>calibration.md</code>
+              </a>{" "}
+              — how projected margin becomes a fair win probability, plus the
+              isotonic and ELO findings still under live evaluation.
+            </li>
+            <li>
+              <a
+                href="https://github.com/EdgeCash/edge-equation-scrapers/blob/main/docs/methodology/clv.md"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <code>clv.md</code>
+              </a>{" "}
+              — CLV formula plus the 4-step pipeline (record → snap → grade →
+              publish).
+            </li>
+          </ul>
+          <p className="text-sm text-chalk-500">
+            If the docs ever disagree with the code, the code is the
+            source of truth and the doc is a bug. If the docs disagree with{" "}
+            <a
+              href="https://github.com/EdgeCash/edge-equation-scrapers/blob/main/docs/BRAND_GUIDE.md"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              the brand guide
+            </a>
+            , the brand guide wins.
+          </p>
+        </Section>
+
         <Section title="What we don't do">
           <ul>
             <li>Guarantee wins.</li>
