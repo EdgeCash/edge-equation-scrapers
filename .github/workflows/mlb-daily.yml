@@ -3,14 +3,14 @@ name: MLB Daily Spreadsheet
 # Builds today's MLB spreadsheet (backfill + projections + Kelly +
 # backtest + market odds) and commits the new files to main, which
 # triggers an automatic Vercel redeploy.
-on:
-  schedule:
+#on:
+  #schedule:
     # 15:00 UTC = 11:00 AM ET during DST (covers entire MLB regular
     # season Mar–Oct). Matches the BRAND_GUIDE operational standard:
     # "Daily card published by 11:00 AM ET" — gives lineups enough time
     # to set before publication. During the brief late-October window
     # after DST ends this fires at 10:00 AM ET, still well within spec.
-    - cron: "0 15 * * *"
+   # - cron: "0 15 * * *"
   workflow_dispatch:
     inputs:
       date:
@@ -88,3 +88,4 @@ jobs:
           DATE_TAG=$(date -u +"%Y-%m-%d")
           git commit -m "Daily MLB spreadsheet — $DATE_TAG"
           git push
+# DISABLED — pipeline now lives in edge-equation-v1
