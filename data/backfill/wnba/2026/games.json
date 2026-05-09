@@ -1,1 +1,104 @@
-[]
+[
+  {
+    "date": "2026-05-08",
+    "game_id": "401856890",
+    "season": 2026,
+    "week": null,
+    "season_type": 2,
+    "status": "STATUS_FINAL",
+    "completed": true,
+    "away_team": "CON",
+    "home_team": "NY",
+    "away_score": 75,
+    "home_score": 106,
+    "total_points": 181,
+    "ml_winner": "NY",
+    "margin": 31,
+    "spread_margin": 31,
+    "away_q": [
+      13,
+      24,
+      23,
+      15
+    ],
+    "home_q": [
+      36,
+      30,
+      21,
+      19
+    ],
+    "away_1h": 37,
+    "home_1h": 66,
+    "first_half_total": 103,
+    "first_half_winner": "NY",
+    "venue": "Barclays Center"
+  },
+  {
+    "date": "2026-05-08",
+    "game_id": "401856891",
+    "season": 2026,
+    "week": null,
+    "season_type": 2,
+    "status": "STATUS_FINAL",
+    "completed": true,
+    "away_team": "WSH",
+    "home_team": "TOR",
+    "away_score": 68,
+    "home_score": 65,
+    "total_points": 133,
+    "ml_winner": "WSH",
+    "margin": -3,
+    "spread_margin": 3,
+    "away_q": [
+      17,
+      20,
+      14,
+      17
+    ],
+    "home_q": [
+      13,
+      17,
+      17,
+      18
+    ],
+    "away_1h": 37,
+    "home_1h": 30,
+    "first_half_total": 67,
+    "first_half_winner": "WSH",
+    "venue": "Coca-Cola Coliseum"
+  },
+  {
+    "date": "2026-05-09",
+    "game_id": "401856892",
+    "season": 2026,
+    "week": null,
+    "season_type": 2,
+    "status": "STATUS_FINAL",
+    "completed": true,
+    "away_team": "GS",
+    "home_team": "SEA",
+    "away_score": 91,
+    "home_score": 80,
+    "total_points": 171,
+    "ml_winner": "GS",
+    "margin": -11,
+    "spread_margin": 11,
+    "away_q": [
+      23,
+      26,
+      20,
+      22
+    ],
+    "home_q": [
+      24,
+      17,
+      12,
+      27
+    ],
+    "away_1h": 49,
+    "home_1h": 41,
+    "first_half_total": 90,
+    "first_half_winner": "GS",
+    "venue": "Climate Pledge Arena"
+  }
+]
