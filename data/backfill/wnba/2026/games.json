@@ -100,5 +100,141 @@
     "first_half_total": 90,
     "first_half_winner": "GS",
     "venue": "Climate Pledge Arena"
+  },
+  {
+    "date": "2026-05-09",
+    "game_id": "401856893",
+    "season": 2026,
+    "week": null,
+    "season_type": 2,
+    "status": "STATUS_FINAL",
+    "completed": true,
+    "away_team": "DAL",
+    "home_team": "IND",
+    "away_score": 107,
+    "home_score": 104,
+    "total_points": 211,
+    "ml_winner": "DAL",
+    "margin": -3,
+    "spread_margin": 3,
+    "away_q": [
+      27,
+      33,
+      20,
+      27
+    ],
+    "home_q": [
+      25,
+      26,
+      29,
+      24
+    ],
+    "away_1h": 60,
+    "home_1h": 51,
+    "first_half_total": 111,
+    "first_half_winner": "DAL",
+    "venue": "Gainbridge Fieldhouse"
+  },
+  {
+    "date": "2026-05-09",
+    "game_id": "401856894",
+    "season": 2026,
+    "week": null,
+    "season_type": 2,
+    "status": "STATUS_FINAL",
+    "completed": true,
+    "away_team": "PHX",
+    "home_team": "LV",
+    "away_score": 99,
+    "home_score": 66,
+    "total_points": 165,
+    "ml_winner": "PHX",
+    "margin": -33,
+    "spread_margin": 33,
+    "away_q": [
+      27,
+      29,
+      27,
+      16
+    ],
+    "home_q": [
+      21,
+      14,
+      10,
+      21
+    ],
+    "away_1h": 56,
+    "home_1h": 35,
+    "first_half_total": 91,
+    "first_half_winner": "PHX",
+    "venue": "T-Mobile Arena"
+  },
+  {
+    "date": "2026-05-10",
+    "game_id": "401856899",
+    "season": 2026,
+    "week": null,
+    "season_type": 2,
+    "status": "STATUS_FINAL",
+    "completed": true,
+    "away_team": "ATL",
+    "home_team": "MIN",
+    "away_score": 91,
+    "home_score": 90,
+    "total_points": 181,
+    "ml_winner": "ATL",
+    "margin": -1,
+    "spread_margin": 1,
+    "away_q": [
+      12,
+      25,
+      26,
+      28
+    ],
+    "home_q": [
+      24,
+      28,
+      19,
+      19
+    ],
+    "away_1h": 37,
+    "home_1h": 52,
+    "first_half_total": 89,
+    "first_half_winner": "MIN",
+    "venue": "Target Center"
+  },
+  {
+    "date": "2026-05-10",
+    "game_id": "401856895",
+    "season": 2026,
+    "week": null,
+    "season_type": 2,
+    "status": "STATUS_FINAL",
+    "completed": true,
+    "away_team": "CHI",
+    "home_team": "POR",
+    "away_score": 98,
+    "home_score": 83,
+    "total_points": 181,
+    "ml_winner": "CHI",
+    "margin": -15,
+    "spread_margin": 15,
+    "away_q": [
+      19,
+      31,
+      18,
+      30
+    ],
+    "home_q": [
+      18,
+      19,
+      30,
+      16
+    ],
+    "away_1h": 50,
+    "home_1h": 37,
+    "first_half_total": 87,
+    "first_half_winner": "CHI",
+    "venue": "Moda Center"
   }
 ]
