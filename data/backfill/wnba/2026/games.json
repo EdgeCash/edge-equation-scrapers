@@ -236,5 +236,143 @@
     "first_half_total": 87,
     "first_half_winner": "CHI",
     "venue": "Moda Center"
+  },
+  {
+    "date": "2026-05-10",
+    "game_id": "401856896",
+    "season": 2026,
+    "week": null,
+    "season_type": 2,
+    "status": "STATUS_FINAL",
+    "completed": true,
+    "away_team": "SEA",
+    "home_team": "CON",
+    "away_score": 89,
+    "home_score": 82,
+    "total_points": 171,
+    "ml_winner": "SEA",
+    "margin": -7,
+    "spread_margin": 7,
+    "away_q": [
+      29,
+      15,
+      19,
+      26
+    ],
+    "home_q": [
+      24,
+      25,
+      12,
+      21
+    ],
+    "away_1h": 44,
+    "home_1h": 49,
+    "first_half_total": 93,
+    "first_half_winner": "CON",
+    "venue": "Mohegan Sun Arena"
+  },
+  {
+    "date": "2026-05-10",
+    "game_id": "401856897",
+    "season": 2026,
+    "week": null,
+    "season_type": 2,
+    "status": "STATUS_FINAL",
+    "completed": true,
+    "away_team": "NY",
+    "home_team": "WSH",
+    "away_score": 98,
+    "home_score": 93,
+    "total_points": 191,
+    "ml_winner": "NY",
+    "margin": -5,
+    "spread_margin": 5,
+    "away_q": [
+      24,
+      31,
+      17,
+      13,
+      13
+    ],
+    "home_q": [
+      31,
+      17,
+      21,
+      16,
+      8
+    ],
+    "away_1h": 55,
+    "home_1h": 48,
+    "first_half_total": 103,
+    "first_half_winner": "NY",
+    "venue": "CareFirst Arena"
+  },
+  {
+    "date": "2026-05-10",
+    "game_id": "401856898",
+    "season": 2026,
+    "week": null,
+    "season_type": 2,
+    "status": "STATUS_FINAL",
+    "completed": true,
+    "away_team": "LV",
+    "home_team": "LA",
+    "away_score": 105,
+    "home_score": 78,
+    "total_points": 183,
+    "ml_winner": "LV",
+    "margin": -27,
+    "spread_margin": 27,
+    "away_q": [
+      29,
+      13,
+      33,
+      30
+    ],
+    "home_q": [
+      14,
+      27,
+      18,
+      19
+    ],
+    "away_1h": 42,
+    "home_1h": 41,
+    "first_half_total": 83,
+    "first_half_winner": "LV",
+    "venue": "crypto.com Arena"
+  },
+  {
+    "date": "2026-05-11",
+    "game_id": "401856900",
+    "season": 2026,
+    "week": null,
+    "season_type": 2,
+    "status": "STATUS_FINAL",
+    "completed": true,
+    "away_team": "PHX",
+    "home_team": "GS",
+    "away_score": 79,
+    "home_score": 95,
+    "total_points": 174,
+    "ml_winner": "GS",
+    "margin": 16,
+    "spread_margin": 16,
+    "away_q": [
+      20,
+      11,
+      31,
+      17
+    ],
+    "home_q": [
+      17,
+      31,
+      18,
+      29
+    ],
+    "away_1h": 31,
+    "home_1h": 48,
+    "first_half_total": 79,
+    "first_half_winner": "GS",
+    "venue": "Chase Center"
   }
 ]
