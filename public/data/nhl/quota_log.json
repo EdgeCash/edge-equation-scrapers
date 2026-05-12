@@ -1,8 +1,8 @@
 {
-  "updated_at": "2026-05-11T10:47:49.023149Z",
+  "updated_at": "2026-05-12T08:13:14.795226Z",
   "current": {
-    "used": 1724,
-    "remaining": 18276
+    "used": 1827,
+    "remaining": 18173
   },
   "recent": [
     {
@@ -44,6 +44,13 @@
       "timestamp": "2026-05-11T10:47:49.023149Z",
       "used": 1724,
       "remaining": 18276,
+      "last_cost": "3",
+      "endpoint": "icehockey_nhl/odds"
+    },
+    {
+      "timestamp": "2026-05-12T08:13:14.795226Z",
+      "used": 1827,
+      "remaining": 18173,
       "last_cost": "3",
       "endpoint": "icehockey_nhl/odds"
     }
