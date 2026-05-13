@@ -374,5 +374,107 @@
     "first_half_total": 79,
     "first_half_winner": "GS",
     "venue": "Chase Center"
+  },
+  {
+    "date": "2026-05-13",
+    "game_id": "401856901",
+    "season": 2026,
+    "week": null,
+    "season_type": 2,
+    "status": "STATUS_FINAL",
+    "completed": true,
+    "away_team": "ATL",
+    "home_team": "DAL",
+    "away_score": 77,
+    "home_score": 72,
+    "total_points": 149,
+    "ml_winner": "ATL",
+    "margin": -5,
+    "spread_margin": 5,
+    "away_q": [
+      19,
+      19,
+      20,
+      19
+    ],
+    "home_q": [
+      21,
+      20,
+      18,
+      13
+    ],
+    "away_1h": 38,
+    "home_1h": 41,
+    "first_half_total": 79,
+    "first_half_winner": "DAL",
+    "venue": "College Park Center"
+  },
+  {
+    "date": "2026-05-13",
+    "game_id": "401856902",
+    "season": 2026,
+    "week": null,
+    "season_type": 2,
+    "status": "STATUS_FINAL",
+    "completed": true,
+    "away_team": "MIN",
+    "home_team": "PHX",
+    "away_score": 88,
+    "home_score": 84,
+    "total_points": 172,
+    "ml_winner": "MIN",
+    "margin": -4,
+    "spread_margin": 4,
+    "away_q": [
+      19,
+      22,
+      27,
+      20
+    ],
+    "home_q": [
+      20,
+      25,
+      22,
+      17
+    ],
+    "away_1h": 41,
+    "home_1h": 45,
+    "first_half_total": 86,
+    "first_half_winner": "PHX",
+    "venue": "Mortgage Matchup Center"
+  },
+  {
+    "date": "2026-05-13",
+    "game_id": "401856903",
+    "season": 2026,
+    "week": null,
+    "season_type": 2,
+    "status": "STATUS_FINAL",
+    "completed": true,
+    "away_team": "NY",
+    "home_team": "POR",
+    "away_score": 96,
+    "home_score": 98,
+    "total_points": 194,
+    "ml_winner": "POR",
+    "margin": 2,
+    "spread_margin": 2,
+    "away_q": [
+      27,
+      27,
+      23,
+      19
+    ],
+    "home_q": [
+      21,
+      26,
+      23,
+      28
+    ],
+    "away_1h": 54,
+    "home_1h": 47,
+    "first_half_total": 101,
+    "first_half_winner": "NY",
+    "venue": "Moda Center"
   }
 ]
