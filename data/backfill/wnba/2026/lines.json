@@ -3390,23 +3390,23 @@
       {
         "provider": "fanduel",
         "h2h": {
-          "away": 136,
-          "home": -167
+          "away": 138,
+          "home": -172
         },
         "spread": {
           "away": {
             "point": 3.5,
-            "price": -114
+            "price": -112
           },
           "home": {
             "point": -3.5,
-            "price": -106
+            "price": -108
           }
         },
         "totals": {
           "point": 166.5,
-          "over": -110,
-          "under": -110
+          "over": -114,
+          "under": -106
         }
       },
       {
@@ -3426,7 +3426,7 @@
           }
         },
         "totals": {
-          "point": 166.0,
+          "point": 167.5,
           "over": -110,
           "under": -110
         }
@@ -3440,53 +3440,61 @@
         "spread": {
           "away": {
             "point": 3.5,
-            "price": -110
+            "price": -112
           },
           "home": {
             "point": -3.5,
-            "price": -110
+            "price": -108
           }
         },
         "totals": {
-          "point": 165.5,
-          "over": -115,
-          "under": -105
+          "point": 167.5,
+          "over": -110,
+          "under": -110
         }
       },
       {
         "provider": "lowvig",
+        "h2h": {
+          "away": 140,
+          "home": -161
+        },
         "spread": {
           "away": {
-            "point": 3.5,
-            "price": -103
+            "point": 4.0,
+            "price": -114
           },
           "home": {
-            "point": -3.5,
-            "price": -114
+            "point": -4.0,
+            "price": -103
           }
         },
         "totals": {
-          "point": 166.5,
-          "over": -103,
-          "under": -114
+          "point": 167.5,
+          "over": -114,
+          "under": -103
         }
       },
       {
         "provider": "betonlineag",
+        "h2h": {
+          "away": 140,
+          "home": -161
+        },
         "spread": {
           "away": {
-            "point": 3.5,
-            "price": -105
+            "point": 4.0,
+            "price": -115
           },
           "home": {
-            "point": -3.5,
-            "price": -115
+            "point": -4.0,
+            "price": -105
           }
         },
         "totals": {
-          "point": 166.5,
-          "over": -105,
-          "under": -115
+          "point": 167.5,
+          "over": -115,
+          "under": -105
         }
       },
       {
@@ -3506,15 +3514,15 @@
           }
         },
         "totals": {
-          "point": 166.5,
-          "over": -105,
-          "under": -115
+          "point": 167.5,
+          "over": -110,
+          "under": -110
         }
       },
       {
         "provider": "betrivers",
         "h2h": {
-          "away": 143,
+          "away": 145,
           "home": -179
         },
         "spread": {
@@ -3528,16 +3536,16 @@
           }
         },
         "totals": {
-          "point": 166.5,
-          "over": -108,
-          "under": -115
+          "point": 167.5,
+          "over": -114,
+          "under": -110
         }
       },
       {
         "provider": "betmgm",
         "h2h": {
           "away": 135,
-          "home": -164
+          "home": -161
         },
         "spread": {
           "away": {
@@ -3550,13 +3558,79 @@
           }
         },
         "totals": {
-          "point": 165.5,
+          "point": 167.5,
           "over": -110,
           "under": -110
         }
+      },
+      {
+        "provider": "bovada",
+        "h2h": {
+          "away": 135,
+          "home": -161
+        },
+        "spread": {
+          "away": {
+            "point": 3.5,
+            "price": -110
+          },
+          "home": {
+            "point": -3.5,
+            "price": -110
+          }
+        },
+        "totals": {
+          "point": 167.5,
+          "over": -110,
+          "under": -110
+        }
+      },
+      {
+        "provider": "mybookieag",
+        "h2h": {
+          "away": 122,
+          "home": -169
+        },
+        "spread": {
+          "away": {
+            "point": 3.0,
+            "price": -110
+          },
+          "home": {
+            "point": -3.0,
+            "price": -110
+          }
+        },
+        "totals": {
+          "point": 167.5,
+          "over": -110,
+          "under": -110
+        }
+      },
+      {
+        "provider": "betus",
+        "h2h": {
+          "away": 130,
+          "home": -149
+        },
+        "spread": {
+          "away": {
+            "point": 4.0,
+            "price": -115
+          },
+          "home": {
+            "point": -4.0,
+            "price": -105
+          }
+        },
+        "totals": {
+          "point": 167.5,
+          "over": -115,
+          "under": -105
+        }
       }
     ],
-    "snapshot_at": "2026-05-12T08:14:56.958923Z"
+    "snapshot_at": "2026-05-13T09:32:22.505060Z"
   },
   {
     "event_id": "8d60431e967888aecd9f44a9419e0fd6",
@@ -3569,38 +3643,38 @@
       {
         "provider": "fanduel",
         "h2h": {
-          "home": 590,
-          "away": -909
+          "home": 680,
+          "away": -1250
         },
         "spread": {
           "home": {
-            "point": 13.5,
-            "price": -106
+            "point": 14.5,
+            "price": -114
           },
           "away": {
-            "point": -13.5,
-            "price": -114
+            "point": -14.5,
+            "price": -106
           }
         },
         "totals": {
           "point": 171.5,
-          "over": -112,
-          "under": -108
+          "over": -106,
+          "under": -114
         }
       },
       {
         "provider": "draftkings",
         "h2h": {
-          "home": 575,
-          "away": -833
+          "home": 750,
+          "away": -1250
         },
         "spread": {
           "home": {
-            "point": 13.5,
+            "point": 14.5,
             "price": -108
           },
           "away": {
-            "point": -13.5,
+            "point": -14.5,
             "price": -112
           }
         },
@@ -3612,35 +3686,39 @@
       },
       {
         "provider": "lowvig",
+        "h2h": {
+          "home": 776,
+          "away": -1250
+        },
         "spread": {
           "home": {
-            "point": 14.0,
-            "price": -108
+            "point": 15.0,
+            "price": -114
           },
           "away": {
-            "point": -14.0,
-            "price": -108
+            "point": -15.0,
+            "price": -103
           }
         },
         "totals": {
-          "point": 171.5,
-          "over": -108,
-          "under": -108
+          "point": 171.0,
+          "over": -114,
+          "under": -103
         }
       },
       {
         "provider": "fanatics",
         "h2h": {
-          "home": 575,
-          "away": -833
+          "home": 750,
+          "away": -1250
         },
         "spread": {
           "home": {
-            "point": 13.5,
+            "point": 14.5,
             "price": -110
           },
           "away": {
-            "point": -13.5,
+            "point": -14.5,
             "price": -110
           }
         },
@@ -3652,42 +3730,46 @@
       },
       {
         "provider": "betonlineag",
+        "h2h": {
+          "home": 776,
+          "away": -1250
+        },
         "spread": {
           "home": {
-            "point": 14.0,
-            "price": -110
+            "point": 15.0,
+            "price": -115
           },
           "away": {
-            "point": -14.0,
-            "price": -110
+            "point": -15.0,
+            "price": -105
           }
         },
         "totals": {
-          "point": 171.5,
-          "over": -110,
-          "under": -110
+          "point": 171.0,
+          "over": -115,
+          "under": -105
         }
       },
       {
         "provider": "williamhill_us",
         "h2h": {
-          "home": 600,
-          "away": -909
+          "home": 800,
+          "away": -1429
         },
         "spread": {
           "home": {
-            "point": 13.5,
-            "price": -110
+            "point": 15.0,
+            "price": -115
           },
           "away": {
-            "point": -13.5,
-            "price": -110
+            "point": -15.0,
+            "price": -105
           }
         },
         "totals": {
-          "point": 171.5,
-          "over": -110,
-          "under": -110
+          "point": 171.0,
+          "over": -115,
+          "under": -105
         }
       },
       {
@@ -3699,33 +3781,33 @@
         "spread": {
           "home": {
             "point": 13.5,
-            "price": -112
+            "price": -109
           },
           "away": {
             "point": -13.5,
-            "price": -112
+            "price": -114
           }
         },
         "totals": {
-          "point": 170.5,
-          "over": -115,
-          "under": -108
+          "point": 171.5,
+          "over": -109,
+          "under": -114
         }
       },
       {
         "provider": "betmgm",
         "h2h": {
-          "home": 600,
-          "away": -909
+          "home": 750,
+          "away": -1250
         },
         "spread": {
           "home": {
-            "point": 13.5,
-            "price": -110
+            "point": 14.5,
+            "price": -115
           },
           "away": {
-            "point": -13.5,
-            "price": -110
+            "point": -14.5,
+            "price": -105
           }
         },
         "totals": {
@@ -3733,9 +3815,75 @@
           "over": -110,
           "under": -110
         }
+      },
+      {
+        "provider": "bovada",
+        "h2h": {
+          "home": 700,
+          "away": -1250
+        },
+        "spread": {
+          "home": {
+            "point": 14.5,
+            "price": -115
+          },
+          "away": {
+            "point": -14.5,
+            "price": -105
+          }
+        },
+        "totals": {
+          "point": 171.0,
+          "over": -110,
+          "under": -110
+        }
+      },
+      {
+        "provider": "betus",
+        "h2h": {
+          "home": 800,
+          "away": -1250
+        },
+        "spread": {
+          "home": {
+            "point": 15.0,
+            "price": -115
+          },
+          "away": {
+            "point": -15.0,
+            "price": -105
+          }
+        },
+        "totals": {
+          "point": 171.0,
+          "over": -115,
+          "under": -105
+        }
+      },
+      {
+        "provider": "mybookieag",
+        "h2h": {
+          "home": 577,
+          "away": -1429
+        },
+        "spread": {
+          "home": {
+            "point": 14.5,
+            "price": -110
+          },
+          "away": {
+            "point": -14.5,
+            "price": -110
+          }
+        },
+        "totals": {
+          "point": 171.0,
+          "over": -110,
+          "under": -110
+        }
       }
     ],
-    "snapshot_at": "2026-05-12T08:14:56.958923Z"
+    "snapshot_at": "2026-05-13T09:32:22.505060Z"
   },
   {
     "event_id": "5a8f677103c076b790518817973162fe",
@@ -3748,43 +3896,43 @@
       {
         "provider": "fanduel",
         "h2h": {
-          "away": 154,
-          "home": -192
+          "away": 184,
+          "home": -233
         },
         "spread": {
           "away": {
-            "point": 4.5,
-            "price": -114
+            "point": 5.5,
+            "price": -110
           },
           "home": {
-            "point": -4.5,
-            "price": -106
+            "point": -5.5,
+            "price": -110
           }
         },
         "totals": {
-          "point": 165.5,
-          "over": -112,
-          "under": -108
+          "point": 166.5,
+          "over": -114,
+          "under": -106
         }
       },
       {
         "provider": "fanatics",
         "h2h": {
-          "away": 150,
-          "home": -179
+          "away": 185,
+          "home": -227
         },
         "spread": {
           "away": {
-            "point": 4.5,
+            "point": 5.5,
             "price": -110
           },
           "home": {
-            "point": -4.5,
+            "point": -5.5,
             "price": -110
           }
         },
         "totals": {
-          "point": 165.5,
+          "point": 167.0,
           "over": -110,
           "under": -110
         }
@@ -3792,110 +3940,96 @@
       {
         "provider": "draftkings",
         "h2h": {
-          "away": 145,
-          "home": -175
+          "away": 195,
+          "home": -238
         },
         "spread": {
           "away": {
-            "point": 4.5,
+            "point": 5.5,
             "price": -108
           },
           "home": {
-            "point": -4.5,
+            "point": -5.5,
             "price": -112
           }
         },
         "totals": {
-          "point": 165.5,
-          "over": -108,
-          "under": -112
+          "point": 166.5,
+          "over": -115,
+          "under": -105
         }
       },
       {
         "provider": "lowvig",
+        "h2h": {
+          "away": 192,
+          "home": -233
+        },
         "spread": {
           "away": {
-            "point": 4.5,
+            "point": 5.5,
             "price": -103
           },
           "home": {
-            "point": -4.5,
+            "point": -5.5,
             "price": -114
           }
         },
         "totals": {
-          "point": 165.0,
-          "over": -114,
-          "under": -103
+          "point": 167.0,
+          "over": -108,
+          "under": -108
         }
       },
       {
         "provider": "betonlineag",
+        "h2h": {
+          "away": 192,
+          "home": -233
+        },
         "spread": {
           "away": {
-            "point": 4.5,
+            "point": 5.5,
             "price": -105
           },
           "home": {
-            "point": -4.5,
+            "point": -5.5,
             "price": -115
           }
         },
         "totals": {
-          "point": 165.0,
-          "over": -115,
-          "under": -105
+          "point": 167.0,
+          "over": -110,
+          "under": -110
         }
       },
       {
         "provider": "williamhill_us",
         "h2h": {
-          "away": 143,
-          "home": -169
+          "away": 196,
+          "home": -238
         },
         "spread": {
           "away": {
-            "point": 4.5,
+            "point": 5.5,
             "price": -105
           },
           "home": {
-            "point": -4.5,
+            "point": -5.5,
             "price": -115
           }
         },
         "totals": {
-          "point": 165.0,
-          "over": -115,
-          "under": -105
+          "point": 167.0,
+          "over": -110,
+          "under": -110
         }
       },
       {
         "provider": "betrivers",
         "h2h": {
-          "away": 170,
-          "home": -222
-        },
-        "spread": {
-          "away": {
-            "point": 4.5,
-            "price": -114
-          },
-          "home": {
-            "point": -4.5,
-            "price": -109
-          }
-        },
-        "totals": {
-          "point": 165.5,
-          "over": -112,
-          "under": -112
-        }
-      },
-      {
-        "provider": "betmgm",
-        "h2h": {
-          "away": 145,
-          "home": -175
+          "away": 180,
+          "home": -233
         },
         "spread": {
           "away": {
@@ -3904,17 +4038,105 @@
           },
           "home": {
             "point": -4.5,
+            "price": -120
+          }
+        },
+        "totals": {
+          "point": 166.5,
+          "over": -115,
+          "under": -108
+        }
+      },
+      {
+        "provider": "betmgm",
+        "h2h": {
+          "away": 180,
+          "home": -222
+        },
+        "spread": {
+          "away": {
+            "point": 5.5,
+            "price": -110
+          },
+          "home": {
+            "point": -5.5,
+            "price": -110
+          }
+        },
+        "totals": {
+          "point": 166.5,
+          "over": -115,
+          "under": -105
+        }
+      },
+      {
+        "provider": "bovada",
+        "h2h": {
+          "away": 210,
+          "home": -250
+        },
+        "spread": {
+          "away": {
+            "point": 5.5,
+            "price": -110
+          },
+          "home": {
+            "point": -5.5,
+            "price": -110
+          }
+        },
+        "totals": {
+          "point": 167.5,
+          "over": -110,
+          "under": -110
+        }
+      },
+      {
+        "provider": "betus",
+        "h2h": {
+          "away": 180,
+          "home": -222
+        },
+        "spread": {
+          "away": {
+            "point": 5.5,
+            "price": -105
+          },
+          "home": {
+            "point": -5.5,
             "price": -115
           }
         },
         "totals": {
-          "point": 165.5,
-          "over": -115,
-          "under": -105
+          "point": 167.0,
+          "over": -110,
+          "under": -110
+        }
+      },
+      {
+        "provider": "mybookieag",
+        "h2h": {
+          "away": 163,
+          "home": -233
+        },
+        "spread": {
+          "away": {
+            "point": 5.0,
+            "price": -110
+          },
+          "home": {
+            "point": -5.0,
+            "price": -110
+          }
+        },
+        "totals": {
+          "point": 167.0,
+          "over": -110,
+          "under": -110
         }
       }
     ],
-    "snapshot_at": "2026-05-12T08:14:56.958923Z"
+    "snapshot_at": "2026-05-13T09:32:22.505060Z"
   },
   {
     "event_id": "9eb12a90128ff851c6046262b5c96292",
@@ -3927,17 +4149,17 @@
       {
         "provider": "fanduel",
         "h2h": {
-          "away": -145,
-          "home": 118
+          "away": -133,
+          "home": 110
         },
         "spread": {
           "away": {
-            "point": -2.5,
-            "price": -110
+            "point": -1.5,
+            "price": -114
           },
           "home": {
-            "point": 2.5,
-            "price": -110
+            "point": 1.5,
+            "price": -106
           }
         },
         "totals": {
@@ -3949,40 +4171,30 @@
       {
         "provider": "fanatics",
         "h2h": {
-          "away": -145,
-          "home": 120
+          "away": -130,
+          "home": 110
         },
         "spread": {
           "away": {
-            "point": -2.5,
-            "price": -110
+            "point": -1.5,
+            "price": -115
           },
           "home": {
-            "point": 2.5,
-            "price": -110
+            "point": 1.5,
+            "price": -105
           }
         },
         "totals": {
-          "point": 184.5,
-          "over": -110,
-          "under": -110
+          "point": 183.5,
+          "over": -115,
+          "under": -105
         }
       },
       {
         "provider": "betmgm",
         "h2h": {
-          "away": -145,
-          "home": 118
-        },
-        "spread": {
-          "away": {
-            "point": -2.5,
-            "price": -110
-          },
-          "home": {
-            "point": 2.5,
-            "price": -110
-          }
+          "away": -135,
+          "home": 110
         },
         "totals": {
           "point": 184.5,
@@ -3993,16 +4205,16 @@
       {
         "provider": "williamhill_us",
         "h2h": {
-          "away": -141,
-          "home": 118
+          "away": -125,
+          "home": 105
         },
         "spread": {
           "away": {
-            "point": -2.5,
+            "point": -1.5,
             "price": -110
           },
           "home": {
-            "point": 2.5,
+            "point": 1.5,
             "price": -110
           }
         },
@@ -4015,21 +4227,21 @@
       {
         "provider": "draftkings",
         "h2h": {
-          "away": -143,
-          "home": 120
+          "away": -125,
+          "home": 105
         },
         "spread": {
           "away": {
-            "point": -2.5,
+            "point": -1.5,
             "price": -110
           },
           "home": {
-            "point": 2.5,
+            "point": 1.5,
             "price": -110
           }
         },
         "totals": {
-          "point": 184.5,
+          "point": 183.5,
           "over": -110,
           "under": -110
         }
@@ -4037,34 +4249,38 @@
       {
         "provider": "betrivers",
         "h2h": {
-          "away": -149,
-          "home": 120
+          "away": -137,
+          "home": 112
         },
         "spread": {
           "away": {
-            "point": -2.5,
-            "price": -108
+            "point": -1.5,
+            "price": -118
           },
           "home": {
-            "point": 2.5,
-            "price": -115
+            "point": 1.5,
+            "price": -108
           }
         },
         "totals": {
-          "point": 183.5,
-          "over": -110,
-          "under": -114
+          "point": 184.5,
+          "over": -112,
+          "under": -112
         }
       },
       {
         "provider": "lowvig",
+        "h2h": {
+          "away": -125,
+          "home": 105
+        },
         "spread": {
           "away": {
-            "point": -2.5,
+            "point": -1.5,
             "price": -108
           },
           "home": {
-            "point": 2.5,
+            "point": 1.5,
             "price": -108
           }
         },
@@ -4076,13 +4292,83 @@
       },
       {
         "provider": "betonlineag",
+        "h2h": {
+          "away": -125,
+          "home": 105
+        },
         "spread": {
           "away": {
-            "point": -2.5,
+            "point": -1.5,
             "price": -110
           },
           "home": {
-            "point": 2.5,
+            "point": 1.5,
+            "price": -110
+          }
+        },
+        "totals": {
+          "point": 184.5,
+          "over": -110,
+          "under": -110
+        }
+      },
+      {
+        "provider": "bovada",
+        "h2h": {
+          "away": -130,
+          "home": 110
+        },
+        "spread": {
+          "away": {
+            "point": -2.0,
+            "price": -110
+          },
+          "home": {
+            "point": 2.0,
+            "price": -110
+          }
+        },
+        "totals": {
+          "point": 184.0,
+          "over": -110,
+          "under": -110
+        }
+      },
+      {
+        "provider": "betus",
+        "h2h": {
+          "away": -125,
+          "home": 105
+        },
+        "spread": {
+          "away": {
+            "point": -1.5,
+            "price": -110
+          },
+          "home": {
+            "point": 1.5,
+            "price": -110
+          }
+        },
+        "totals": {
+          "point": 184.5,
+          "over": -110,
+          "under": -110
+        }
+      },
+      {
+        "provider": "mybookieag",
+        "h2h": {
+          "away": -135,
+          "home": -101
+        },
+        "spread": {
+          "away": {
+            "point": -1.5,
+            "price": -110
+          },
+          "home": {
+            "point": 1.5,
             "price": -110
           }
         },
@@ -4093,6 +4379,6 @@
         }
       }
     ],
-    "snapshot_at": "2026-05-12T08:14:56.958923Z"
+    "snapshot_at": "2026-05-13T09:32:22.505060Z"
   }
 ]
