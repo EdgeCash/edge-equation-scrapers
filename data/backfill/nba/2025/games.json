@@ -46924,37 +46924,37 @@
     "venue": "crypto.com Arena"
   },
   {
-    "date": "2026-05-12",
+    "date": "2026-05-13",
     "game_id": "401871156",
     "season": 2026,
     "week": null,
     "season_type": 3,
-    "status": "STATUS_SCHEDULED",
-    "completed": false,
+    "status": "STATUS_FINAL",
+    "completed": true,
     "away_team": "MIN",
     "home_team": "SA",
-    "away_score": 0,
-    "home_score": 0,
-    "total_points": 0,
-    "ml_winner": null,
-    "margin": 0,
-    "spread_margin": 0,
+    "away_score": 97,
+    "home_score": 126,
+    "total_points": 223,
+    "ml_winner": "SA",
+    "margin": 29,
+    "spread_margin": 29,
     "away_q": [
-      0,
-      0,
-      0,
-      0
+      30,
+      17,
+      26,
+      24
     ],
     "home_q": [
-      0,
-      0,
-      0,
-      0
+      34,
+      25,
+      32,
+      35
     ],
-    "away_1h": 0,
-    "home_1h": 0,
-    "first_half_total": 0,
-    "first_half_winner": null,
+    "away_1h": 47,
+    "home_1h": 59,
+    "first_half_total": 106,
+    "first_half_winner": "SA",
     "venue": "Frost Bank Center"
   },
   {
