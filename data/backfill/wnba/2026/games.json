@@ -476,5 +476,141 @@
     "first_half_total": 101,
     "first_half_winner": "NY",
     "venue": "Moda Center"
+  },
+  {
+    "date": "2026-05-13",
+    "game_id": "401856904",
+    "season": 2026,
+    "week": null,
+    "season_type": 2,
+    "status": "STATUS_FINAL",
+    "completed": true,
+    "away_team": "SEA",
+    "home_team": "TOR",
+    "away_score": 73,
+    "home_score": 86,
+    "total_points": 159,
+    "ml_winner": "TOR",
+    "margin": 13,
+    "spread_margin": 13,
+    "away_q": [
+      22,
+      23,
+      17,
+      11
+    ],
+    "home_q": [
+      27,
+      17,
+      23,
+      19
+    ],
+    "away_1h": 45,
+    "home_1h": 44,
+    "first_half_total": 89,
+    "first_half_winner": "SEA",
+    "venue": "Coca-Cola Coliseum"
+  },
+  {
+    "date": "2026-05-14",
+    "game_id": "401856905",
+    "season": 2026,
+    "week": null,
+    "season_type": 2,
+    "status": "STATUS_FINAL",
+    "completed": true,
+    "away_team": "LV",
+    "home_team": "CON",
+    "away_score": 98,
+    "home_score": 69,
+    "total_points": 167,
+    "ml_winner": "LV",
+    "margin": -29,
+    "spread_margin": 29,
+    "away_q": [
+      28,
+      20,
+      30,
+      20
+    ],
+    "home_q": [
+      19,
+      18,
+      16,
+      16
+    ],
+    "away_1h": 48,
+    "home_1h": 37,
+    "first_half_total": 85,
+    "first_half_winner": "LV",
+    "venue": "Mohegan Sun Arena"
+  },
+  {
+    "date": "2026-05-14",
+    "game_id": "401856906",
+    "season": 2026,
+    "week": null,
+    "season_type": 2,
+    "status": "STATUS_FINAL",
+    "completed": true,
+    "away_team": "CHI",
+    "home_team": "GS",
+    "away_score": 69,
+    "home_score": 63,
+    "total_points": 132,
+    "ml_winner": "CHI",
+    "margin": -6,
+    "spread_margin": 6,
+    "away_q": [
+      10,
+      14,
+      25,
+      20
+    ],
+    "home_q": [
+      19,
+      9,
+      16,
+      19
+    ],
+    "away_1h": 24,
+    "home_1h": 28,
+    "first_half_total": 52,
+    "first_half_winner": "GS",
+    "venue": "Chase Center"
+  },
+  {
+    "date": "2026-05-14",
+    "game_id": "401856907",
+    "season": 2026,
+    "week": null,
+    "season_type": 2,
+    "status": "STATUS_FINAL",
+    "completed": true,
+    "away_team": "IND",
+    "home_team": "LA",
+    "away_score": 87,
+    "home_score": 78,
+    "total_points": 165,
+    "ml_winner": "IND",
+    "margin": -9,
+    "spread_margin": 9,
+    "away_q": [
+      24,
+      24,
+      20,
+      19
+    ],
+    "home_q": [
+      20,
+      14,
+      18,
+      26
+    ],
+    "away_1h": 48,
+    "home_1h": 34,
+    "first_half_total": 82,
+    "first_half_winner": "IND",
+    "venue": "crypto.com Arena"
   }
 ]
