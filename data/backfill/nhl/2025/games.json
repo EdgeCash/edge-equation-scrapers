@@ -45906,35 +45906,37 @@
     "venue": "Xfinity Mobile Arena"
   },
   {
-    "date": "2026-05-13",
+    "date": "2026-05-14",
     "game_id": "401871420",
     "season": 2026,
     "season_type": 3,
-    "status": "STATUS_SCHEDULED",
-    "completed": false,
+    "status": "STATUS_FINAL",
+    "completed": true,
     "away_team": "MIN",
     "home_team": "COL",
-    "away_score": 0,
-    "home_score": 0,
-    "total_goals": 0,
-    "ml_winner": null,
-    "margin": 0,
-    "puck_line_margin": 0,
-    "went_to_ot": false,
+    "away_score": 3,
+    "home_score": 4,
+    "total_goals": 7,
+    "ml_winner": "COL",
+    "margin": 1,
+    "puck_line_margin": 1,
+    "went_to_ot": true,
     "away_periods": [
+      3,
       0,
       0,
       0
     ],
     "home_periods": [
       0,
-      0,
-      0
+      1,
+      2,
+      1
     ],
-    "away_p1": 0,
+    "away_p1": 3,
     "home_p1": 0,
-    "first_period_total": 0,
-    "first_period_winner": null,
+    "first_period_total": 3,
+    "first_period_winner": "MIN",
     "venue": "Ball Arena"
   },
   {
