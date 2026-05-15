@@ -612,5 +612,73 @@
     "first_half_total": 82,
     "first_half_winner": "IND",
     "venue": "crypto.com Arena"
+  },
+  {
+    "date": "2026-05-15",
+    "game_id": "401856908",
+    "season": 2026,
+    "week": null,
+    "season_type": 2,
+    "status": "STATUS_FINAL",
+    "completed": true,
+    "away_team": "MIN",
+    "home_team": "DAL",
+    "away_score": 90,
+    "home_score": 86,
+    "total_points": 176,
+    "ml_winner": "MIN",
+    "margin": -4,
+    "spread_margin": 4,
+    "away_q": [
+      18,
+      22,
+      28,
+      22
+    ],
+    "home_q": [
+      28,
+      20,
+      22,
+      16
+    ],
+    "away_1h": 40,
+    "home_1h": 48,
+    "first_half_total": 88,
+    "first_half_winner": "DAL",
+    "venue": "College Park Center"
+  },
+  {
+    "date": "2026-05-15",
+    "game_id": "401856909",
+    "season": 2026,
+    "week": null,
+    "season_type": 2,
+    "status": "STATUS_FINAL",
+    "completed": true,
+    "away_team": "NY",
+    "home_team": "POR",
+    "away_score": 100,
+    "home_score": 82,
+    "total_points": 182,
+    "ml_winner": "NY",
+    "margin": -18,
+    "spread_margin": 18,
+    "away_q": [
+      14,
+      25,
+      31,
+      30
+    ],
+    "home_q": [
+      20,
+      17,
+      16,
+      29
+    ],
+    "away_1h": 39,
+    "home_1h": 37,
+    "first_half_total": 76,
+    "first_half_winner": "NY",
+    "venue": "Moda Center"
   }
 ]
