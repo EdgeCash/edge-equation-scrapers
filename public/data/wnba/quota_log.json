@@ -1,8 +1,8 @@
 {
-  "updated_at": "2026-05-15T09:36:19.207160Z",
+  "updated_at": "2026-05-16T07:26:36.385185Z",
   "current": {
-    "used": 2228,
-    "remaining": 17772
+    "used": 2425,
+    "remaining": 17575
   },
   "recent": [
     {
@@ -72,6 +72,13 @@
       "timestamp": "2026-05-15T09:36:19.207160Z",
       "used": 2228,
       "remaining": 17772,
+      "last_cost": "3",
+      "endpoint": "basketball_wnba/odds"
+    },
+    {
+      "timestamp": "2026-05-16T07:26:36.385185Z",
+      "used": 2425,
+      "remaining": 17575,
       "last_cost": "3",
       "endpoint": "basketball_wnba/odds"
     }
