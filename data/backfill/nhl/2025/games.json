@@ -46036,35 +46036,35 @@
     "venue": "Grand Casino Arena"
   },
   {
-    "date": "2026-05-16",
+    "date": "2026-05-17",
     "game_id": "401871409",
     "season": 2026,
     "season_type": 3,
-    "status": "STATUS_SCHEDULED",
-    "completed": false,
+    "status": "STATUS_FINAL",
+    "completed": true,
     "away_team": "BUF",
     "home_team": "MTL",
-    "away_score": 0,
-    "home_score": 0,
-    "total_goals": 0,
-    "ml_winner": null,
-    "margin": 0,
-    "puck_line_margin": 0,
+    "away_score": 8,
+    "home_score": 3,
+    "total_goals": 11,
+    "ml_winner": "BUF",
+    "margin": -5,
+    "puck_line_margin": 5,
     "went_to_ot": false,
     "away_periods": [
-      0,
-      0,
-      0
+      2,
+      3,
+      3
     ],
     "home_periods": [
-      0,
+      3,
       0,
       0
     ],
-    "away_p1": 0,
-    "home_p1": 0,
-    "first_period_total": 0,
-    "first_period_winner": null,
+    "away_p1": 2,
+    "home_p1": 3,
+    "first_period_total": 5,
+    "first_period_winner": "MTL",
     "venue": "Bell Centre"
   },
   {
